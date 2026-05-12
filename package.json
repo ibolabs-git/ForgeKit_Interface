@@ -1,0 +1,54 @@
+{
+  "name": "forgekit-interface",
+  "version": "0.1.0",
+  "description": "ForgeKit Interface App — namenska Windows aplikacija za rad sa ForgeKit Tool-om",
+  "main": "out/main/index.js",
+  "author": "ForgeKit",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "electron-vite build && electron-builder"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3",
+    "openai": "^4.77.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-vite": "^2.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  },
+  "build": {
+    "appId": "com.forgekit.interface",
+    "productName": "ForgeKit Interface",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "ibolabs-git",
+      "repo": "ForgeKit_Interface"
+    }
+  }
+}

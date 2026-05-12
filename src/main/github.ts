@@ -1,0 +1,128 @@
+import { net } from 'electron'
+import * as os from 'os'
+import * as fs from 'fs'
+import * as path from 'path'
+
+const GITHUB_API = 'https://api.github.com'
+
+interface GitHubConfig {
+  token: string
+  repo: string // format: "owner/repo"
+}
+
+async function githubFetch(
+  config: GitHubConfig,
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const url = `${GITHUB_API}${endpoint}`
+  return fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'ForgeKit-Interface-App',
+      ...(options.headers ?? {})
+    }
+  })
+}
+
+export async function testGitHubConnection(config: GitHubConfig): Promise<{ ok: boolean; message: string }> {
+  try {
+    const res = await githubFetch(config, `/repos/${config.repo}`)
+    if (res.ok) return { ok: true, message: 'Konekcija uspesna' }
+    if (res.status === 401) return { ok: false, message: 'Nevazan token' }
+    if (res.status === 404) return { ok: false, message: 'Repozitorijum nije pronadjen ili nije privatno dostupan' }
+    return { ok: false, message: `HTTP ${res.status}` }
+  } catch (err) {
+    return { ok: false, message: `Mreza nedostupna: ${(err as Error).message}` }
+  }
+}
+
+export async function fetchFileFromGitHub(
+  config: GitHubConfig,
+  filePath: string
+): Promise<string | null> {
+  try {
+    const res = await githubFetch(config, `/repos/${config.repo}/contents/${filePath}`)
+    if (!res.ok) return null
+    const data = await res.json() as { content?: string; encoding?: string }
+    if (!data.content) return null
+    return Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf-8')
+  } catch {
+    return null
+  }
+}
+
+export async function uploadFileToGitHub(
+  config: GitHubConfig,
+  filePath: string,
+  content: string,
+  commitMessage: string
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    // Proverimo da li fajl vec postoji (za SHA)
+    const existing = await githubFetch(config, `/repos/${config.repo}/contents/${filePath}`)
+    let sha: string | undefined
+    if (existing.ok) {
+      const data = await existing.json() as { sha?: string }
+      sha = data.sha
+    }
+
+    const body: Record<string, string> = {
+      message: commitMessage,
+      content: Buffer.from(content, 'utf-8').toString('base64')
+    }
+    if (sha) body.sha = sha
+
+    const res = await githubFetch(config, `/repos/${config.repo}/contents/${filePath}`, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    })
+
+    if (res.ok) return { ok: true, message: 'Upload uspesno' }
+    const errData = await res.json() as { message?: string }
+    return { ok: false, message: errData.message ?? `HTTP ${res.status}` }
+  } catch (err) {
+    return { ok: false, message: (err as Error).message }
+  }
+}
+
+export async function uploadMemoryRecord(
+  config: GitHubConfig,
+  projectName: string,
+  content: string
+): Promise<{ ok: boolean; message: string }> {
+  const date = new Date().toISOString().slice(0, 10)
+  const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_')
+  const timestamp = Date.now()
+  const remotePath = `learning_data/${date}_${safeName}_${timestamp}.md`
+
+  // Pisi u temp, uploaduj, obrisi temp
+  const tempFile = path.join(os.tmpdir(), `forgekit_memory_${timestamp}.md`)
+  try {
+    fs.writeFileSync(tempFile, content, 'utf-8')
+    const result = await uploadFileToGitHub(config, remotePath, content, `Memory record: ${projectName} ${date}`)
+    return result
+  } finally {
+    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile)
+  }
+}
+
+export async function fetchSystemPromptFromGitHub(
+  config: GitHubConfig
+): Promise<string | null> {
+  // Pokusaj da ucita system prompt iz GitHub repo-a
+  const candidates = [
+    'Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md',
+    'Master_ForgeKit_Tool/00_SYSTEM/orchestrator_prompt.md',
+    '00_SYSTEM/forgekit_mode_prompt.md',
+    'system-prompt.md'
+  ]
+  for (const candidate of candidates) {
+    const content = await fetchFileFromGitHub(config, candidate)
+    if (content) return content
+  }
+  return null
+}

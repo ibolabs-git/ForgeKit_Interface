@@ -1,0 +1,260 @@
+.side-panel {
+  width: var(--panel-w);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.panel-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Uloga */
+.role-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  background: var(--bg-tertiary);
+}
+.role-icon { font-size: 16px; }
+.role-name { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* Faze */
+.phase-track { display: flex; flex-direction: column; gap: 8px; }
+
+.phase-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.phase-item.active { color: var(--text-primary); opacity: 1; }
+.phase-item.done { color: var(--success); opacity: 0.7; }
+
+.phase-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.phase-item.active .phase-dot { background: var(--accent); }
+.phase-item.done .phase-dot { background: var(--success); }
+
+/* Taskovi */
+.panel-tasks { flex: 1; }
+
+.task-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-count {
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  padding: 1px 6px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+}
+
+.clear-tasks-btn {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.clear-tasks-btn:hover { color: var(--danger); background: var(--bg-tertiary); }
+
+.task-input-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.task-input {
+  flex: 1;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  outline: none;
+}
+.task-input:focus { border-color: var(--accent); }
+.task-input::placeholder { color: var(--text-muted); }
+
+.task-add-btn {
+  width: 26px;
+  height: 26px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.task-add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.tasks-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.task-list { display: flex; flex-direction: column; gap: 4px; }
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+}
+.task-item:hover { background: var(--bg-tertiary); }
+.task-item.completed .task-text { opacity: 0.5; text-decoration: line-through; }
+
+.task-cb { flex-shrink: 0; color: var(--success); font-size: 13px; cursor: pointer; }
+.task-text { flex: 1; line-height: 1.4; cursor: pointer; }
+
+.task-remove-btn {
+  font-size: 9px;
+  color: transparent;
+  padding: 1px 3px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: color 0.1s;
+}
+.task-item:hover .task-remove-btn { color: var(--text-muted); }
+.task-remove-btn:hover { color: var(--danger) !important; background: var(--bg-primary); }
+
+/* Memory Curator */
+.panel-memory { }
+
+.memory-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.memory-list { display: flex; flex-direction: column; gap: 4px; }
+
+.memory-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border-left: 2px solid var(--border);
+  background: var(--bg-tertiary);
+  font-size: 11px;
+}
+.memory-pending { border-left-color: var(--text-muted); }
+.memory-uploading { border-left-color: var(--accent); }
+.memory-uploaded { border-left-color: var(--success); }
+.memory-error { border-left-color: var(--danger); }
+
+.memory-item-content { color: var(--text-secondary); line-height: 1.3; }
+
+.memory-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.memory-status { font-size: 10px; }
+.memory-status-pending { color: var(--text-muted); }
+.memory-status-uploading { color: var(--accent); }
+.memory-status-uploaded { color: var(--success); }
+.memory-status-error { color: var(--danger); }
+
+.memory-upload-btn {
+  font-size: 13px;
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.memory-upload-btn:hover { background: var(--bg-primary); }
+
+.memory-remove-btn {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.memory-remove-btn:hover { color: var(--danger); }
+
+/* Project */
+.panel-project { }
+
+.project-path {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: monospace;
+  background: var(--bg-tertiary);
+  padding: 5px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-path-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 6px;
+}
+
+.btn-project-setup {
+  width: 100%;
+  padding: 6px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-project-setup:hover { border-color: var(--accent); color: var(--text-primary); }
+
+/* Session */
+.panel-session { margin-top: auto; }
+.session-info { display: flex; flex-direction: column; gap: 6px; }
+.session-row { display: flex; justify-content: space-between; font-size: 12px; }
+.session-key { color: var(--text-muted); }
+.session-val { color: var(--text-secondary); font-family: monospace; font-size: 11px; }
