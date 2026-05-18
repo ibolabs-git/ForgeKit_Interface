@@ -10,6 +10,7 @@ interface AppSettings {
   anthropicApiKey: string
   openaiApiKey: string
   nvidiaApiKey: string
+  nvidiaBaseUrl: string
   defaultProvider: 'anthropic' | 'openai'
   defaultAnthropicModel: string
   defaultOpenAIModel: string
@@ -25,6 +26,7 @@ const defaults: AppSettings = {
   anthropicApiKey: '',
   openaiApiKey: '',
   nvidiaApiKey: '',
+  nvidiaBaseUrl: 'https://integrate.api.nvidia.com/v1',
   defaultProvider: 'anthropic',
   defaultAnthropicModel: 'claude-sonnet-4-6',
   defaultOpenAIModel: 'gpt-4o',
@@ -49,6 +51,10 @@ export function getApiKey(provider: 'anthropic' | 'openai' | 'nvidia' | string):
     case 'nvidia':    return settingsStore.get('nvidiaApiKey')
     default:          return ''
   }
+}
+
+export function getNvidiaBaseUrl(): string {
+  return settingsStore.get('nvidiaBaseUrl') || 'https://integrate.api.nvidia.com/v1'
 }
 
 export function getGitHubConfig() {

@@ -39,6 +39,28 @@ export function MessageBubble({ message }: Props): JSX.Element {
     )
   }
 
+  // Model switch divider — [MODEL_SWITCH:from→to:timestamp]
+  const modelSwitchMatch = message.content.match(/^\[MODEL_SWITCH:(.+?)→(.+?):(\d+)\]$/)
+  if (modelSwitchMatch) {
+    const [, from, to, ts] = modelSwitchMatch
+    const d = new Date(Number(ts))
+    const timeLabel = d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+    const fromShort = from.includes('/') ? from.split('/')[1] : from.split('-').slice(0, 3).join('-')
+    const toShort = to.includes('/') ? to.split('/')[1] : to.split('-').slice(0, 3).join('-')
+    return (
+      <div className="model-switch-divider">
+        <div className="session-divider-line" />
+        <span className="model-switch-label">
+          ⇄ Model promijenjen — <span className="model-switch-from">{fromShort}</span>
+          {' → '}
+          <span className="model-switch-to">{toShort}</span>
+          {' · '}{timeLabel}
+        </span>
+        <div className="session-divider-line" />
+      </div>
+    )
+  }
+
   const color = ROLE_COLORS[message.forgeRole] ?? '#888'
   const isUser = message.role === 'user'
 

@@ -41,6 +41,7 @@ export interface AppSettings {
   hasAnthropicKey: boolean
   hasOpenAIKey: boolean
   hasNvidiaKey: boolean
+  nvidiaBaseUrl: string
   defaultProvider: 'anthropic' | 'openai'
   defaultAnthropicModel: string
   defaultOpenAIModel: string

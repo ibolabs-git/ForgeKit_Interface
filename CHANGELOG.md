@@ -4,6 +4,23 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.4.0] — 2026-05-18 — Model Switch System + ForgeKit Context Re-Prime
+### Novo
+- **Live model switcher u SidePanel** — mijenjaj provider i model tokom aktivnog projekta bez zatvaranja sesije
+- **Custom model ID polje** (samo NVIDIA) — unesi bilo koji NIM model ID koji nije u dropdown listi
+- **ForgeKit Context Re-Prime** — pri promjeni modela aplikacija automatski šalje strukturirani kontekst (projekt, faza, uloga, taskovi, posljednji output) umjesto pune historije; model nastavlja tok bez resetovanja
+- **`[MODEL_SWITCH]` divider** u chatu — vizuelni marker kada je model promijenjen (narančast, s imenima before/after)
+- **Context status badge** — `✓ synced` ili `⚠ refresh` u SidePanel MODEL sekciji
+- **Refresh Context dugme** — ručni trigger za Re-Prime (pojavljuje se samo kada je context `needs_refresh`)
+- **NVIDIA NIM Base URL** u Settings (Globalno) — podesiv endpoint s preset dugmadima:
+  - `[Hosted NVIDIA]` → `https://integrate.api.nvidia.com/v1`
+  - `[Local NIM]` → `http://localhost:8000/v1`
+- **`forgekit-context.ts` utility** — `buildProjectContext`, `buildModelSwitchNotice`, `buildRePrimeMessages`
+- Efektivni model: custom ID override ili dropdown model (InputBar koristi ispravan model pri slanju)
+- Provider/model promijenjen u `setProvider` — automatski triggeruje `needs_refresh` ako postoje poruke
+
+---
+
 ## [0.1.1] — 2026-05-12
 ### Izmijenjeno
 - Ikona aplikacije promijenjena na proton-native atom logo

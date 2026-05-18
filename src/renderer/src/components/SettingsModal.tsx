@@ -14,6 +14,7 @@ export function SettingsModal(): JSX.Element | null {
   const [anthropicKey, setAnthropicKey] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
   const [nvidiaKey, setNvidiaKey] = useState('')
+  const [nvidiaBaseUrl, setNvidiaBaseUrl] = useState('https://integrate.api.nvidia.com/v1')
   const [hasAnthropicKey, setHasAnthropicKey] = useState(false)
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false)
   const [hasNvidiaKey, setHasNvidiaKey] = useState(false)
@@ -38,6 +39,7 @@ export function SettingsModal(): JSX.Element | null {
         setHasAnthropicKey(s.hasAnthropicKey)
         setHasOpenAIKey(s.hasOpenAIKey)
         setHasNvidiaKey(s.hasNvidiaKey)
+        setNvidiaBaseUrl(s.nvidiaBaseUrl || 'https://integrate.api.nvidia.com/v1')
         setHasGithubToken(s.hasGithubToken)
         setGithubRepo(s.githubRepo || '')
         setAnthropicKey('')
@@ -74,6 +76,7 @@ export function SettingsModal(): JSX.Element | null {
       anthropicApiKey: anthropicKey || undefined,
       openaiApiKey: openaiKey || undefined,
       nvidiaApiKey: nvidiaKey || undefined,
+      nvidiaBaseUrl: nvidiaBaseUrl || undefined,
       githubToken: githubToken || undefined,
       githubRepo: githubRepo || undefined
     })
@@ -165,6 +168,28 @@ export function SettingsModal(): JSX.Element | null {
                 <div className="settings-field-hint">
                   Besplatan pristup 80+ modela · Registracija:{' '}
                   <span className="settings-link">build.nvidia.com</span>
+                </div>
+              </div>
+
+              <div className="settings-group">
+                <label className="settings-label">NVIDIA NIM Base URL</label>
+                <div className="nvidia-preset-row">
+                  <button
+                    className={`nvidia-preset-btn ${nvidiaBaseUrl === 'https://integrate.api.nvidia.com/v1' ? 'active' : ''}`}
+                    onClick={() => setNvidiaBaseUrl('https://integrate.api.nvidia.com/v1')}
+                  >Hosted NVIDIA</button>
+                  <button
+                    className={`nvidia-preset-btn ${nvidiaBaseUrl === 'http://localhost:8000/v1' ? 'active' : ''}`}
+                    onClick={() => setNvidiaBaseUrl('http://localhost:8000/v1')}
+                  >Local NIM</button>
+                </div>
+                <input
+                  type="text" className="settings-input"
+                  value={nvidiaBaseUrl} onChange={(e) => setNvidiaBaseUrl(e.target.value)}
+                  placeholder="https://integrate.api.nvidia.com/v1"
+                />
+                <div className="settings-field-hint">
+                  Za self-hosted NIM promijeni na http://localhost:8000/v1
                 </div>
               </div>
 

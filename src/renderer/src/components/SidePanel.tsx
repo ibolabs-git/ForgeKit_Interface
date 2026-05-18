@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
-import type { ForgeKitPhase } from '../types'
+import type { ForgeKitPhase, ModelInfo } from '../types'
 import './SidePanel.css'
 
 async function uploadRecord(
@@ -45,7 +45,8 @@ const PHASES: { id: ForgeKitPhase; label: string }[] = [
 export function SidePanel(): JSX.Element {
   const {
     activeRole, currentPhase, tasks, messages,
-    selectedProvider, selectedModel,
+    selectedProvider, selectedModel, customModelId, contextStatus,
+    setProvider, setModel, setCustomModelId, refreshContext,
     memoryRecords, projectPath, projectName,
     toggleTask, addManualTask, removeTask, clearTasks, setPhase,
     updateMemoryStatus, removeMemoryRecord,
@@ -57,9 +58,22 @@ export function SidePanel(): JSX.Element {
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
   const [updateMsg, setUpdateMsg] = useState('')
 
+  // Model switcher state
+  const [availableProviders, setAvailableProviders] = useState<{ id: string; name: string }[]>([])
+  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([])
+  const [customInput, setCustomInput] = useState(customModelId)
+
   useEffect(() => {
     window.api.getAppVersion().then(setAppVersion).catch(() => {})
+    window.api.getProviders().then(setAvailableProviders).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    window.api.getModels(selectedProvider).then(setAvailableModels).catch(() => {})
+  }, [selectedProvider])
+
+  // Sync local customInput with store
+  useEffect(() => { setCustomInput(customModelId) }, [customModelId])
 
   const handleCheckUpdate = async () => {
     setUpdateStatus('checking')
@@ -240,22 +254,81 @@ export function SidePanel(): JSX.Element {
         </button>
       </section>
 
-      {/* Session info */}
+      {/* Model Switcher */}
       <section className="panel-section panel-session">
-        <div className="panel-label">SESIJA</div>
-        <div className="session-info">
-          <div className="session-row">
-            <span className="session-key">Provider</span>
-            <span className="session-val">{selectedProvider}</span>
+        <div className="panel-label">
+          MODEL
+          <span className={`context-status-badge context-status-${contextStatus}`}>
+            {contextStatus === 'synced' ? '✓ synced' : '⚠ refresh'}
+          </span>
+        </div>
+
+        {/* Provider select */}
+        <div className="model-switcher-group">
+          <select
+            className="model-switcher-select"
+            value={selectedProvider}
+            onChange={(e) => {
+              const newProvider = e.target.value
+              const defaultModels: Record<string, string> = {
+                anthropic: 'claude-sonnet-4-6',
+                openai: 'gpt-5.4',
+                nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
+              }
+              setProvider(newProvider, defaultModels[newProvider] ?? '')
+            }}
+          >
+            {availableProviders.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Model select */}
+        <div className="model-switcher-group">
+          <select
+            className="model-switcher-select"
+            value={selectedModel}
+            onChange={(e) => setModel(e.target.value)}
+          >
+            {availableModels.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Custom model ID (samo za NVIDIA) */}
+        {selectedProvider === 'nvidia' && (
+          <div className="model-switcher-group">
+            <input
+              className="model-switcher-input"
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onBlur={() => { if (customInput !== customModelId) setCustomModelId(customInput) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') setCustomModelId(customInput) }}
+              placeholder="Custom model ID (npr. org/model-name)"
+            />
+            {customModelId && (
+              <button
+                className="model-custom-clear"
+                onClick={() => { setCustomInput(''); setCustomModelId('') }}
+                title="Resetuj na dropdown model"
+              >✕</button>
+            )}
           </div>
-          <div className="session-row">
-            <span className="session-key">Model</span>
-            <span className="session-val">{selectedModel.split('-').slice(0, 3).join('-')}</span>
-          </div>
-          <div className="session-row">
-            <span className="session-key">Poruke</span>
-            <span className="session-val">{messages.length}</span>
-          </div>
+        )}
+
+        {/* Refresh Context dugme */}
+        {contextStatus === 'needs_refresh' && (
+          <button className="btn-refresh-context" onClick={refreshContext}>
+            ↺ Refresh ForgeKit kontekst
+          </button>
+        )}
+
+        {/* Broj poruka */}
+        <div className="session-row" style={{ marginTop: 6 }}>
+          <span className="session-key">Poruke</span>
+          <span className="session-val">{messages.length}</span>
         </div>
       </section>
 

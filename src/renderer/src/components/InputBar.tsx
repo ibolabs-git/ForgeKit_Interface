@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { FORGEKIT_SYSTEM_PROMPT } from '../prompts/system-prompt'
+import { buildRePrimeMessages } from '../utils/forgekit-context'
 import './InputBar.css'
 
 export function InputBar(): JSX.Element {
@@ -12,11 +13,20 @@ export function InputBar(): JSX.Element {
     isStreaming,
     selectedProvider,
     selectedModel,
+    customModelId,
+    modelJustChanged,
+    contextStatus,
+    currentPhase,
+    activeRole,
+    tasks,
+    projectName,
+    previousEffectiveModel,
     addUserMessage,
     startAssistantMessage,
     appendStreamToken,
     finalizeMessage,
-    addErrorMessage
+    addErrorMessage,
+    markContextSynced
   } = useForgeKitStore()
 
   const handleSend = async () => {
@@ -31,11 +41,38 @@ export function InputBar(): JSX.Element {
     const messageId = `ai-${Date.now()}`
     startAssistantMessage(messageId)
 
-    const history = messages
-      .filter((m) => !m.isStreaming)
-      .map((m) => ({ role: m.role, content: m.content }))
+    // Efektivni model — custom ID override ili izabrani iz dropdown-a
+    const effectiveModel = customModelId.trim() || selectedModel
 
-    history.push({ role: 'user', content: text })
+    // Re-Prime logika: koristi se kada je model upravo promijenjen ili context treba refresh
+    const needsRePrime = modelJustChanged || contextStatus === 'needs_refresh'
+
+    let history: Array<{ role: 'user' | 'assistant'; content: string }>
+
+    if (needsRePrime) {
+      // Šalji strukturiran kontekst umjesto pune historije
+      history = buildRePrimeMessages(
+        {
+          projectName,
+          currentPhase,
+          activeRole,
+          tasks,
+          messages,
+          selectedModel: effectiveModel,
+          previousEffectiveModel
+        },
+        text
+      )
+      // Odmah označi kao synced — slanje je u toku
+      markContextSynced()
+    } else {
+      // Normalan flow — puna historija (bez system divider poruka)
+      history = messages
+        .filter((m) => !m.isStreaming && !m.content.startsWith('[SESSION_DIVIDER]') && !m.content.startsWith('[MODEL_SWITCH:'))
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+      history.push({ role: 'user', content: text })
+    }
 
     // Registruj listenere pre slanja
     const removeToken = window.api.onStreamToken((token, id) => {
@@ -61,7 +98,7 @@ export function InputBar(): JSX.Element {
     window.api.sendMessage({
       messages: history,
       provider: selectedProvider,
-      model: selectedModel,
+      model: effectiveModel,
       systemPrompt: FORGEKIT_SYSTEM_PROMPT,
       messageId
     })

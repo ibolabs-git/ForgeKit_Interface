@@ -91,6 +91,9 @@ interface TabSnapshot {
   tasks: Task[]
   selectedProvider: string
   selectedModel: string
+  customModelId: string
+  modelHistory: Array<{ from: string; to: string; time: number }>
+  previousEffectiveModel: string
   memoryRecords: MemoryRecord[]
 }
 
@@ -107,6 +110,9 @@ function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
     tasks: [],
     selectedProvider: 'anthropic',
     selectedModel: 'claude-sonnet-4-6',
+    customModelId: '',
+    modelHistory: [],
+    previousEffectiveModel: 'claude-sonnet-4-6',
     memoryRecords: [],
     ...overrides
   }
@@ -125,6 +131,9 @@ function captureSnapshot(s: ForgeKitStore): TabSnapshot {
     tasks: s.tasks,
     selectedProvider: s.selectedProvider,
     selectedModel: s.selectedModel,
+    customModelId: s.customModelId,
+    modelHistory: s.modelHistory,
+    previousEffectiveModel: s.previousEffectiveModel,
     memoryRecords: s.memoryRecords
   }
 }
@@ -188,9 +197,19 @@ interface ForgeKitStore {
     savedActiveId: string
   ) => void
 
+  // ── Model switch ──
+  customModelId: string
+  modelJustChanged: boolean
+  contextStatus: 'synced' | 'needs_refresh'
+  modelHistory: Array<{ from: string; to: string; time: number }>
+  previousEffectiveModel: string
+
   // ── Akcije — provider ──
   setProvider: (provider: string, model: string) => void
   setModel: (model: string) => void
+  setCustomModelId: (id: string) => void
+  refreshContext: () => void
+  markContextSynced: () => void
 
   // ── Settings ──
   setShowSettings: (show: boolean) => void
@@ -334,6 +353,13 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   memoryRecords: [],
   projectPath: null,
   showProjectSetup: false,
+
+  // ── Model switch ──
+  customModelId: '',
+  modelJustChanged: false,
+  contextStatus: 'synced' as const,
+  modelHistory: [],
+  previousEffectiveModel: 'claude-sonnet-4-6',
 
   // ── Poruke ──
 
@@ -502,8 +528,72 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   // ── Provider ──
 
-  setProvider: (provider, model) => set({ selectedProvider: provider, selectedModel: model }),
-  setModel: (model) => set({ selectedModel: model }),
+  setProvider: (provider, model) => set({
+    selectedProvider: provider,
+    selectedModel: model,
+    customModelId: '',
+    // Provider switch = context needs refresh ako već imamo poruke
+    modelJustChanged: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')),
+    contextStatus: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')) ? 'needs_refresh' : 'synced',
+    previousEffectiveModel: get().customModelId.trim() || get().selectedModel
+  }),
+
+  setModel: (newModel) => {
+    const s = get()
+    const oldEffective = s.customModelId.trim() || s.selectedModel
+    const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))
+
+    if (isMidSession && newModel !== s.selectedModel) {
+      const switchMsg: ChatMessage = {
+        id: `model-switch-${Date.now()}`,
+        role: 'assistant',
+        content: `[MODEL_SWITCH:${oldEffective}→${newModel}:${Date.now()}]`,
+        forgeRole: 'SYSTEM',
+        timestamp: Date.now()
+      }
+      set((st) => ({
+        selectedModel: newModel,
+        customModelId: '',
+        modelJustChanged: true,
+        contextStatus: 'needs_refresh',
+        previousEffectiveModel: oldEffective,
+        messages: [...st.messages, switchMsg],
+        modelHistory: [...st.modelHistory, { from: oldEffective, to: newModel, time: Date.now() }]
+      }))
+    } else {
+      set({ selectedModel: newModel, customModelId: '' })
+    }
+  },
+
+  setCustomModelId: (id) => {
+    const s = get()
+    const oldEffective = s.customModelId.trim() || s.selectedModel
+    const newEffective = id.trim() || s.selectedModel
+    const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))
+
+    if (isMidSession && newEffective !== oldEffective && id.trim()) {
+      const switchMsg: ChatMessage = {
+        id: `model-switch-${Date.now()}`,
+        role: 'assistant',
+        content: `[MODEL_SWITCH:${oldEffective}→${newEffective}:${Date.now()}]`,
+        forgeRole: 'SYSTEM',
+        timestamp: Date.now()
+      }
+      set((st) => ({
+        customModelId: id,
+        modelJustChanged: true,
+        contextStatus: 'needs_refresh',
+        previousEffectiveModel: oldEffective,
+        messages: [...st.messages, switchMsg],
+        modelHistory: [...st.modelHistory, { from: oldEffective, to: newEffective, time: Date.now() }]
+      }))
+    } else {
+      set({ customModelId: id })
+    }
+  },
+
+  refreshContext: () => set({ modelJustChanged: true, contextStatus: 'needs_refresh' }),
+  markContextSynced: () => set({ modelJustChanged: false, contextStatus: 'synced' }),
 
   // ── Settings ──
 

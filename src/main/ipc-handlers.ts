@@ -1,6 +1,6 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
-import { settingsStore, getApiKey, getGitHubConfig } from './store'
+import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig } from './store'
 import {
   testGitHubConnection,
   uploadMemoryRecord,
@@ -29,14 +29,20 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     const { messages, provider, model, systemPrompt, messageId } = payload
 
     try {
-      const apiKey = getApiKey(provider as 'anthropic' | 'openai')
+      const apiKey = getApiKey(provider as 'anthropic' | 'openai' | 'nvidia')
       if (!apiKey) {
-        const providerName = provider === 'anthropic' ? 'Anthropic' : 'OpenAI'
-        event.sender.send('stream-error', `API kljuc za ${providerName} nije podesen.`, messageId)
+        const providerNames: Record<string, string> = {
+          anthropic: 'Anthropic',
+          openai: 'OpenAI',
+          nvidia: 'NVIDIA NIM'
+        }
+        const displayName = providerNames[provider] ?? provider
+        event.sender.send('stream-error', `API kljuc za ${displayName} nije podesen.`, messageId)
         return
       }
 
-      const providerInstance = createProvider(provider, apiKey)
+      const options = provider === 'nvidia' ? { baseURL: getNvidiaBaseUrl() } : undefined
+      const providerInstance = createProvider(provider, apiKey, options)
       for await (const token of providerInstance.sendMessage(messages, systemPrompt, model)) {
         if (win.isDestroyed()) break
         event.sender.send('stream-token', token, messageId)
@@ -54,6 +60,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     anthropicApiKey: settingsStore.get('anthropicApiKey') ? '***' : '',
     openaiApiKey: settingsStore.get('openaiApiKey') ? '***' : '',
     nvidiaApiKey: settingsStore.get('nvidiaApiKey') ? '***' : '',
+    nvidiaBaseUrl: settingsStore.get('nvidiaBaseUrl') || 'https://integrate.api.nvidia.com/v1',
     defaultProvider: settingsStore.get('defaultProvider'),
     defaultAnthropicModel: settingsStore.get('defaultAnthropicModel'),
     defaultOpenAIModel: settingsStore.get('defaultOpenAIModel'),
@@ -73,6 +80,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       settingsStore.set('openaiApiKey', settings.openaiApiKey)
     if (typeof settings.nvidiaApiKey === 'string' && settings.nvidiaApiKey !== '***')
       settingsStore.set('nvidiaApiKey', settings.nvidiaApiKey)
+    if (typeof settings.nvidiaBaseUrl === 'string' && settings.nvidiaBaseUrl)
+      settingsStore.set('nvidiaBaseUrl', settings.nvidiaBaseUrl)
     if (typeof settings.githubToken === 'string' && settings.githubToken !== '***')
       settingsStore.set('githubToken', settings.githubToken)
     if (typeof settings.githubRepo === 'string' && settings.githubRepo)
