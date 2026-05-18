@@ -5,6 +5,26 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.6.1] — 2026-05-18 — Keyboard shortcuts (FAZA A4)
+### Novo
+- **`Ctrl+Enter`** — šalje poruku (ranije `Enter`); plain `Enter` i `Shift+Enter` = novi red u textarea
+- **`Ctrl+Tab`** — ciklično prebacivanje na sljedeći otvoreni tab (wrap-around)
+- **`Ctrl+,`** — otvara Settings modal direktno
+- Placeholder i tooltip na send dugmetu ažurirani
+
+---
+
+## [0.6.0] — 2026-05-18 — Markdown rendering + Syntax highlighting (FAZA A1+A2+A3)
+### Novo
+- **Markdown rendering** (`react-markdown` + `remark-gfm`) — bold, italic, headings, liste, tabele, blockquote, HR
+- **Syntax highlighting** (`react-syntax-highlighter` / Prism / vscDarkPlus tema) — automatski za sve code blokove
+- **Copy dugme** na svakom code bloku — `COPY ›`, nakon klika prikazuje `✓ KOPIRANO` 2s
+- **GFM task liste** — checkbox stilizacija s corner bracket UI
+- **Role tag + timestamp** u jednom header redu iznad poruke
+- Inline code stilizacija: `font-mono`, orange boja, tanki border
+
+---
+
 ## [0.5.4] — 2026-05-18 — Metric tiles: tekst u dva reda
 ### Ispravka
 - `.m-val` u desnom panelu: uklonjen `white-space: nowrap` i `text-overflow: ellipsis`

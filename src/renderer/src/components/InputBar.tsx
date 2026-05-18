@@ -105,7 +105,8 @@ export function InputBar(): JSX.Element {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Ctrl+Enter = pošalji; plain Enter i Shift+Enter = novi red (default)
+    if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault()
       handleSend()
     }
@@ -129,7 +130,7 @@ export function InputBar(): JSX.Element {
         value={input}
         onChange={handleInput}
         onKeyDown={handleKeyDown}
-        placeholder="Unesi poruku... (Enter za slanje, Shift+Enter za novi red)"
+        placeholder="Unesi poruku... (Ctrl+Enter za slanje, Enter za novi red)"
         disabled={isStreaming}
         rows={1}
       />
@@ -137,7 +138,7 @@ export function InputBar(): JSX.Element {
         className={`send-btn ${isStreaming ? 'loading' : ''}`}
         onClick={handleSend}
         disabled={isStreaming || !input.trim()}
-        title="Posalji (Enter)"
+        title="Posalji (Ctrl+Enter)"
       >
         {isStreaming ? '◼' : '▶'}
       </button>

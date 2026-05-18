@@ -14,7 +14,7 @@ export function App(): JSX.Element {
     setProjectPath, setShowProjectSetup, loadSession, saveSession,
     initTabsFromSaved,
     messages, tasks, activeTabId, tabs,
-    theme
+    theme, switchToTab, setShowSettings
   } = useForgeKitStore()
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -24,6 +24,29 @@ export function App(): JSX.Element {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  // Globalni keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      // Ctrl+, = otvori Settings
+      if (e.ctrlKey && e.key === ',') {
+        e.preventDefault()
+        setShowSettings(true)
+        return
+      }
+      // Ctrl+Tab = sljedeći tab (ciklično)
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault()
+        if (tabs.length <= 1) return
+        const currentIndex = tabs.findIndex((t) => t.id === activeTabId)
+        const nextIndex = (currentIndex + 1) % tabs.length
+        switchToTab(tabs[nextIndex].id)
+        return
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKey)
+    return () => window.removeEventListener('keydown', handleGlobalKey)
+  }, [tabs, activeTabId, switchToTab, setShowSettings])
 
   // Startup — pokušaj restauracije sačuvanih tabova, inače standardni tok
   useEffect(() => {

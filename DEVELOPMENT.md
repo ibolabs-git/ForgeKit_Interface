@@ -46,7 +46,7 @@ Ažurira se uz svaki veći milestone.
 | A1 | **Markdown rendering** | `react-markdown` + `remark-gfm` — bold, italic, liste, code blokovi, tabele | M |
 | A2 | **Syntax highlighting** | `react-syntax-highlighter` ili `shiki` za code blokove u AI odgovorima | M |
 | A3 | **Copy dugme na code blokovima** | Hover → pojavi se `COPY ›` u uglu code bloka | S |
-| A4 | **Keyboard shortcuts** | `Ctrl+Enter` = pošalji, `Ctrl+Tab` = sljedeći tab, `Ctrl+,` = Settings | S |
+| A4 | **Keyboard shortcuts** | `Ctrl+Enter` = pošalji, `Ctrl+Tab` = sljedeći tab, `Ctrl+,` = Settings | S | ✅ v0.6.1 |
 
 **Može sve u jednom prolazu (A1+A2+A3 zajedno, A4 posebno).**
 
