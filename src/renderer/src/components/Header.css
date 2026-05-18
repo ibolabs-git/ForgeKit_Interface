@@ -27,7 +27,7 @@
   gap: 9px;
 }
 
-/* Orange square logo mark */
+/* Logo mark — orange in light, gray in dark */
 .header-logo-mark {
   width: 26px;
   height: 26px;
@@ -40,6 +40,11 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* Dark theme — logo mark postaje sivi */
+[data-theme="dark"] .header-logo-mark {
+  background: #5c6370;
 }
 
 .header-logo-text {
