@@ -178,6 +178,10 @@ interface ForgeKitStore {
   showHandoffModal: boolean
   setShowHandoffModal: (show: boolean) => void
 
+  // ── Session summary modal (C3) ──
+  showSummaryModal: boolean
+  setShowSummaryModal: (show: boolean) => void
+
   // ── Tema (globalno) ──
   theme: 'light' | 'dark'
   setTheme: (theme: 'light' | 'dark') => void
@@ -368,6 +372,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   showSettings: false,
   settingsTab: 'global',
   showHandoffModal: false,
+  showSummaryModal: false,
   theme: ((): 'light' | 'dark' => {
     try { return (localStorage.getItem('fk-theme') as 'light' | 'dark') ?? 'light' } catch { return 'light' }
   })(),
@@ -626,6 +631,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   setShowSettings: (show) => set({ showSettings: show }),
   setShowHandoffModal: (show) => set({ showHandoffModal: show }),
+  setShowSummaryModal: (show) => set({ showSummaryModal: show }),
   setSettingsTab: (tab) => set({ settingsTab: tab }),
   setTheme: (theme) => {
     try { localStorage.setItem('fk-theme', theme) } catch {}

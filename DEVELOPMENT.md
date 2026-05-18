@@ -72,7 +72,7 @@ Ažurira se uz svaki veći milestone.
 |---|---------|------|-----------|
 | C1 | **Re-Prime preview** | Pokaži šta se šalje modelu pri context refreshu (expandable preview) | M | ✅ v0.8.0 |
 | C2 | **Handoff poboljšanje** | Handoff modal s preview-om dokumenta prije kreiranja; opcija da se uključi/isključi sekcija | M | ✅ v0.8.0 |
-| C3 | **Session summary** | AI-generisani kratak sažetak sesije na zahtjev (posebna akcija u header-u) | L |
+| C3 | **Session summary** | AI-generisani kratak sažetak sesije na zahtjev (posebna akcija u header-u) | L | ✅ v0.8.1 |
 
 **C1 i C2 mogu u jednom prolazu.**
 

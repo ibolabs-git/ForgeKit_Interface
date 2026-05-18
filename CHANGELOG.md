@@ -5,6 +5,18 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.8.1] — 2026-05-19 — Session Summary (FAZA C3)
+### Novo
+- **SUMMARY dugme** u chat headeru (pored EXPORT i SEARCH) — disabled dok nema poruka ili dok AI streama
+- Klik otvara modal koji odmah počinje streamovati AI-generisani sažetak sesije
+- Streaming je **lokalan** — ne ide u chat historiju, ne utiče na store
+- Sažetak uključuje: projekat i kontekst, ključne odluke, urađeno, sljedeći koraci
+- **Kopiraj** — kopira sažetak u clipboard
+- **+ Dodaj u chat** — ubacuje sažetak kao poruku u aktivnu sesiju
+- Koristi isti provider/model kao aktivna sesija; radi sa svim providerima (Anthropic, OpenAI, NVIDIA)
+
+---
+
 ## [0.8.0] — 2026-05-18 — Re-Prime preview + Handoff modal (FAZA C1+C2)
 ### Novo
 - **C1 — Re-Prime preview** — kolapsibilna sekcija "▸ RE-PRIME KONTEKST" u panelu SESIJA; pokazuje tačno šta će biti poslato modelu pri sljedećem re-prime requestu (projekat, faza, uloga, taskovi, sažetak outputa)

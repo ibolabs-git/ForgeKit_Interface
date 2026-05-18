@@ -16,8 +16,9 @@ export function ChatWindow(): JSX.Element {
   const currentPhase       = useForgeKitStore((s) => s.currentPhase)
   const activeRole         = useForgeKitStore((s) => s.activeRole)
   const projectPath        = useForgeKitStore((s) => s.projectPath)
-  const highlightMessageId = useForgeKitStore((s) => s.highlightMessageId)
+  const highlightMessageId    = useForgeKitStore((s) => s.highlightMessageId)
   const setHighlightMessageId = useForgeKitStore((s) => s.setHighlightMessageId)
+  const setShowSummaryModal   = useForgeKitStore((s) => s.setShowSummaryModal)
 
   const bottomRef      = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -198,6 +199,16 @@ export function ChatWindow(): JSX.Element {
               </div>
             )}
           </div>
+
+          {/* Session summary */}
+          <button
+            className="chat-header-btn"
+            onClick={() => setShowSummaryModal(true)}
+            title="Generiši AI sažetak sesije (C3)"
+            disabled={messages.length === 0 || isStreaming}
+          >
+            SUMMARY
+          </button>
 
           {/* Search toggle */}
           <button
