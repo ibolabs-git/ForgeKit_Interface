@@ -5,6 +5,19 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.7.0] — 2026-05-18 — Search u chatu + Export razgovora (FAZA B1+B2)
+### Novo
+- **Search bar** (`Ctrl+F`) — otvara se ispod chat header-a s narandžastim border-om; `Enter` = sljedeći match, `Shift+Enter` = prethodni, `Escape` = zatvori
+- **Match highlight** — poruke koje sadrže upit dobijaju blago narandžastu pozadinu; trenutna match ima jaču boju i narandžasti lijevi border
+- **Match counter** — `1 / 5` prikazano u search baru uz ↑↓ navigacijske dugmad
+- **EXPORT ›** dugme u chat header-u — dropdown s dvije opcije:
+  - **Markdown (.md)** — naslovi, uloge, timestamps, session separator-i
+  - **Plaintext (.txt)** — ista struktura u plain tekstu
+- Export fajl sprema se u aktivni projektni folder: `chat_export_YYYY-MM-DD_HH-MM.md/txt`
+- Export dugme disabled ako nema projektnog foldera ili poruka
+
+---
+
 ## [0.6.1] — 2026-05-18 — Keyboard shortcuts (FAZA A4)
 ### Novo
 - **`Ctrl+Enter`** — šalje poruku (ranije `Enter`); plain `Enter` i `Shift+Enter` = novi red u textarea

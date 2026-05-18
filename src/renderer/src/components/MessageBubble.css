@@ -14,6 +14,15 @@
 .message-bubble:hover { background: var(--bg-tertiary); }
 .message-bubble.assistant:hover { border-left-color: var(--accent); }
 
+/* ── Search highlight ── */
+.message-bubble.search-match {
+  background: rgba(255, 107, 0, 0.05);
+}
+.message-bubble.search-current {
+  background: rgba(255, 107, 0, 0.12);
+  border-left-color: var(--accent) !important;
+}
+
 /* ── Header row: role badge + time ── */
 .msg-row-header {
   display: flex;

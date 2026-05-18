@@ -152,11 +152,13 @@ const mdComponents: any = {
 
 interface Props {
   message: ChatMessage
+  isSearchMatch?: boolean
+  isCurrentMatch?: boolean
 }
 
 // ── Komponenta ────────────────────────────────────────────────────────────────
 
-export function MessageBubble({ message }: Props): JSX.Element {
+export function MessageBubble({ message, isSearchMatch, isCurrentMatch }: Props): JSX.Element {
   const { setShowSettings, setSettingsTab } = useForgeKitStore()
 
   const handleOpenSettings = (tab: 'global' | 'project') => {
@@ -209,8 +211,16 @@ export function MessageBubble({ message }: Props): JSX.Element {
   // Ukloni role tag s početka sadržaja
   const cleanedContent = message.content.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
 
+  const searchClasses = [
+    isSearchMatch  ? 'search-match'   : '',
+    isCurrentMatch ? 'search-current' : ''
+  ].filter(Boolean).join(' ')
+
   return (
-    <div className={`message-bubble ${isUser ? 'user' : 'assistant'}`}>
+    <div
+      className={`message-bubble ${isUser ? 'user' : 'assistant'} ${searchClasses}`}
+      data-msg-id={message.id}
+    >
 
       {/* Role badge + timestamp header */}
       <div className="msg-row-header">

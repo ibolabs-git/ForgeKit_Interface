@@ -57,8 +57,8 @@ Ažurira se uz svaki veći milestone.
 
 | # | Feature | Opis | Složenost |
 |---|---------|------|-----------|
-| B1 | **Search u chatu** | `Ctrl+F` otvara search bar, highlight + navigate kroz rezultate | M |
-| B2 | **Export razgovora** | Izvoz aktivnog chata u `.md` ili `.txt` u projektni folder | S |
+| B1 | **Search u chatu** | `Ctrl+F` otvara search bar, highlight + navigate kroz rezultate | M | ✅ v0.7.0 |
+| B2 | **Export razgovora** | Izvoz aktivnog chata u `.md` ili `.txt` u projektni folder | S | ✅ v0.7.0 |
 | B3 | **Jump to message** | Klik na task → scroll do poruke gdje je task detektovan | M |
 
 **B1 i B2 mogu u jednom prolazu. B3 zahtijeva poseban prolaz.**
