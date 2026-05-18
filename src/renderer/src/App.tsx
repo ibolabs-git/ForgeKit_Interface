@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Header } from './components/Header'
-import { TabBar } from './components/TabBar'
 import { ChatWindow } from './components/ChatWindow'
 import { InputBar } from './components/InputBar'
+import { LeftPanel } from './components/LeftPanel'
 import { SidePanel } from './components/SidePanel'
 import { SettingsModal } from './components/SettingsModal'
 import { ProjectSetupModal } from './components/ProjectSetupModal'
@@ -62,8 +62,8 @@ export function App(): JSX.Element {
   return (
     <div className="app-shell">
       <Header />
-      <TabBar />
       <div className="app-body">
+        <LeftPanel />
         <main className="app-main">
           <ChatWindow />
           <InputBar />

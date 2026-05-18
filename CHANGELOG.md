@@ -4,6 +4,18 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.5.1] — 2026-05-18 — 3-kolona layout identičan ChainGPT preview-u
+### Izmijenjeno
+- **3-kolona grid layout** — `app-body` pretvoren u `display: grid; grid-template-columns: 200px 1fr 240px` umjesto flex s jednim side panelom
+- **Nova `LeftPanel` komponenta** — lijevi panel (200px): aktivna uloga, faza rada (✓/■/□), projekat info
+- **TabBar integriran u Header** — tabovi su flat nav linkovi UNUTAR header trake (50px), eliminisana zasebna tab bar traka
+- **Chat header bar** — kontekst info linija: "CHAT ProjectName · Faza · ROLE MODE"
+- **Metric tiles u desnom panelu** — 2×2 grid: Provider / Model / Faza / Poruke, svaki s corner bracket dekoracijama
+- **Corner brackets** na task itemima i metric tiles (CSS ::before/::after)
+- Duplicate sekcije uklonjene iz SidePanel (uloga/faza/projekat → LeftPanel)
+
+---
+
 ## [0.5.0] — 2026-05-18 — ChainGPT Light UI Tema
 ### Novo
 - **Potpuno novi vizuelni identitet** inspirisan ChainGPT Labs dizajnom — svjetla siva pozadina `#e8e8e8`, narandžasti akcenat `#ff6b00`, grid layout sa vidljivim 1px border separatorima

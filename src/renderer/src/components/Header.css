@@ -3,22 +3,22 @@
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
   flex-shrink: 0;
   -webkit-app-region: drag;
 }
 
-/* Logo blok */
+/* Logo zone — matches left-panel width (200px) */
 .header-left {
   display: flex;
   align-items: center;
+  width: 200px;
+  min-width: 200px;
   height: 100%;
   border-right: 1px solid var(--border);
-  padding: 0 18px;
-  gap: 10px;
-  -webkit-app-region: drag;
+  padding: 0 16px;
   flex-shrink: 0;
+  -webkit-app-region: drag;
 }
 
 .header-logo {
@@ -27,12 +27,8 @@
   gap: 9px;
 }
 
-/* Orange square logo mark — ChainGPT style */
-.header-logo::before {
-  content: 'FK';
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Orange square logo mark */
+.header-logo-mark {
   width: 26px;
   height: 26px;
   background: var(--accent);
@@ -40,6 +36,9 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -63,15 +62,64 @@
   color: var(--text-muted);
   letter-spacing: 1px;
   text-transform: uppercase;
+  margin-top: 2px;
 }
 
-/* Separator + project crumb */
-.header-logo-sep {
-  width: 1px;
-  height: 18px;
-  background: var(--border);
+/* Right side controls */
+.header-right {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
 }
 
+/* Icon buttons */
+.header-icon-btn {
+  width: 44px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  transition: all 0.12s;
+  -webkit-app-region: no-drag;
+}
+.header-icon-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Orange CTA — "HANDOFF ›" */
+.header-cta {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 18px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: background 0.12s;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+.header-cta:hover { background: #ff8c33; }
+
+/* Project name edit — kept for potential inline use */
 .project-name {
   font-size: 12px;
   font-weight: 600;
@@ -103,83 +151,3 @@
   font-family: var(--font);
   -webkit-app-region: no-drag;
 }
-
-/* Right side controls */
-.header-right {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  border-left: 1px solid var(--border);
-  flex-shrink: 0;
-  -webkit-app-region: no-drag;
-}
-
-.new-session-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 100%;
-  padding: 0 16px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  border-right: 1px solid var(--border);
-  letter-spacing: 0.3px;
-  transition: all 0.12s;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
-.new-session-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.settings-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 100%;
-  font-size: 15px;
-  color: var(--text-muted);
-  border-right: 1px solid var(--border);
-  transition: all 0.12s;
-}
-.settings-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-/* Orange APPLY-style CTA — ChainGPT "APPLY NOW" */
-.header-cta {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 18px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 0.12s;
-  white-space: nowrap;
-}
-.header-cta:hover { background: #ff8c33; }
-
-/* Window control buttons */
-.wm-btn {
-  width: 40px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  color: var(--text-muted);
-  border-right: 1px solid var(--border);
-  transition: all 0.12s;
-}
-.wm-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
-.wm-btn.close:hover { background: #cc2222; color: #fff; }

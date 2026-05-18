@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
-import type { ForgeKitPhase, ModelInfo } from '../types'
+import type { ModelInfo } from '../types'
 import './SidePanel.css'
 
 async function uploadRecord(
@@ -18,39 +18,14 @@ async function uploadRecord(
   }
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  ORCHESTRATOR: '#4a9eff',
-  THINKER: '#9b59b6',
-  BUILDER: '#2ecc71',
-  REVIEWER: '#e67e22',
-  'MEMORY CURATOR': '#1abc9c',
-  OBSERVER: '#95a5a6'
-}
-
-const ROLE_ICONS: Record<string, string> = {
-  ORCHESTRATOR: '🎯',
-  THINKER: '🧠',
-  BUILDER: '🔨',
-  REVIEWER: '🔍',
-  'MEMORY CURATOR': '📚',
-  OBSERVER: '👁'
-}
-
-const PHASES: { id: ForgeKitPhase; label: string }[] = [
-  { id: 'F1', label: 'F1 — Fundament' },
-  { id: 'F2', label: 'F2 — ForgeKit Logika' },
-  { id: 'F3', label: 'F3 — Multi-model' }
-]
-
 export function SidePanel(): JSX.Element {
   const {
     activeRole, currentPhase, tasks, messages,
     selectedProvider, selectedModel, customModelId, contextStatus,
     setProvider, setModel, setCustomModelId, refreshContext,
-    memoryRecords, projectPath, projectName,
-    toggleTask, addManualTask, removeTask, clearTasks, setPhase,
-    updateMemoryStatus, removeMemoryRecord,
-    setShowProjectSetup
+    memoryRecords, projectName,
+    toggleTask, addManualTask, removeTask, clearTasks,
+    updateMemoryStatus, removeMemoryRecord
   } = useForgeKitStore()
 
   const [newTaskInput, setNewTaskInput] = useState('')
@@ -58,7 +33,6 @@ export function SidePanel(): JSX.Element {
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
   const [updateMsg, setUpdateMsg] = useState('')
 
-  // Model switcher state
   const [availableProviders, setAvailableProviders] = useState<{ id: string; name: string }[]>([])
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([])
   const [customInput, setCustomInput] = useState(customModelId)
@@ -72,7 +46,6 @@ export function SidePanel(): JSX.Element {
     window.api.getModels(selectedProvider).then(setAvailableModels).catch(() => {})
   }, [selectedProvider])
 
-  // Sync local customInput with store
   useEffect(() => { setCustomInput(customModelId) }, [customModelId])
 
   const handleCheckUpdate = async () => {
@@ -97,19 +70,14 @@ export function SidePanel(): JSX.Element {
     await window.api.triggerUpdate()
   }
 
-  const roleColor = ROLE_COLORS[activeRole] ?? '#888'
-  const roleIcon = ROLE_ICONS[activeRole] ?? '●'
   const completedCount = tasks.filter((t) => t.completed).length
-  const currentPhaseIndex = PHASES.findIndex((p) => p.id === currentPhase)
-
-  // ── Efektivni model — isti izvor istine kao u InputBar/sendMessage ──
   const effectiveModelId = customModelId.trim() || selectedModel
   const isCustomActive = Boolean(customModelId.trim())
 
-  // Human-readable display — strip ★ i [role tags]
   function shortName(fullName: string): string {
     return fullName.replace(/★\s*/, '').split('[')[0].trim()
   }
+
   const providerDisplayName = availableProviders.find((p) => p.id === selectedProvider)?.name ?? selectedProvider
   const modelDisplayName = isCustomActive
     ? 'Custom'
@@ -128,34 +96,108 @@ export function SidePanel(): JSX.Element {
 
   return (
     <aside className="side-panel">
-      {/* Aktivna uloga */}
+
+      {/* ── Sesija — metric tiles grid ── */}
       <section className="panel-section">
-        <div className="panel-label">AKTIVNA ULOGA</div>
-        <div className="role-display" style={{ borderColor: roleColor }}>
-          <span className="role-icon">{roleIcon}</span>
-          <span className="role-name" style={{ color: roleColor }}>[{activeRole}]</span>
+        <div className="panel-label">SESIJA</div>
+
+        <div className="metric-grid">
+          {/* Tile 01 — Provider */}
+          <div className="metric-tile">
+            <span className="m-num">01</span>
+            <div className="m-label">PROVIDER</div>
+            <div className="m-val">{providerDisplayName}</div>
+          </div>
+          {/* Tile 02 — Model */}
+          <div className="metric-tile">
+            <span className="m-num">02</span>
+            <div className="m-label">MODEL</div>
+            <div className="m-val" title={effectiveModelId}>{modelDisplayName}</div>
+          </div>
+          {/* Tile 03 — Faza */}
+          <div className="metric-tile">
+            <span className="m-num">03</span>
+            <div className="m-label">FAZA</div>
+            <div className={`m-val ${currentPhase === 'F1' ? '' : currentPhase === 'F2' ? 'orange' : 'blue'}`}>{currentPhase}</div>
+          </div>
+          {/* Tile 04 — Poruke */}
+          <div className="metric-tile">
+            <span className="m-num">04</span>
+            <div className="m-label">PORUKE</div>
+            <div className="m-val orange">{messages.length}</div>
+          </div>
         </div>
+
+        {/* Context status */}
+        <div className="context-status-row">
+          <span className={`context-badge context-badge-${contextStatus}`}>
+            {contextStatus === 'synced' ? '✓ synced' : '⚠ needs refresh'}
+          </span>
+          <span className="context-role">{activeRole}</span>
+        </div>
+
+        {contextStatus === 'needs_refresh' && (
+          <button className="btn-refresh-context" onClick={refreshContext}>
+            ↺ Refresh ForgeKit kontekst
+          </button>
+        )}
       </section>
 
-      {/* Faze — klikabilne */}
+      {/* ── Model switcher ── */}
       <section className="panel-section">
-        <div className="panel-label">FAZA</div>
-        <div className="phase-track">
-          {PHASES.map((p, i) => (
-            <div
-              key={p.id}
-              className={`phase-item ${currentPhase === p.id ? 'active' : ''} ${i < currentPhaseIndex ? 'done' : ''}`}
-              onClick={() => setPhase(p.id)}
-              title={`Prebaci na ${p.id}`}
-            >
-              <span className="phase-dot" />
-              <span className="phase-label">{p.label}</span>
-            </div>
+        <div className="panel-label">MODEL</div>
+
+        <select
+          className="model-switcher-select"
+          value={selectedProvider}
+          onChange={(e) => {
+            const newProvider = e.target.value
+            const defaultModels: Record<string, string> = {
+              anthropic: 'claude-sonnet-4-6',
+              openai: 'gpt-5.4',
+              nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
+            }
+            setProvider(newProvider, defaultModels[newProvider] ?? '')
+          }}
+        >
+          {availableProviders.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
           ))}
-        </div>
+        </select>
+
+        <select
+          className="model-switcher-select"
+          value={selectedModel}
+          onChange={(e) => setModel(e.target.value)}
+          style={{ marginBottom: selectedProvider === 'nvidia' ? '5px' : '0' }}
+        >
+          {availableModels.map((m) => (
+            <option key={m.id} value={m.id}>{m.name}</option>
+          ))}
+        </select>
+
+        {selectedProvider === 'nvidia' && (
+          <div className="model-custom-row">
+            <input
+              className="model-switcher-input"
+              value={customInput}
+              onChange={(e) => setCustomInput(e.target.value)}
+              onBlur={() => { if (customInput !== customModelId) setCustomModelId(customInput) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') setCustomModelId(customInput) }}
+              placeholder="Custom model ID (org/model-name)"
+            />
+            {customModelId && (
+              <button
+                className="model-custom-clear"
+                onClick={() => { setCustomInput(''); setCustomModelId('') }}
+                title="Resetuj na dropdown model"
+              >✕</button>
+            )}
+          </div>
+        )}
       </section>
 
-      {/* Taskovi */}
+      {/* ── Taskovi ── */}
       <section className="panel-section panel-tasks">
         <div className="panel-label">
           TASKOVI
@@ -169,7 +211,6 @@ export function SidePanel(): JSX.Element {
           </div>
         </div>
 
-        {/* Input za manual task */}
         <div className="task-input-row">
           <input
             className="task-input"
@@ -209,13 +250,13 @@ export function SidePanel(): JSX.Element {
         )}
       </section>
 
-      {/* Memory Curator */}
+      {/* ── Memory Curator ── */}
       <section className="panel-section panel-memory">
         <div className="panel-label">MEMORY CURATOR</div>
 
         {memoryRecords.length === 0 ? (
           <div className="memory-empty">
-            Zapisi se kreiraju automatski kada AI preuzme ulogu [MEMORY CURATOR]
+            Automatski kreira zapis kada AI preuzme ulogu [MEMORY CURATOR]
           </div>
         ) : (
           <ul className="memory-list">
@@ -226,10 +267,10 @@ export function SidePanel(): JSX.Element {
                 </div>
                 <div className="memory-item-actions">
                   <span className={`memory-status memory-status-${rec.status}`}>
-                    {rec.status === 'pending' && 'ceka'}
+                    {rec.status === 'pending'   && 'ceka'}
                     {rec.status === 'uploading' && 'upload...'}
-                    {rec.status === 'uploaded' && '✓ GitHub'}
-                    {rec.status === 'error' && `✗ ${rec.errorMessage ?? 'greska'}`}
+                    {rec.status === 'uploaded'  && '✓ GitHub'}
+                    {rec.status === 'error'     && `✗ ${rec.errorMessage ?? 'greska'}`}
                   </span>
                   {rec.status === 'error' && (
                     <button
@@ -252,124 +293,7 @@ export function SidePanel(): JSX.Element {
         )}
       </section>
 
-      {/* Project */}
-      <section className="panel-section panel-project">
-        <div className="panel-label">PROJEKAT</div>
-        {projectPath ? (
-          <div className="project-path" title={projectPath}>
-            {projectPath.split(/[\\/]/).slice(-2).join('/')}
-          </div>
-        ) : (
-          <div className="project-path-empty">Nema aktivnog foldera</div>
-        )}
-        <button className="btn-project-setup" onClick={() => setShowProjectSetup(true)}>
-          {projectPath ? 'Promeni folder' : 'Podesi folder'}
-        </button>
-      </section>
-
-      {/* Model Switcher */}
-      <section className="panel-section panel-session">
-        <div className="panel-label">SESIJA</div>
-
-        {/* ── Status info blok — izvor istine (isti kao sendMessage payload) ── */}
-        <div className="session-status-block">
-          <div className="session-row">
-            <span className="session-key">Provider</span>
-            <span className="session-val">{providerDisplayName}</span>
-          </div>
-          <div className="session-row">
-            <span className="session-key">Model</span>
-            <span className="session-val session-val-model" title={effectiveModelId}>
-              {modelDisplayName}
-            </span>
-          </div>
-          {isCustomActive && (
-            <div className="session-row">
-              <span className="session-key">ID</span>
-              <span className="session-val session-val-id" title={effectiveModelId}>
-                {effectiveModelId}
-              </span>
-            </div>
-          )}
-          <div className="session-row">
-            <span className="session-key">Context</span>
-            <span className={`session-context-val context-status-${contextStatus}`}>
-              {contextStatus === 'synced' ? '✓ synced' : '⚠ needs refresh'}
-            </span>
-          </div>
-          <div className="session-row">
-            <span className="session-key">Poruke</span>
-            <span className="session-val">{messages.length}</span>
-          </div>
-        </div>
-
-        {/* ── Refresh dugme — prikaže se samo kad treba ── */}
-        {contextStatus === 'needs_refresh' && (
-          <button className="btn-refresh-context" onClick={refreshContext}>
-            ↺ Refresh ForgeKit kontekst
-          </button>
-        )}
-
-        {/* ── Kontrole za switch ── */}
-        <div className="model-controls-separator">promijeni</div>
-
-        {/* Provider select */}
-        <div className="model-switcher-group">
-          <select
-            className="model-switcher-select"
-            value={selectedProvider}
-            onChange={(e) => {
-              const newProvider = e.target.value
-              const defaultModels: Record<string, string> = {
-                anthropic: 'claude-sonnet-4-6',
-                openai: 'gpt-5.4',
-                nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
-              }
-              setProvider(newProvider, defaultModels[newProvider] ?? '')
-            }}
-          >
-            {availableProviders.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Model select */}
-        <div className="model-switcher-group">
-          <select
-            className="model-switcher-select"
-            value={selectedModel}
-            onChange={(e) => setModel(e.target.value)}
-          >
-            {availableModels.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Custom model ID (samo za NVIDIA) */}
-        {selectedProvider === 'nvidia' && (
-          <div className="model-switcher-group">
-            <input
-              className="model-switcher-input"
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              onBlur={() => { if (customInput !== customModelId) setCustomModelId(customInput) }}
-              onKeyDown={(e) => { if (e.key === 'Enter') setCustomModelId(customInput) }}
-              placeholder="Custom model ID (npr. org/model-name)"
-            />
-            {customModelId && (
-              <button
-                className="model-custom-clear"
-                onClick={() => { setCustomInput(''); setCustomModelId('') }}
-                title="Resetuj na dropdown model"
-              >✕</button>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Verzija + Update */}
+      {/* ── Verzija + Update ── */}
       <section className="panel-section panel-version">
         <div className="version-row">
           <span className="version-label">ForgeKit Interface</span>
@@ -382,17 +306,18 @@ export function SidePanel(): JSX.Element {
             disabled={updateStatus === 'checking'}
             title={updateStatus === 'available' ? 'Klikni za instalaciju' : 'Provjeri azuriranje'}
           >
-            {updateStatus === 'checking' && '⟳ Provjera...'}
-            {updateStatus === 'idle' && '↑ Provjeri update'}
+            {updateStatus === 'checking'   && '⟳ Provjera...'}
+            {updateStatus === 'idle'       && '↑ Provjeri update'}
             {updateStatus === 'up-to-date' && '✓ Azurno'}
-            {updateStatus === 'available' && '↓ Instaliraj update'}
-            {updateStatus === 'error' && '↑ Pokusaj ponovo'}
+            {updateStatus === 'available'  && '↓ Instaliraj update'}
+            {updateStatus === 'error'      && '↑ Pokusaj ponovo'}
           </button>
           {updateMsg && (
             <span className={`update-msg update-msg-${updateStatus}`}>{updateMsg}</span>
           )}
         </div>
       </section>
+
     </aside>
   )
 }
