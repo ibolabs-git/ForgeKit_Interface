@@ -6,6 +6,7 @@ import { LeftPanel } from './components/LeftPanel'
 import { SidePanel } from './components/SidePanel'
 import { SettingsModal } from './components/SettingsModal'
 import { ProjectSetupModal } from './components/ProjectSetupModal'
+import { HandoffModal } from './components/HandoffModal'
 import { useForgeKitStore } from './store/forgekit.store'
 import './App.css'
 
@@ -98,6 +99,7 @@ export function App(): JSX.Element {
       </div>
       <SettingsModal />
       <ProjectSetupModal />
+      <HandoffModal />
     </div>
   )
 }

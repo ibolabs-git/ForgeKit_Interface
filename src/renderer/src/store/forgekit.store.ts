@@ -174,6 +174,10 @@ interface ForgeKitStore {
   showSettings: boolean
   settingsTab: 'global' | 'project' | 'appearance'
 
+  // ── Handoff modal (C2) ──
+  showHandoffModal: boolean
+  setShowHandoffModal: (show: boolean) => void
+
   // ── Tema (globalno) ──
   theme: 'light' | 'dark'
   setTheme: (theme: 'light' | 'dark') => void
@@ -363,6 +367,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   selectedModel: 'claude-sonnet-4-6',
   showSettings: false,
   settingsTab: 'global',
+  showHandoffModal: false,
   theme: ((): 'light' | 'dark' => {
     try { return (localStorage.getItem('fk-theme') as 'light' | 'dark') ?? 'light' } catch { return 'light' }
   })(),
@@ -620,6 +625,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   // ── Settings ──
 
   setShowSettings: (show) => set({ showSettings: show }),
+  setShowHandoffModal: (show) => set({ showHandoffModal: show }),
   setSettingsTab: (tab) => set({ settingsTab: tab }),
   setTheme: (theme) => {
     try { localStorage.setItem('fk-theme', theme) } catch {}

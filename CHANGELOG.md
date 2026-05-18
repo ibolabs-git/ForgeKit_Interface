@@ -5,6 +5,15 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.8.0] — 2026-05-18 — Re-Prime preview + Handoff modal (FAZA C1+C2)
+### Novo
+- **C1 — Re-Prime preview** — kolapsibilna sekcija "▸ RE-PRIME KONTEKST" u panelu SESIJA; pokazuje tačno šta će biti poslato modelu pri sljedećem re-prime requestu (projekat, faza, uloga, taskovi, sažetak outputa)
+- **C2 — Handoff modal** — zamjenjuje `window.confirm()`: pravi modal s preview-om dokumenta, toggle opcijama (uključi/isključi taskove i izvod sesije), info o broju poruka i fajlu; preview se osvježava u realnom vremenu pri promjeni opcija
+- `buildHandoffDoc` premješten iz `Header.tsx` u `forgekit-context.ts` — zajednička utility funkcija
+- `HandoffModal` komponenta dodata u App render tree
+
+---
+
 ## [0.7.1] — 2026-05-18 — Jump to message (FAZA B3)
 ### Novo
 - **Jump to message** — svaki task koji je AI generisao u chatu dobija `↗` dugme (vidljivo na hover)

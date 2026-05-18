@@ -7,6 +7,87 @@
 
 import type { ForgeKitPhase, ForgeKitRole, Task, ChatMessage } from '../types'
 
+/** Gradi handoff dokument (koristi ga HandoffModal i Header) */
+export function buildHandoffDoc(
+  projectName: string,
+  phase: ForgeKitPhase,
+  tasks: Task[],
+  messages: ChatMessage[],
+  provider: string,
+  model: string,
+  opts: { includeTasks: boolean; includeMessages: boolean } = { includeTasks: true, includeMessages: true }
+): string {
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const timeStr = now.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+
+  const completed = tasks.filter((t) => t.completed)
+  const pending   = tasks.filter((t) => !t.completed)
+
+  const phaseNames: Record<ForgeKitPhase, string> = {
+    F1: 'F1 — Fundament',
+    F2: 'F2 — ForgeKit Logika',
+    F3: 'F3 — Multi-model'
+  }
+
+  let doc = `# Handoff dokument — ${projectName}
+
+**Datum:** ${dateStr} u ${timeStr}
+**Faza:** ${phaseNames[phase]}
+**Model:** ${provider} / ${model}
+
+---
+`
+
+  if (opts.includeTasks) {
+    const taskList = tasks.length > 0
+      ? tasks.map((t) => `- [${t.completed ? 'x' : ' '}] ${t.content}`).join('\n')
+      : '_Nema evidentiranih zadataka_'
+
+    doc += `
+## Status zadataka
+
+| Kategorija | Broj |
+|---|---|
+| Završeni | ${completed.length} |
+| Na čekanju | ${pending.length} |
+| Ukupno | ${tasks.length} |
+
+### Lista zadataka
+
+${taskList}
+
+---
+`
+  }
+
+  if (opts.includeMessages) {
+    const lastMsgs = messages.slice(-6)
+    const msgPreview = lastMsgs.length > 0
+      ? lastMsgs.map((m) => {
+          const roleLabel = m.role === 'user' ? 'Korisnik' : `ForgeKit [${m.forgeRole}]`
+          const preview = m.content.length > 300 ? m.content.slice(0, 300) + '...' : m.content
+          return `**${roleLabel}:**\n${preview}`
+        }).join('\n\n---\n\n')
+      : '_Nema poruka u sesiji_'
+
+    doc += `
+## Izvod sesije
+
+Ukupno poruka u sesiji: **${messages.length}**
+
+### Posljednje poruke
+
+${msgPreview}
+
+---
+`
+  }
+
+  doc += `\n*Handoff dokument generisan automatski — ForgeKit Interface*\n*Nova sesija je pokrenuta nakon ovog zapisa.*\n`
+  return doc
+}
+
 interface ProjectState {
   projectName: string
   currentPhase: ForgeKitPhase

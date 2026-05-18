@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
+import { buildProjectContext } from '../utils/forgekit-context'
 import type { ModelInfo } from '../types'
 import './SidePanel.css'
 
@@ -33,6 +34,7 @@ export function SidePanel(): JSX.Element {
   const [appVersion, setAppVersion] = useState('')
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
   const [updateMsg, setUpdateMsg] = useState('')
+  const [reprimePreviewOpen, setReprimePreviewOpen] = useState(false)
 
   const [availableProviders, setAvailableProviders] = useState<{ id: string; name: string }[]>([])
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([])
@@ -72,6 +74,20 @@ export function SidePanel(): JSX.Element {
   }
 
   const completedCount = tasks.filter((t) => t.completed).length
+
+  // C1 — Re-Prime preview tekst
+  const reprimePreviewText = useMemo(() =>
+    buildProjectContext({
+      projectName,
+      currentPhase,
+      activeRole,
+      tasks,
+      messages,
+      selectedModel: customModelId.trim() || selectedModel,
+      previousEffectiveModel: selectedModel
+    }),
+    [projectName, currentPhase, activeRole, tasks, messages, selectedModel, customModelId]
+  )
   const effectiveModelId = customModelId.trim() || selectedModel
   const isCustomActive = Boolean(customModelId.trim())
 
@@ -142,6 +158,19 @@ export function SidePanel(): JSX.Element {
             ↺ Refresh ForgeKit kontekst
           </button>
         )}
+
+        {/* C1 — Re-Prime preview */}
+        <div className="reprime-preview-wrap">
+          <button
+            className="reprime-preview-toggle"
+            onClick={() => setReprimePreviewOpen((v) => !v)}
+          >
+            {reprimePreviewOpen ? '▾' : '▸'} RE-PRIME KONTEKST
+          </button>
+          {reprimePreviewOpen && (
+            <pre className="reprime-preview-text">{reprimePreviewText}</pre>
+          )}
+        </div>
       </section>
 
       {/* ── Model switcher ── */}

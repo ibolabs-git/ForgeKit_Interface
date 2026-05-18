@@ -149,6 +149,45 @@
 }
 .btn-refresh-context:hover { background: rgba(192,120,0,0.14); }
 
+/* ── C1: Re-Prime preview ── */
+.reprime-preview-wrap {
+  margin-top: 6px;
+  border: 1px solid var(--border2);
+}
+
+.reprime-preview-toggle {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+.reprime-preview-toggle:hover { color: var(--accent); }
+
+.reprime-preview-text {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border2);
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
 /* ── Model switcher ── */
 .model-switcher-select {
   width: 100%;
