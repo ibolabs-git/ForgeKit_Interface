@@ -10,12 +10,14 @@ const PHASE_LABELS: Record<string, string> = {
 }
 
 export function ChatWindow(): JSX.Element {
-  const messages    = useForgeKitStore((s) => s.messages)
-  const isStreaming = useForgeKitStore((s) => s.isStreaming)
-  const projectName = useForgeKitStore((s) => s.projectName)
-  const currentPhase = useForgeKitStore((s) => s.currentPhase)
-  const activeRole  = useForgeKitStore((s) => s.activeRole)
-  const projectPath = useForgeKitStore((s) => s.projectPath)
+  const messages           = useForgeKitStore((s) => s.messages)
+  const isStreaming        = useForgeKitStore((s) => s.isStreaming)
+  const projectName        = useForgeKitStore((s) => s.projectName)
+  const currentPhase       = useForgeKitStore((s) => s.currentPhase)
+  const activeRole         = useForgeKitStore((s) => s.activeRole)
+  const projectPath        = useForgeKitStore((s) => s.projectPath)
+  const highlightMessageId = useForgeKitStore((s) => s.highlightMessageId)
+  const setHighlightMessageId = useForgeKitStore((s) => s.setHighlightMessageId)
 
   const bottomRef      = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -89,6 +91,22 @@ export function ChatWindow(): JSX.Element {
   useEffect(() => {
     if (!searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, searchOpen])
+
+  // ── B3: Jump to message ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!highlightMessageId) return
+    const el = document.querySelector(`[data-msg-id="${highlightMessageId}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.classList.add('jump-highlight')
+      const t = setTimeout(() => {
+        el.classList.remove('jump-highlight')
+        setHighlightMessageId(null)
+      }, 1600)
+      return () => clearTimeout(t)
+    }
+    setHighlightMessageId(null)
+  }, [highlightMessageId, setHighlightMessageId])
 
   // ── Zatvori export dropdown klikom izvan njega ────────────────────────────
   useEffect(() => {

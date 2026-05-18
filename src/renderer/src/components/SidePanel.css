@@ -319,6 +319,19 @@
 .task-item:hover .task-remove-btn { color: var(--text-muted); }
 .task-remove-btn:hover { color: var(--danger) !important; }
 
+.task-jump-btn {
+  font-size: 9px;
+  color: transparent;
+  padding: 1px 3px;
+  flex-shrink: 0;
+  transition: color 0.1s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.task-item:hover .task-jump-btn { color: var(--text-muted); }
+.task-jump-btn:hover { color: var(--accent) !important; }
+
 /* ── Memory Curator ── */
 .memory-empty {
   font-size: 11px;

@@ -23,6 +23,16 @@
   border-left-color: var(--accent) !important;
 }
 
+/* ── Jump-to highlight (B3) ── */
+@keyframes msg-flash {
+  0%   { background: rgba(255, 107, 0, 0.22); border-left-color: var(--accent); }
+  60%  { background: rgba(255, 107, 0, 0.12); border-left-color: var(--accent); }
+  100% { background: transparent; border-left-color: transparent; }
+}
+.message-bubble.jump-highlight {
+  animation: msg-flash 1.6s ease-out forwards;
+}
+
 /* ── Header row: role badge + time ── */
 .msg-row-header {
   display: flex;

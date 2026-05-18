@@ -25,7 +25,8 @@ export function SidePanel(): JSX.Element {
     setProvider, setModel, setCustomModelId, refreshContext,
     memoryRecords, projectName,
     toggleTask, addManualTask, removeTask, clearTasks,
-    updateMemoryStatus, removeMemoryRecord
+    updateMemoryStatus, removeMemoryRecord,
+    setHighlightMessageId
   } = useForgeKitStore()
 
   const [newTaskInput, setNewTaskInput] = useState('')
@@ -239,6 +240,13 @@ export function SidePanel(): JSX.Element {
                 <span className="task-text" onClick={() => toggleTask(task.id)}>
                   {task.content}
                 </span>
+                {task.sourceMessageId && (
+                  <button
+                    className="task-jump-btn"
+                    onClick={(e) => { e.stopPropagation(); setHighlightMessageId(task.sourceMessageId!) }}
+                    title="Skoci do poruke u chatu"
+                  >↗</button>
+                )}
                 <button
                   className="task-remove-btn"
                   onClick={() => removeTask(task.id)}

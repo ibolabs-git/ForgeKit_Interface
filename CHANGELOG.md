@@ -5,6 +5,15 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.7.1] — 2026-05-18 — Jump to message (FAZA B3)
+### Novo
+- **Jump to message** — svaki task koji je AI generisao u chatu dobija `↗` dugme (vidljivo na hover)
+- Klik na `↗` skrola chat do originalne poruke i narandžasto je flesha (animacija 1.6s)
+- `Task` struktura proširena sa `sourceMessageId` — sprema se automatski pri parsiranju AI odgovora
+- Ručno dodani taskovi nemaju `↗` dugme (nemaju izvornu poruku)
+
+---
+
 ## [0.7.0] — 2026-05-18 — Search u chatu + Export razgovora (FAZA B1+B2)
 ### Novo
 - **Search bar** (`Ctrl+F`) — otvara se ispod chat header-a s narandžastim border-om; `Enter` = sljedeći match, `Shift+Enter` = prethodni, `Escape` = zatvori

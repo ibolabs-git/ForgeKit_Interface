@@ -48,12 +48,17 @@ function extractRole(content: string): ForgeKitRole {
   return VALID_ROLES.includes(role) ? role : 'ORCHESTRATOR'
 }
 
-function extractTasks(content: string): Task[] {
+function extractTasks(content: string, sourceMessageId?: string): Task[] {
   const tasks: Task[] = []
   let m: RegExpExecArray | null
   TASK_REGEX.lastIndex = 0
   while ((m = TASK_REGEX.exec(content)) !== null) {
-    tasks.push({ id: `task-${Date.now()}-${Math.random()}`, content: m[2], completed: m[1] === 'x' })
+    tasks.push({
+      id: `task-${Date.now()}-${Math.random()}`,
+      content: m[2],
+      completed: m[1] === 'x',
+      sourceMessageId
+    })
   }
   return tasks
 }
@@ -215,6 +220,10 @@ interface ForgeKitStore {
   refreshContext: () => void
   markContextSynced: () => void
 
+  // ── Jump to message (B3) ──
+  highlightMessageId: string | null
+  setHighlightMessageId: (id: string | null) => void
+
   // ── Settings ──
   setShowSettings: (show: boolean) => void
   setSettingsTab: (tab: 'global' | 'project' | 'appearance') => void
@@ -368,6 +377,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   modelHistory: [],
   previousEffectiveModel: 'claude-sonnet-4-6',
 
+  // ── Jump to message (B3) ──
+  highlightMessageId: null,
+
   // ── Poruke ──
 
   addUserMessage: (content) => {
@@ -402,7 +414,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     if (!msg) return
 
     const role = extractRole(msg.content)
-    const newTasks = extractTasks(msg.content)
+    const newTasks = extractTasks(msg.content, messageId)
     const phase = extractPhase(msg.content)
 
     set((s) => ({
@@ -601,6 +613,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   refreshContext: () => set({ modelJustChanged: true, contextStatus: 'needs_refresh' }),
   markContextSynced: () => set({ modelJustChanged: false, contextStatus: 'synced' }),
+
+  // ── Jump to message (B3) ──
+  setHighlightMessageId: (id) => set({ highlightMessageId: id }),
 
   // ── Settings ──
 

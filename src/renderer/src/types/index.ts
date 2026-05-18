@@ -15,6 +15,7 @@ export interface Task {
   content: string
   completed: boolean
   phase?: ForgeKitPhase
+  sourceMessageId?: string  // ID poruke iz koje je task izvučen (B3 jump-to-message)
 }
 
 export interface ChatMessage {
