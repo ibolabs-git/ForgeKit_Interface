@@ -5,6 +5,14 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.9.0] — 2026-05-19 — FAZA D: Error boundary, Window controls, Onboarding
+### Novo
+- **D4 — Error boundary** — React `ErrorBoundary` wrapa cijelu App; pri crash-u prikazuje ForgeKit recovery screen (poruka greške + "↺ PONOVO POKRETANJE"); sesija ostaje sačuvana u `session.json`
+- **D5 — Custom window controls** — `frame: false` + tri dugmeta (─ □ ✕) u desnom uglu header-a; dugme ✕ crveni hover; □ toggleuje maximize/restore stanje; sve bez OS title bar-a
+- **D6 — Onboarding** — pri prvom pokretanju (nema nijednog API ključa: Anthropic, OpenAI, NVIDIA) Settings modal se automatski otvara na "Globalno" tabu; korisnik odmah vidi gdje upisati ključ
+
+---
+
 ## [0.8.1] — 2026-05-19 — Session Summary (FAZA C3)
 ### Novo
 - **SUMMARY dugme** u chat headeru (pored EXPORT i SEARCH) — disabled dok nema poruka ili dok AI streama

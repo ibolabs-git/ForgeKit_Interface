@@ -17,6 +17,15 @@ import { checkForLatestRelease, checkAndNotifyFallback } from './updater'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
 
+  // ── WINDOW CONTROLS (D5) ─────────────────────────────────────────────────
+  ipcMain.handle('win:minimize', () => win.minimize())
+  ipcMain.handle('win:maximize', () => {
+    if (win.isMaximized()) win.unmaximize()
+    else win.maximize()
+  })
+  ipcMain.handle('win:close', () => win.close())
+  ipcMain.handle('win:is-maximized', () => win.isMaximized())
+
   // ── AI STREAMING ──────────────────────────────────────────────────────────
 
   ipcMain.on('send-message', async (event, payload: {

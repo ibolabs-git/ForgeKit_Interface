@@ -86,9 +86,9 @@ Ažurira se uz svaki veći milestone.
 | D1 | Markdown u chatu | ⏳ FAZA A |
 | D2 | Scrollbar u LeftPanel kad je content duži | ✅ već radi |
 | D3 | Tab title update kad se promijeni naziv projekta | ✅ već radi |
-| D4 | Error boundary za crash recovery | ⏳ buduće |
-| D5 | Electron window controls (min/max/close) styling | ⏳ buduće |
-| D6 | Onboarding flow za prvi start (bez API ključa) | ⏳ buduće |
+| D4 | Error boundary za crash recovery | ✅ v0.9.0 |
+| D5 | Electron window controls (min/max/close) styling | ✅ v0.9.0 |
+| D6 | Onboarding flow za prvi start (bez API ključa) | ✅ v0.9.0 |
 
 ---
 

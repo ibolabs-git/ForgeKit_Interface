@@ -68,5 +68,11 @@ contextBridge.exposeInMainWorld('api', {
     tabs: Array<{ id: string; projectPath: string | null; projectName: string }>,
     activeTabId: string
   ) => ipcRenderer.invoke('tabs:save-state', tabs, activeTabId),
-  tabsLoadState: () => ipcRenderer.invoke('tabs:load-state')
+  tabsLoadState: () => ipcRenderer.invoke('tabs:load-state'),
+
+  // Window controls (D5)
+  winMinimize:   () => ipcRenderer.invoke('win:minimize'),
+  winMaximize:   () => ipcRenderer.invoke('win:maximize'),
+  winClose:      () => ipcRenderer.invoke('win:close'),
+  winIsMaximized: () => ipcRenderer.invoke('win:is-maximized')
 })

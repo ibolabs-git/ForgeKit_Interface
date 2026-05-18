@@ -105,6 +105,11 @@ export interface ElectronAPI {
     tabs: Array<{ id: string; projectPath: string; projectName: string }>
     activeTabId: string
   }>
+  // Window controls (D5)
+  winMinimize:    () => Promise<void>
+  winMaximize:    () => Promise<void>
+  winClose:       () => Promise<void>
+  winIsMaximized: () => Promise<boolean>
 }
 
 declare global {

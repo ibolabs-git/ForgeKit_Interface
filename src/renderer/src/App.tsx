@@ -16,7 +16,7 @@ export function App(): JSX.Element {
     setProjectPath, setShowProjectSetup, loadSession, saveSession,
     initTabsFromSaved,
     messages, tasks, activeTabId, tabs,
-    theme, switchToTab, setShowSettings
+    theme, switchToTab, setShowSettings, setSettingsTab
   } = useForgeKitStore()
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -65,6 +65,16 @@ export function App(): JSX.Element {
           setShowProjectSetup(true)
         }
       }
+
+      // D6 — Onboarding: ako nema nijednog API ključa, otvori Settings → Global
+      try {
+        const settings = await window.api.getSettings()
+        const noKey = !settings.hasAnthropicKey && !settings.hasOpenAIKey && !settings.hasNvidiaKey
+        if (noKey) {
+          setSettingsTab('global')
+          setShowSettings(true)
+        }
+      } catch { /* ignoriši — ne blokiraj startup */ }
     })
   }, [])
 

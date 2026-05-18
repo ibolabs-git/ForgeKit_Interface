@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { TabBar } from './TabBar'
+import { WindowControls } from './WindowControls'
 import './Header.css'
 
 export function Header(): JSX.Element {
@@ -54,6 +55,9 @@ export function Header(): JSX.Element {
           title="Handoff projekta"
         >HANDOFF &nbsp;›</button>
       </div>
+
+      {/* D5 — custom window controls */}
+      <WindowControls />
     </header>
   )
 }
