@@ -30,6 +30,13 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.1] — 2026-05-18 — OpenAI modeli ažurirani
+### Izmijenjeno
+- OpenAI lista modela: dodati `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`
+- Zadržani: `gpt-4o`, `gpt-4o-mini`
+
+---
+
 ## [0.3.0] — 2026-05-18 — Multi-tab projekti
 ### Novo
 - **Do 4 projekta istovremeno** kao tabovi ispod headera
