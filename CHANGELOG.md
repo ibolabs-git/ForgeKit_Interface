@@ -4,6 +4,22 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.5.0] — 2026-05-18 — ChainGPT Light UI Tema
+### Novo
+- **Potpuno novi vizuelni identitet** inspirisan ChainGPT Labs dizajnom — svjetla siva pozadina `#e8e8e8`, narandžasti akcenat `#ff6b00`, grid layout sa vidljivim 1px border separatorima
+- **Share Tech + Share Tech Mono fontovi** — tech display font za logo/labele, monospace za timestamps i section titles
+- **Flat tab navigacija** (TabBar) — tab linkovi sa `border-bottom: 2px` orange indikatorom umjesto rounded pill stilova; corner bracket dekoracije na aktivnom tabu
+- **Square UI elementi** — `border-radius: 0` konzistentno kroz cijelu aplikaciju; flat, grid-based estetika
+- **Header redesign** — FK orange kvadratni logo mark, flat layout sa 1px border separatorima između zona, orange "HANDOFF ›" CTA button desno
+- **Poruke kao grid redovi** — bubble stilovi zamijenjeni flat row stilom sa border-bottom separatorom; AI poruke dobijaju `border-left: 2px solid orange` on hover; square avatari
+- **■ bullet ispred section labela** u SidePanel — direktno iz ChainGPT UI pattern-a
+- **Orange send button** sa "SEND ›" tekstom — kvadratan, uppercase mono font
+- **Settings modal** — `box-shadow: 4px 4px 0` offset shadow, orange left border na modal headeru, uppercase CTA dugmad
+- **Corner bracket dekoracije** `┌ ┐` na task itemima i porukama (CSS ::before/::after)
+- **Tamni mode** (prethodni dark theme) ostaje očuvan — planiran za implementaciju kao dark mode toggle u v0.5.x
+
+---
+
 ## [0.4.1] — 2026-05-18 — Settings UI: accordion + NVIDIA test veze
 ### Izmijenjeno
 - **API ključevi kao accordion sekcije** — Anthropic, OpenAI, NVIDIA NIM, GitHub se otvaraju/zatvaraju klikom; svaka sekcija prikazuje status (`✓ Podešeno` / `Nije podešeno`) u header-u bez otvaranja

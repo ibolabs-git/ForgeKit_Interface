@@ -1,20 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #242424;
-  --bg-tertiary: #2e2e2e;
-  --border: #3a3a3a;
-  --text-primary: #e8e8e8;
-  --text-secondary: #999;
-  --text-muted: #666;
-  --accent: #4a9eff;
-  --danger: #e74c3c;
-  --success: #2ecc71;
-  --header-h: 52px;
-  --tabbar-h: 38px;
-  --input-h: 72px;
-  --panel-w: 280px;
-  --radius: 8px;
-  --font: -apple-system, 'Segoe UI', sans-serif;
+  /* ── ChainGPT Light Theme ── */
+  --bg-primary:    #e8e8e8;
+  --bg-secondary:  #f0f0f0;
+  --bg-tertiary:   #ffffff;
+  --border:        #cccccc;
+  --border2:       #d8d8d8;
+
+  --text-primary:  #111111;
+  --text-secondary:#444444;
+  --text-muted:    #888888;
+
+  --accent:        #ff6b00;
+  --accent-bg:     rgba(255,107,0,0.07);
+  --accent-border: rgba(255,107,0,0.28);
+
+  --danger:        #cc2222;
+  --success:       #1a8a3a;
+  --warning:       #c07800;
+
+  --header-h:  50px;
+  --tabbar-h:  42px;
+  --input-h:   80px;
+  --panel-w:   268px;
+  --radius:    2px;
+
+  --font:      'Inter', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+  --font-tech: 'Share Tech', monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,7 +37,7 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.6;
   overflow: hidden;
   height: 100vh;
@@ -51,3 +65,9 @@ body {
 button { cursor: pointer; border: none; background: none; font-family: var(--font); }
 input, textarea, select { font-family: var(--font); }
 ul { list-style: none; }
+
+/* Scrollbar — light theme */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #bbb; }

@@ -1,45 +1,58 @@
 .input-bar {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 10px 14px;
   border-top: 1px solid var(--border);
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   flex-shrink: 0;
 }
 
 .input-textarea {
   flex: 1;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  font-size: 14px;
+  border-radius: 0;
+  padding: 9px 12px;
+  font-size: 13px;
   resize: none;
   outline: none;
   line-height: 1.5;
   min-height: 42px;
   max-height: 160px;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
+  font-family: var(--font);
 }
 .input-textarea:focus { border-color: var(--accent); }
 .input-textarea::placeholder { color: var(--text-muted); }
 .input-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Orange square send button — ChainGPT "APPLY NOW" style */
 .send-btn {
-  width: 42px;
   height: 42px;
-  border-radius: var(--radius);
+  padding: 0 16px;
   background: var(--accent);
   color: #fff;
-  font-size: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   flex-shrink: 0;
-  transition: background 0.15s, opacity 0.15s;
+  border-radius: 0;
+  border: none;
+  transition: background 0.12s;
+  white-space: nowrap;
 }
-.send-btn:hover:not(:disabled) { background: #3a8ee8; }
-.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.send-btn.loading { background: var(--bg-tertiary); color: var(--danger); }
+.send-btn:hover:not(:disabled) { background: #ff8c33; }
+.send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.send-btn.loading {
+  background: var(--bg-secondary);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
