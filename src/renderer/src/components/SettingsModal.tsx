@@ -39,7 +39,8 @@ export function SettingsModal(): JSX.Element | null {
   const {
     showSettings, setShowSettings, settingsTab, setSettingsTab,
     selectedProvider, selectedModel, setProvider,
-    projectName, setProjectName, projectPath, setShowProjectSetup
+    projectName, setProjectName, projectPath, setShowProjectSetup,
+    theme, setTheme
   } = useForgeKitStore()
 
   // ── Global state ──
@@ -188,6 +189,10 @@ export function SettingsModal(): JSX.Element | null {
             className={`settings-tab ${settingsTab === 'project' ? 'active' : ''}`}
             onClick={() => setSettingsTab('project')}
           >Projekat</button>
+          <button
+            className={`settings-tab ${settingsTab === 'appearance' ? 'active' : ''}`}
+            onClick={() => setSettingsTab('appearance')}
+          >Izgled</button>
         </div>
 
         {/* ── GLOBALNI TAB ── */}
@@ -414,6 +419,62 @@ export function SettingsModal(): JSX.Element | null {
             </div>
           </>
         )}
+        {/* ── IZGLED TAB ── */}
+        {settingsTab === 'appearance' && (
+          <>
+            <div className="modal-body">
+              <div className="settings-section-title">Tema prikaza</div>
+
+              <div className="theme-switch-group">
+                <div
+                  className={`theme-option ${theme === 'light' ? 'active' : ''}`}
+                  onClick={() => setTheme('light')}
+                >
+                  <div className="theme-option-preview theme-preview-light">
+                    <div className="tp-header" />
+                    <div className="tp-body">
+                      <div className="tp-sidebar" />
+                      <div className="tp-main" />
+                      <div className="tp-sidebar" />
+                    </div>
+                  </div>
+                  <div className="theme-option-label">
+                    <span className="theme-option-name">Svijetla tema</span>
+                    <span className="theme-option-desc">#e8e8e8 · bijela površina</span>
+                  </div>
+                  {theme === 'light' && <span className="theme-option-check">✓</span>}
+                </div>
+
+                <div
+                  className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
+                  onClick={() => setTheme('dark')}
+                >
+                  <div className="theme-option-preview theme-preview-dark">
+                    <div className="tp-header" />
+                    <div className="tp-body">
+                      <div className="tp-sidebar" />
+                      <div className="tp-main" />
+                      <div className="tp-sidebar" />
+                    </div>
+                  </div>
+                  <div className="theme-option-label">
+                    <span className="theme-option-name">Tamna tema</span>
+                    <span className="theme-option-desc">#181818 · isti raspored</span>
+                  </div>
+                  {theme === 'dark' && <span className="theme-option-check">✓</span>}
+                </div>
+              </div>
+
+              <div className="settings-note">
+                Tema se odmah primijenjuje i pamti između sesija. Raspored i svi elementi ostaju identični — mijenjaju se samo boje i kontrast.
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowSettings(false)}>Zatvori</button>
+            </div>
+          </>
+        )}
+
       </div>
     </div>
   )

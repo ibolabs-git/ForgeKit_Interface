@@ -13,22 +13,25 @@ export function App(): JSX.Element {
   const {
     setProjectPath, setShowProjectSetup, loadSession, saveSession,
     initTabsFromSaved,
-    messages, tasks, activeTabId, tabs
+    messages, tasks, activeTabId, tabs,
+    theme
   } = useForgeKitStore()
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tabsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Primijeni temu pri startu i svaki put kada se promijeni
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
   // Startup — pokušaj restauracije sačuvanih tabova, inače standardni tok
   useEffect(() => {
     window.api.tabsLoadState().then(async ({ tabs: savedTabs, activeTabId: savedActiveId }) => {
       if (savedTabs && savedTabs.length > 0) {
-        // Restauriraj sve sačuvane tabove
         initTabsFromSaved(savedTabs, savedActiveId)
-        // Učitaj sesiju aktivnog taba (ostali se učitavaju lazy pri prelasku)
         await loadSession()
       } else {
-        // Nema sačuvanih tabova — standardni tok (jedan tab, prethodni folder)
         const path = await window.api.projectGetPath()
         if (path) {
           setProjectPath(path)
@@ -47,7 +50,7 @@ export function App(): JSX.Element {
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
   }, [messages, tasks, activeTabId])
 
-  // Auto-save liste tabova u electron-store (debounce 1s) — za restauraciju pri ponovnom pokretanju
+  // Auto-save liste tabova u electron-store (debounce 1s)
   useEffect(() => {
     if (tabsSaveTimer.current) clearTimeout(tabsSaveTimer.current)
     tabsSaveTimer.current = setTimeout(() => {

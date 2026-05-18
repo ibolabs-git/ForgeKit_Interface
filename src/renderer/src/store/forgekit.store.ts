@@ -167,7 +167,11 @@ interface ForgeKitStore {
 
   // ── Settings (globalno) ──
   showSettings: boolean
-  settingsTab: 'global' | 'project'
+  settingsTab: 'global' | 'project' | 'appearance'
+
+  // ── Tema (globalno) ──
+  theme: 'light' | 'dark'
+  setTheme: (theme: 'light' | 'dark') => void
 
   // ── Memory (aktivni tab) ──
   memoryRecords: MemoryRecord[]
@@ -213,7 +217,7 @@ interface ForgeKitStore {
 
   // ── Settings ──
   setShowSettings: (show: boolean) => void
-  setSettingsTab: (tab: 'global' | 'project') => void
+  setSettingsTab: (tab: 'global' | 'project' | 'appearance') => void
 
   // ── Memory ──
   addMemoryRecord: (content: string) => void
@@ -350,6 +354,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   selectedModel: 'claude-sonnet-4-6',
   showSettings: false,
   settingsTab: 'global',
+  theme: ((): 'light' | 'dark' => {
+    try { return (localStorage.getItem('fk-theme') as 'light' | 'dark') ?? 'light' } catch { return 'light' }
+  })(),
   memoryRecords: [],
   projectPath: null,
   showProjectSetup: false,
@@ -599,6 +606,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   setShowSettings: (show) => set({ showSettings: show }),
   setSettingsTab: (tab) => set({ settingsTab: tab }),
+  setTheme: (theme) => {
+    try { localStorage.setItem('fk-theme', theme) } catch {}
+    document.documentElement.setAttribute('data-theme', theme)
+    set({ theme })
+  },
 
   // ── Memory ──
 

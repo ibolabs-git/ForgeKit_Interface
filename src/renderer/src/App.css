@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ── ChainGPT Light Theme ── */
+  /* ── ChainGPT Light Theme (default) ── */
   --bg-primary:    #e8e8e8;
   --bg-secondary:  #f0f0f0;
   --bg-tertiary:   #ffffff;
@@ -22,12 +22,32 @@
 
   --header-h:  50px;
   --input-h:   80px;
-  --panel-w:   268px;
   --radius:    2px;
 
   --font:      'Inter', -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', 'Courier New', monospace;
   --font-tech: 'Share Tech', monospace;
+}
+
+/* ── Dark Theme — isti layout, tamne boje ── */
+[data-theme="dark"] {
+  --bg-primary:    #181818;
+  --bg-secondary:  #1e1e1e;
+  --bg-tertiary:   #252525;
+  --border:        #333333;
+  --border2:       #2a2a2a;
+
+  --text-primary:  #e8e8e8;
+  --text-secondary:#aaaaaa;
+  --text-muted:    #606060;
+
+  --accent:        #ff6b00;
+  --accent-bg:     rgba(255,107,0,0.10);
+  --accent-border: rgba(255,107,0,0.32);
+
+  --danger:        #e05555;
+  --success:       #2ecc71;
+  --warning:       #e0a020;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,6 +60,7 @@ body {
   line-height: 1.6;
   overflow: hidden;
   height: 100vh;
+  transition: background 0.2s, color 0.2s;
 }
 
 .app-shell {
@@ -50,7 +71,7 @@ body {
 
 .app-body {
   display: grid;
-  grid-template-columns: 200px 1fr 240px;
+  grid-template-columns: 200px 1fr 280px;
   flex: 1;
   overflow: hidden;
   min-height: 0;
@@ -68,8 +89,8 @@ button { cursor: pointer; border: none; background: none; font-family: var(--fon
 input, textarea, select { font-family: var(--font); }
 ul { list-style: none; }
 
-/* Scrollbar — light theme */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
-::-webkit-scrollbar-thumb:hover { background: #bbb; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

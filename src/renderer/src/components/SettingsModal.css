@@ -350,3 +350,106 @@
 }
 
 .modal-body .settings-note { margin-top: 3px; }
+
+/* ── Theme switcher ── */
+.theme-switch-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+.theme-option:hover { border-color: rgba(255,107,0,0.4); }
+.theme-option.active {
+  border-color: var(--accent);
+  border-left: 2px solid var(--accent);
+}
+
+/* Mini UI preview thumbnail */
+.theme-option-preview {
+  width: 64px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-preview-light { background: #e8e8e8; }
+.theme-preview-dark  { background: #181818; }
+
+.tp-header {
+  height: 8px;
+  flex-shrink: 0;
+}
+.theme-preview-light .tp-header { background: #ffffff; border-bottom: 1px solid #cccccc; }
+.theme-preview-dark  .tp-header { background: #252525; border-bottom: 1px solid #333333; }
+
+.tp-body {
+  display: flex;
+  flex: 1;
+  gap: 1px;
+}
+
+.tp-sidebar {
+  width: 12px;
+  flex-shrink: 0;
+}
+.theme-preview-light .tp-sidebar { background: #f0f0f0; }
+.theme-preview-dark  .tp-sidebar { background: #1e1e1e; }
+
+.tp-main { flex: 1; }
+.theme-preview-light .tp-main { background: #f4f4f4; }
+.theme-preview-dark  .tp-main { background: #181818; }
+
+/* Orange accent line on top of preview */
+.theme-option-preview::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: #ff6b00;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.theme-option.active .theme-option-preview::before { opacity: 1; }
+
+.theme-option-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.theme-option-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-option-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.theme-option-check {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
