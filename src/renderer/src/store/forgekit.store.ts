@@ -14,6 +14,29 @@ const VALID_ROLES: ForgeKitRole[] = [
 
 const MAX_TABS = 4
 
+// Mapiranje: koji modeli pripadaju kom provideru
+const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
+  anthropic: ['claude'],
+  openai:    ['gpt', 'o1', 'o3']
+}
+
+const DEFAULT_MODELS: Record<string, string> = {
+  anthropic: 'claude-sonnet-4-6',
+  openai:    'gpt-5.4'
+}
+
+function isModelCompatible(provider: string, model: string): boolean {
+  const prefixes = PROVIDER_MODEL_PREFIXES[provider]
+  if (!prefixes) return false
+  return prefixes.some((p) => model.toLowerCase().startsWith(p))
+}
+
+function sanitizeProviderModel(provider: string, model: string): { provider: string; model: string } {
+  if (isModelCompatible(provider, model)) return { provider, model }
+  // Mismatch — resetuj model na default za taj provider
+  return { provider, model: DEFAULT_MODELS[provider] ?? model }
+}
+
 function extractRole(content: string): ForgeKitRole {
   const match = content.match(ROLE_REGEX)
   if (!match) return 'ORCHESTRATOR'
@@ -352,13 +375,20 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   },
 
   addErrorMessage: (error, _messageId) => {
+    const isNoKeyError = error.toLowerCase().includes('kljuc') || error.toLowerCase().includes('api key') || error.toLowerCase().includes('401')
     set((s) => ({
       isStreaming: false,
       streamingMessageId: null,
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
       messages: s.messages.map((m) =>
         m.id === _messageId
-          ? { ...m, content: `Greska: ${error}`, isStreaming: false, forgeRole: 'SYSTEM' as ForgeKitRole }
+          ? {
+              ...m,
+              content: error,
+              isStreaming: false,
+              forgeRole: 'SYSTEM' as ForgeKitRole,
+              action: isNoKeyError ? 'open-settings-global' as const : undefined
+            }
           : m
       )
     }))
@@ -485,14 +515,18 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         selectedProvider?: string
         selectedModel?: string
       }
+      // Validacija provider/model — sprječava mismatch iz starih session.json
+      const { provider: safeProvider, model: safeModel } = sanitizeProviderModel(
+        data.selectedProvider ?? get().selectedProvider,
+        data.selectedModel ?? get().selectedModel
+      )
       set((s) => ({
         projectName: data.projectName ?? s.projectName,
         tasks: data.tasks ?? [],
         messages: data.messages ?? [],
         currentPhase: data.currentPhase ?? s.currentPhase,
-        selectedProvider: data.selectedProvider ?? s.selectedProvider,
-        selectedModel: data.selectedModel ?? s.selectedModel,
-        // Ažuriraj i tab header
+        selectedProvider: safeProvider,
+        selectedModel: safeModel,
         tabs: s.tabs.map((t) => t.id === s.activeTabId
           ? { ...t, projectName: data.projectName ?? t.projectName }
           : t

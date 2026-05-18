@@ -31,7 +31,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     try {
       const apiKey = getApiKey(provider as 'anthropic' | 'openai')
       if (!apiKey) {
-        event.sender.send('stream-error', 'API kljuc nije podesen. Otvori Settings i unesi kljuc.', messageId)
+        const providerName = provider === 'anthropic' ? 'Anthropic' : 'OpenAI'
+        event.sender.send('stream-error', `API kljuc za ${providerName} nije podesen.`, messageId)
         return
       }
 

@@ -30,6 +30,13 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.3] — 2026-05-18 — Validacija provider/model + bolja greška za API ključ
+### Novo
+- Validacija provider/model pri učitavanju sesije — mismatch se automatski ispravlja (npr. `anthropic + gpt-4o` → `anthropic + claude-sonnet-4-6`)
+- Greška "API ključ nije podešen" sada prikazuje dugme **⚙ Otvori Settings → API Ključevi** direktno u chatu — jedan klik do rješenja
+
+---
+
 ## [0.3.2] — 2026-05-18 — Nova sesija = checkpoint, ne brisanje
 ### Izmijenjeno
 - **Nova sesija** više ne briše razgovor — dodaje vizuelni separator u chat (datum + vremenska oznaka)

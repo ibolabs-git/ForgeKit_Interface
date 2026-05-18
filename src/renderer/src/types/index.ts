@@ -24,6 +24,7 @@ export interface ChatMessage {
   forgeRole: ForgeKitRole
   timestamp: number
   isStreaming?: boolean
+  action?: 'open-settings-global' | 'open-settings-project'
 }
 
 export interface ProviderInfo {

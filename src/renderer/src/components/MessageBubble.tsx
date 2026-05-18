@@ -1,4 +1,5 @@
 import type { ChatMessage } from '../types'
+import { useForgeKitStore } from '../store/forgekit.store'
 import './MessageBubble.css'
 
 const ROLE_COLORS: Record<string, string> = {
@@ -17,6 +18,13 @@ interface Props {
 }
 
 export function MessageBubble({ message }: Props): JSX.Element {
+  const { setShowSettings, setSettingsTab } = useForgeKitStore()
+
+  const handleOpenSettings = (tab: 'global' | 'project') => {
+    setSettingsTab(tab)
+    setShowSettings(true)
+  }
+
   // Session divider — poseban prikaz, ne normalna poruka
   if (message.content === '[SESSION_DIVIDER]') {
     const d = new Date(message.timestamp)
@@ -96,6 +104,22 @@ export function MessageBubble({ message }: Props): JSX.Element {
           <div className="message-text">
             {renderContent(message.content)}
           </div>
+        )}
+        {message.action === 'open-settings-global' && (
+          <button
+            className="msg-action-btn"
+            onClick={() => handleOpenSettings('global')}
+          >
+            ⚙ Otvori Settings → API Ključevi
+          </button>
+        )}
+        {message.action === 'open-settings-project' && (
+          <button
+            className="msg-action-btn"
+            onClick={() => handleOpenSettings('project')}
+          >
+            ⚙ Otvori Settings → Projekat
+          </button>
         )}
       </div>
       <div className="message-time">

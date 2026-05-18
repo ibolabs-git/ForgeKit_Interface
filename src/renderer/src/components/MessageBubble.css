@@ -97,3 +97,23 @@
   border-radius: 10px;
   background: var(--bg-secondary);
 }
+
+/* Action dugme u poruci (npr. otvori Settings) */
+.msg-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.msg-action-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
