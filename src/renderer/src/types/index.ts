@@ -73,6 +73,7 @@ export interface ElectronAPI {
   saveSettings: (s: Record<string, unknown>) => Promise<{ success: boolean }>
   getProviders: () => Promise<ProviderInfo[]>
   getModels: (provider: string) => Promise<ModelInfo[]>
+  nvidiaTest: (apiKey: string, baseUrl: string) => Promise<{ ok: boolean; message: string }>
   githubTest: () => Promise<{ ok: boolean; message: string }>
   githubUploadMemory: (p: { projectName: string; content: string }) => Promise<{ ok: boolean; message: string }>
   githubFetchSystemPrompt: () => Promise<string | null>

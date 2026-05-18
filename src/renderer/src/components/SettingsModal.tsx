@@ -3,14 +3,46 @@ import { useForgeKitStore } from '../store/forgekit.store'
 import type { ProviderInfo, ModelInfo } from '../types'
 import './SettingsModal.css'
 
+// ── Accordion sekcija ─────────────────────────────────────────────────────────
+
+function AccordionSection({
+  title, badge, badgeOk, open, onToggle, children
+}: {
+  title: string
+  badge?: string
+  badgeOk?: boolean
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}): JSX.Element {
+  return (
+    <div className={`api-accordion ${open ? 'open' : ''}`}>
+      <button className="api-accordion-header" onClick={onToggle}>
+        <span className="api-accordion-title">{title}</span>
+        <div className="api-accordion-right">
+          {badge && (
+            <span className={`api-accordion-badge ${badgeOk ? 'ok' : 'missing'}`}>
+              {badgeOk ? `✓ ${badge}` : badge}
+            </span>
+          )}
+          <span className="api-accordion-chevron">{open ? '▲' : '▼'}</span>
+        </div>
+      </button>
+      {open && <div className="api-accordion-body">{children}</div>}
+    </div>
+  )
+}
+
+// ── Komponenta ────────────────────────────────────────────────────────────────
+
 export function SettingsModal(): JSX.Element | null {
   const {
     showSettings, setShowSettings, settingsTab, setSettingsTab,
-    selectedProvider, selectedModel, setProvider, setModel,
+    selectedProvider, selectedModel, setProvider,
     projectName, setProjectName, projectPath, setShowProjectSetup
   } = useForgeKitStore()
 
-  // Global tab state
+  // ── Global state ──
   const [anthropicKey, setAnthropicKey] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
   const [nvidiaKey, setNvidiaKey] = useState('')
@@ -21,11 +53,21 @@ export function SettingsModal(): JSX.Element | null {
   const [githubToken, setGithubToken] = useState('')
   const [githubRepo, setGithubRepo] = useState('')
   const [hasGithubToken, setHasGithubToken] = useState(false)
-  const [githubTestStatus, setGithubTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
-  const [githubTestMsg, setGithubTestMsg] = useState('')
   const [saved, setSaved] = useState(false)
 
-  // Project tab state
+  // Accordion open state
+  const [openAnthropic, setOpenAnthropic] = useState(false)
+  const [openOpenAI, setOpenOpenAI] = useState(false)
+  const [openNvidia, setOpenNvidia] = useState(false)
+  const [openGithub, setOpenGithub] = useState(false)
+
+  // Test statusi
+  const [nvidiaTestStatus, setNvidiaTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
+  const [nvidiaTestMsg, setNvidiaTestMsg] = useState('')
+  const [githubTestStatus, setGithubTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
+  const [githubTestMsg, setGithubTestMsg] = useState('')
+
+  // ── Project state ──
   const [editName, setEditName] = useState(projectName)
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [models, setModels] = useState<ModelInfo[]>([])
@@ -47,7 +89,13 @@ export function SettingsModal(): JSX.Element | null {
         setNvidiaKey('')
         setGithubToken('')
         setSaved(false)
+        setNvidiaTestStatus('idle')
         setGithubTestStatus('idle')
+        // Auto-otvori sekciju koja nema podešen ključ
+        setOpenAnthropic(!s.hasAnthropicKey)
+        setOpenOpenAI(!s.hasOpenAIKey && s.hasAnthropicKey)
+        setOpenNvidia(!s.hasNvidiaKey && s.hasAnthropicKey && s.hasOpenAIKey)
+        setOpenGithub(false)
       })
       window.api.getProviders().then(setProviders)
       window.api.getModels(selectedProvider).then(setModels)
@@ -91,6 +139,21 @@ export function SettingsModal(): JSX.Element | null {
     setTimeout(() => setShowSettings(false), 600)
   }
 
+  const handleNvidiaTest = async () => {
+    setNvidiaTestStatus('testing')
+    setNvidiaTestMsg('')
+    // Sačuvaj promjene prije testa ako su unesene
+    if (nvidiaKey || nvidiaBaseUrl) {
+      await window.api.saveSettings({
+        nvidiaApiKey: nvidiaKey || undefined,
+        nvidiaBaseUrl: nvidiaBaseUrl || undefined
+      })
+    }
+    const result = await window.api.nvidiaTest(nvidiaKey, nvidiaBaseUrl)
+    setNvidiaTestStatus(result.ok ? 'ok' : 'fail')
+    setNvidiaTestMsg(result.message)
+  }
+
   const handleGithubTest = async () => {
     setGithubTestStatus('testing')
     setGithubTestMsg('')
@@ -108,12 +171,14 @@ export function SettingsModal(): JSX.Element | null {
   return (
     <div className="modal-overlay" onClick={() => setShowSettings(false)}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+
+        {/* Header — uvijek vidljiv */}
         <div className="modal-header">
-          <h2>Podesavanja</h2>
+          <h2>Podešavanja</h2>
           <button className="modal-close" onClick={() => setShowSettings(false)}>✕</button>
         </div>
 
-        {/* Tabovi */}
+        {/* Tabovi — uvijek vidljivi */}
         <div className="settings-tabs">
           <button
             className={`settings-tab ${settingsTab === 'global' ? 'active' : ''}`}
@@ -125,117 +190,151 @@ export function SettingsModal(): JSX.Element | null {
           >Projekat</button>
         </div>
 
-        {/* Globalni tab */}
+        {/* ── GLOBALNI TAB ── */}
         {settingsTab === 'global' && (
           <>
             <div className="modal-body">
-              <div className="settings-section-title">API Ključevi</div>
 
-              <div className="settings-group">
-                <label className="settings-label">
-                  Anthropic API Key
-                  {hasAnthropicKey && <span className="key-set">✓ Podeseno</span>}
-                </label>
-                <input
-                  type="password" className="settings-input"
-                  value={anthropicKey} onChange={(e) => setAnthropicKey(e.target.value)}
-                  placeholder={hasAnthropicKey ? '••••••• (unesi za promenu)' : 'sk-ant-...'}
-                />
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">
-                  OpenAI API Key
-                  {hasOpenAIKey && <span className="key-set">✓ Podeseno</span>}
-                </label>
-                <input
-                  type="password" className="settings-input"
-                  value={openaiKey} onChange={(e) => setOpenaiKey(e.target.value)}
-                  placeholder={hasOpenAIKey ? '••••••• (unesi za promenu)' : 'sk-...'}
-                />
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">
-                  NVIDIA NIM API Key
-                  {hasNvidiaKey && <span className="key-set">✓ Podeseno</span>}
-                </label>
-                <input
-                  type="password" className="settings-input"
-                  value={nvidiaKey} onChange={(e) => setNvidiaKey(e.target.value)}
-                  placeholder={hasNvidiaKey ? '••••••• (unesi za promenu)' : 'nvapi-...'}
-                />
-                <div className="settings-field-hint">
-                  Besplatan pristup 80+ modela · Registracija:{' '}
-                  <span className="settings-link">build.nvidia.com</span>
+              {/* Anthropic */}
+              <AccordionSection
+                title="Anthropic (Claude)"
+                badge={hasAnthropicKey ? 'Podešeno' : 'Nije podešeno'}
+                badgeOk={hasAnthropicKey}
+                open={openAnthropic}
+                onToggle={() => setOpenAnthropic((v) => !v)}
+              >
+                <div className="settings-group">
+                  <label className="settings-label">API Key</label>
+                  <input
+                    type="password" className="settings-input"
+                    value={anthropicKey} onChange={(e) => setAnthropicKey(e.target.value)}
+                    placeholder={hasAnthropicKey ? '••••••• (unesi za promenu)' : 'sk-ant-...'}
+                  />
+                  <div className="settings-field-hint">console.anthropic.com</div>
                 </div>
-              </div>
+              </AccordionSection>
 
-              <div className="settings-group">
-                <label className="settings-label">NVIDIA NIM Base URL</label>
-                <div className="nvidia-preset-row">
+              {/* OpenAI */}
+              <AccordionSection
+                title="OpenAI (GPT)"
+                badge={hasOpenAIKey ? 'Podešeno' : 'Nije podešeno'}
+                badgeOk={hasOpenAIKey}
+                open={openOpenAI}
+                onToggle={() => setOpenOpenAI((v) => !v)}
+              >
+                <div className="settings-group">
+                  <label className="settings-label">API Key</label>
+                  <input
+                    type="password" className="settings-input"
+                    value={openaiKey} onChange={(e) => setOpenaiKey(e.target.value)}
+                    placeholder={hasOpenAIKey ? '••••••• (unesi za promenu)' : 'sk-...'}
+                  />
+                  <div className="settings-field-hint">platform.openai.com</div>
+                </div>
+              </AccordionSection>
+
+              {/* NVIDIA NIM */}
+              <AccordionSection
+                title="NVIDIA NIM"
+                badge={hasNvidiaKey ? 'Podešeno' : 'Nije podešeno'}
+                badgeOk={hasNvidiaKey}
+                open={openNvidia}
+                onToggle={() => setOpenNvidia((v) => !v)}
+              >
+                <div className="settings-group">
+                  <label className="settings-label">API Key</label>
+                  <input
+                    type="password" className="settings-input"
+                    value={nvidiaKey} onChange={(e) => { setNvidiaKey(e.target.value); setNvidiaTestStatus('idle') }}
+                    placeholder={hasNvidiaKey ? '••••••• (unesi za promenu)' : 'nvapi-...'}
+                  />
+                  <div className="settings-field-hint">
+                    Besplatan pristup 80+ modela · <span className="settings-link">build.nvidia.com</span>
+                  </div>
+                </div>
+
+                <div className="settings-group">
+                  <label className="settings-label">Base URL</label>
+                  <div className="nvidia-preset-row">
+                    <button
+                      className={`nvidia-preset-btn ${nvidiaBaseUrl === 'https://integrate.api.nvidia.com/v1' ? 'active' : ''}`}
+                      onClick={() => { setNvidiaBaseUrl('https://integrate.api.nvidia.com/v1'); setNvidiaTestStatus('idle') }}
+                    >Hosted NVIDIA</button>
+                    <button
+                      className={`nvidia-preset-btn ${nvidiaBaseUrl === 'http://localhost:8000/v1' ? 'active' : ''}`}
+                      onClick={() => { setNvidiaBaseUrl('http://localhost:8000/v1'); setNvidiaTestStatus('idle') }}
+                    >Local NIM</button>
+                  </div>
+                  <input
+                    type="text" className="settings-input"
+                    value={nvidiaBaseUrl} onChange={(e) => { setNvidiaBaseUrl(e.target.value); setNvidiaTestStatus('idle') }}
+                    placeholder="https://integrate.api.nvidia.com/v1"
+                  />
+                </div>
+
+                <div className="github-test-row">
                   <button
-                    className={`nvidia-preset-btn ${nvidiaBaseUrl === 'https://integrate.api.nvidia.com/v1' ? 'active' : ''}`}
-                    onClick={() => setNvidiaBaseUrl('https://integrate.api.nvidia.com/v1')}
-                  >Hosted NVIDIA</button>
+                    className={`btn-github-test ${nvidiaTestStatus}`}
+                    onClick={handleNvidiaTest}
+                    disabled={nvidiaTestStatus === 'testing'}
+                  >
+                    {nvidiaTestStatus === 'testing' ? 'Testiranje...' : 'Testiraj vezu'}
+                  </button>
+                  {nvidiaTestMsg && (
+                    <span className={`github-test-msg ${nvidiaTestStatus}`}>{nvidiaTestMsg}</span>
+                  )}
+                </div>
+              </AccordionSection>
+
+              {/* GitHub */}
+              <AccordionSection
+                title="GitHub Integracija"
+                badge={hasGithubToken ? 'Podešeno' : 'Nije podešeno'}
+                badgeOk={hasGithubToken}
+                open={openGithub}
+                onToggle={() => setOpenGithub((v) => !v)}
+              >
+                <div className="settings-group">
+                  <label className="settings-label">
+                    GitHub Token
+                    {hasGithubToken && <span className="key-set">✓ Podešeno</span>}
+                  </label>
+                  <input
+                    type="password" className="settings-input"
+                    value={githubToken}
+                    onChange={(e) => { setGithubToken(e.target.value); setGithubTestStatus('idle') }}
+                    placeholder={hasGithubToken ? '••••••• (unesi za promenu)' : 'ghp_...'}
+                  />
+                </div>
+                <div className="settings-group">
+                  <label className="settings-label">Repozitorijum</label>
+                  <input
+                    type="text" className="settings-input"
+                    value={githubRepo}
+                    onChange={(e) => { setGithubRepo(e.target.value); setGithubTestStatus('idle') }}
+                    placeholder="korisnik/naziv-repoa"
+                  />
+                </div>
+                <div className="github-test-row">
                   <button
-                    className={`nvidia-preset-btn ${nvidiaBaseUrl === 'http://localhost:8000/v1' ? 'active' : ''}`}
-                    onClick={() => setNvidiaBaseUrl('http://localhost:8000/v1')}
-                  >Local NIM</button>
+                    className={`btn-github-test ${githubTestStatus}`}
+                    onClick={handleGithubTest}
+                    disabled={githubTestStatus === 'testing'}
+                  >
+                    {githubTestStatus === 'testing' ? 'Testiranje...' : 'Testiraj vezu'}
+                  </button>
+                  {githubTestMsg && (
+                    <span className={`github-test-msg ${githubTestStatus}`}>{githubTestMsg}</span>
+                  )}
                 </div>
-                <input
-                  type="text" className="settings-input"
-                  value={nvidiaBaseUrl} onChange={(e) => setNvidiaBaseUrl(e.target.value)}
-                  placeholder="https://integrate.api.nvidia.com/v1"
-                />
-                <div className="settings-field-hint">
-                  Za self-hosted NIM promijeni na http://localhost:8000/v1
-                </div>
-              </div>
-
-              <div className="settings-divider" />
-              <div className="settings-section-title">GitHub Integracija</div>
-
-              <div className="settings-group">
-                <label className="settings-label">
-                  GitHub Token
-                  {hasGithubToken && <span className="key-set">✓ Podeseno</span>}
-                </label>
-                <input
-                  type="password" className="settings-input"
-                  value={githubToken}
-                  onChange={(e) => { setGithubToken(e.target.value); setGithubTestStatus('idle') }}
-                  placeholder={hasGithubToken ? '••••••• (unesi za promenu)' : 'ghp_...'}
-                />
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">GitHub Repozitorijum</label>
-                <input
-                  type="text" className="settings-input"
-                  value={githubRepo}
-                  onChange={(e) => { setGithubRepo(e.target.value); setGithubTestStatus('idle') }}
-                  placeholder="korisnik/naziv-repoa"
-                />
-              </div>
-
-              <div className="github-test-row">
-                <button
-                  className={`btn-github-test ${githubTestStatus}`}
-                  onClick={handleGithubTest}
-                  disabled={githubTestStatus === 'testing'}
-                >
-                  {githubTestStatus === 'testing' ? 'Testiranje...' : 'Testiraj vezu'}
-                </button>
-                {githubTestMsg && (
-                  <span className={`github-test-msg ${githubTestStatus}`}>{githubTestMsg}</span>
-                )}
-              </div>
+              </AccordionSection>
 
               <div className="settings-note">
-                API ključevi i GitHub token se čuvaju enkriptovano lokalno.
+                API ključevi se čuvaju enkriptovano lokalno (DPAPI).
               </div>
             </div>
+
+            {/* Footer — uvijek vidljiv */}
             <div className="modal-footer">
               <button className="btn-cancel" onClick={() => setShowSettings(false)}>Otkazi</button>
               <button className={`btn-save ${saved ? 'saved' : ''}`} onClick={handleSaveGlobal}>
@@ -245,7 +344,7 @@ export function SettingsModal(): JSX.Element | null {
           </>
         )}
 
-        {/* Projekat tab */}
+        {/* ── PROJEKAT TAB ── */}
         {settingsTab === 'project' && (
           <>
             <div className="modal-body">
@@ -265,7 +364,7 @@ export function SettingsModal(): JSX.Element | null {
                 <label className="settings-label">Projektni folder</label>
                 <div className="project-folder-row">
                   <div className="project-folder-path" title={projectPath ?? ''}>
-                    {projectPath ?? 'Nije podesen'}
+                    {projectPath ?? 'Nije podešeno'}
                   </div>
                   <button
                     className="btn-change-folder"

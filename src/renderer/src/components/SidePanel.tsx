@@ -102,6 +102,19 @@ export function SidePanel(): JSX.Element {
   const completedCount = tasks.filter((t) => t.completed).length
   const currentPhaseIndex = PHASES.findIndex((p) => p.id === currentPhase)
 
+  // ── Efektivni model — isti izvor istine kao u InputBar/sendMessage ──
+  const effectiveModelId = customModelId.trim() || selectedModel
+  const isCustomActive = Boolean(customModelId.trim())
+
+  // Human-readable display — strip ★ i [role tags]
+  function shortName(fullName: string): string {
+    return fullName.replace(/★\s*/, '').split('[')[0].trim()
+  }
+  const providerDisplayName = availableProviders.find((p) => p.id === selectedProvider)?.name ?? selectedProvider
+  const modelDisplayName = isCustomActive
+    ? 'Custom'
+    : shortName(availableModels.find((m) => m.id === selectedModel)?.name ?? selectedModel)
+
   const handleAddTask = () => {
     const text = newTaskInput.trim()
     if (!text) return
@@ -256,12 +269,49 @@ export function SidePanel(): JSX.Element {
 
       {/* Model Switcher */}
       <section className="panel-section panel-session">
-        <div className="panel-label">
-          MODEL
-          <span className={`context-status-badge context-status-${contextStatus}`}>
-            {contextStatus === 'synced' ? '✓ synced' : '⚠ refresh'}
-          </span>
+        <div className="panel-label">SESIJA</div>
+
+        {/* ── Status info blok — izvor istine (isti kao sendMessage payload) ── */}
+        <div className="session-status-block">
+          <div className="session-row">
+            <span className="session-key">Provider</span>
+            <span className="session-val">{providerDisplayName}</span>
+          </div>
+          <div className="session-row">
+            <span className="session-key">Model</span>
+            <span className="session-val session-val-model" title={effectiveModelId}>
+              {modelDisplayName}
+            </span>
+          </div>
+          {isCustomActive && (
+            <div className="session-row">
+              <span className="session-key">ID</span>
+              <span className="session-val session-val-id" title={effectiveModelId}>
+                {effectiveModelId}
+              </span>
+            </div>
+          )}
+          <div className="session-row">
+            <span className="session-key">Context</span>
+            <span className={`session-context-val context-status-${contextStatus}`}>
+              {contextStatus === 'synced' ? '✓ synced' : '⚠ needs refresh'}
+            </span>
+          </div>
+          <div className="session-row">
+            <span className="session-key">Poruke</span>
+            <span className="session-val">{messages.length}</span>
+          </div>
         </div>
+
+        {/* ── Refresh dugme — prikaže se samo kad treba ── */}
+        {contextStatus === 'needs_refresh' && (
+          <button className="btn-refresh-context" onClick={refreshContext}>
+            ↺ Refresh ForgeKit kontekst
+          </button>
+        )}
+
+        {/* ── Kontrole za switch ── */}
+        <div className="model-controls-separator">promijeni</div>
 
         {/* Provider select */}
         <div className="model-switcher-group">
@@ -317,19 +367,6 @@ export function SidePanel(): JSX.Element {
             )}
           </div>
         )}
-
-        {/* Refresh Context dugme */}
-        {contextStatus === 'needs_refresh' && (
-          <button className="btn-refresh-context" onClick={refreshContext}>
-            ↺ Refresh ForgeKit kontekst
-          </button>
-        )}
-
-        {/* Broj poruka */}
-        <div className="session-row" style={{ marginTop: 6 }}>
-          <span className="session-key">Poruke</span>
-          <span className="session-val">{messages.length}</span>
-        </div>
       </section>
 
       {/* Verzija + Update */}

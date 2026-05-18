@@ -107,6 +107,28 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     } catch { return [] }
   })
 
+  // ── NVIDIA TEST ───────────────────────────────────────────────────────────
+
+  ipcMain.handle('nvidia:test', async (_e, apiKey: string, baseUrl: string) => {
+    const key = apiKey && apiKey !== '***' ? apiKey : settingsStore.get('nvidiaApiKey')
+    const url = baseUrl || settingsStore.get('nvidiaBaseUrl') || 'https://integrate.api.nvidia.com/v1'
+    if (!key) return { ok: false, message: 'API ključ nije podešen' }
+    try {
+      const OpenAI = (await import('openai')).default
+      const client = new OpenAI({ apiKey: key, baseURL: url })
+      const list = await client.models.list()
+      const count = (list.data ?? []).length
+      return { ok: true, message: `Veza OK · ${count > 0 ? `${count} modela dostupno` : 'endpoint aktivan'}` }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Nepoznata greška'
+      const short = msg.includes('401') ? 'Neispravan API ključ (401)'
+        : msg.includes('403') ? 'Zabranjen pristup (403)'
+        : msg.includes('ENOTFOUND') || msg.includes('ECONNREFUSED') ? 'Endpoint nedostupan'
+        : msg.slice(0, 80)
+      return { ok: false, message: short }
+    }
+  })
+
   // ── GITHUB ────────────────────────────────────────────────────────────────
 
   ipcMain.handle('github:test', async () => {

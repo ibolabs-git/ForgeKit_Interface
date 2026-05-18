@@ -404,3 +404,64 @@
   transition: all 0.15s;
 }
 .btn-refresh-context:hover { background: color-mix(in srgb, #f0a500 22%, transparent); }
+
+/* ── Session status info blok ──────────────────────────────────────────────── */
+
+.session-status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.session-val-model {
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  font-family: inherit !important;
+  font-size: 12px !important;
+}
+
+.session-val-id {
+  font-family: monospace;
+  font-size: 10px !important;
+  color: var(--text-muted) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+  display: inline-block;
+}
+
+.session-context-val {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: monospace;
+}
+.context-status-synced { color: var(--success); }
+.context-status-needs_refresh { color: #f0a500; }
+
+/* Separator "promijeni" između status bloka i kontrola */
+.model-controls-separator {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-align: center;
+  position: relative;
+  margin: 6px 0 8px;
+}
+.model-controls-separator::before,
+.model-controls-separator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 34%;
+  height: 1px;
+  background: var(--border);
+}
+.model-controls-separator::before { left: 0; }
+.model-controls-separator::after { right: 0; }

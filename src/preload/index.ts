@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld('api', {
   getProviders: () => ipcRenderer.invoke('get-providers'),
   getModels: (provider: string) => ipcRenderer.invoke('get-models', provider),
 
+  // NVIDIA test
+  nvidiaTest: (apiKey: string, baseUrl: string) =>
+    ipcRenderer.invoke('nvidia:test', apiKey, baseUrl),
+
   // GitHub
   githubTest: () => ipcRenderer.invoke('github:test'),
   githubUploadMemory: (payload: { projectName: string; content: string }) =>

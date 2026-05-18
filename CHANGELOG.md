@@ -4,6 +4,16 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.4.1] — 2026-05-18 — Settings UI: accordion + NVIDIA test veze
+### Izmijenjeno
+- **API ključevi kao accordion sekcije** — Anthropic, OpenAI, NVIDIA NIM, GitHub se otvaraju/zatvaraju klikom; svaka sekcija prikazuje status (`✓ Podešeno` / `Nije podešeno`) u header-u bez otvaranja
+- **Modal max-height 88vh** + `overflow-y: auto` na body — header, tabovi i Save dugme uvijek vidljivi, sadržaj scrolluje
+- **NVIDIA NIM — Testiraj vezu** dugme unutar NVIDIA sekcije (testira key + base URL pozivom `/models` endpointa)
+- **SidePanel SESIJA blok** — kompaktni info prikaz: Provider (display name), Model (kratko ime), Context (synced/needs refresh), Poruke; dropdowns za switch ostaju ispod separatora
+- Auto-otvori prvu nepodešenu sekciju pri otvaranju Settings
+
+---
+
 ## [0.4.0] — 2026-05-18 — Model Switch System + ForgeKit Context Re-Prime
 ### Novo
 - **Live model switcher u SidePanel** — mijenjaj provider i model tokom aktivnog projekta bez zatvaranja sesije

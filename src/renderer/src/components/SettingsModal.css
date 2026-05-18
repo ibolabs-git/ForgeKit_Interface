@@ -14,6 +14,7 @@
   border-radius: 12px;
   width: 440px;
   max-width: 92vw;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -30,7 +31,17 @@
 .modal-close { font-size: 18px; color: var(--text-muted); padding: 4px 8px; border-radius: 4px; }
 .modal-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 
-.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
 
 .settings-group { display: flex; flex-direction: column; gap: 6px; }
 
@@ -242,4 +253,77 @@
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ── Accordion API sekcije ─────────────────────────────────────────────────── */
+
+.api-accordion {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.api-accordion.open { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+
+.api-accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.api-accordion-header:hover { background: color-mix(in srgb, var(--accent) 6%, var(--bg-tertiary)); }
+
+.api-accordion-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.api-accordion-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-accordion-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.api-accordion-badge.ok {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+}
+.api-accordion-badge.missing {
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.api-accordion-chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+}
+
+.api-accordion-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+/* Malo manji gap u modal-body kad je accordion mode */
+.modal-body .settings-note {
+  margin-top: 4px;
 }
