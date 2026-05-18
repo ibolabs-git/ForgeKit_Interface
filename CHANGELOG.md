@@ -5,6 +5,13 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.9.1] — 2026-05-19 — Bugfix: task ekstrakcija po proximity
+### Ispravka
+- **Task lista** — zamijenjen globalni regex sa proximity-based parserima: checkbox postaje task samo ako se u prethodnih 8 redova pojavljuje keyword (`taskovi`, `zadaci`, `akcije`, `todo`)
+- Markdown liste aktivnosti, doc outline-i i slični checkbox blokovi bez task konteksta se više ne dodaju u task panel
+
+---
+
 ## [0.9.0] — 2026-05-19 — FAZA D: Error boundary, Window controls, Onboarding
 ### Novo
 - **D4 — Error boundary** — React `ErrorBoundary` wrapa cijelu App; pri crash-u prikazuje ForgeKit recovery screen (poruka greške + "↺ PONOVO POKRETANJE"); sesija ostaje sačuvana u `session.json`
