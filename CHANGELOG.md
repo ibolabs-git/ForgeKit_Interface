@@ -1,44 +1,68 @@
 # Changelog — ForgeKit Interface App
 
-Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
+Verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH  
+Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
-## [0.5.1] — 2026-05-18 — 3-kolona layout identičan ChainGPT preview-u
-### Izmijenjeno
-- **3-kolona grid layout** — `app-body` pretvoren u `display: grid; grid-template-columns: 200px 1fr 240px` umjesto flex s jednim side panelom
-- **Nova `LeftPanel` komponenta** — lijevi panel (200px): aktivna uloga, faza rada (✓/■/□), projekat info
-- **TabBar integriran u Header** — tabovi su flat nav linkovi UNUTAR header trake (50px), eliminisana zasebna tab bar traka
-- **Chat header bar** — kontekst info linija: "CHAT ProjectName · Faza · ROLE MODE"
-- **Metric tiles u desnom panelu** — 2×2 grid: Provider / Model / Faza / Poruke, svaki s corner bracket dekoracijama
-- **Corner brackets** na task itemima i metric tiles (CSS ::before/::after)
-- Duplicate sekcije uklonjene iz SidePanel (uloga/faza/projekat → LeftPanel)
+## [0.5.4] — 2026-05-18 — Metric tiles: tekst u dva reda
+### Ispravka
+- `.m-val` u desnom panelu: uklonjen `white-space: nowrap` i `text-overflow: ellipsis`
+- Dodan `word-break: break-word` + `line-height: 1.3` — dugi nazivi (npr. "Claude Sonnet 4.6") sada prelaze u drugi red umjesto da budu odrezani
+- Font smanjen s 12px na 11px za bolji fit u 2×2 tile grid
+
+---
+
+## [0.5.3] — 2026-05-18 — FK logo sivi u tamnoj temi
+### Ispravka
+- `[data-theme="dark"] .header-logo-mark { background: #5c6370 }` — FK kvadrat postaje neutralno sivi u tamnoj temi
+- Svi ostali narandzasti akcenti ostaju nepromijenjeni u obje teme
+
+---
+
+## [0.5.2] — 2026-05-18 — Tamna tema + Settings Izgled tab
+### Novo
+- **Tamna tema** — CSS varijable pod `[data-theme="dark"]`: pozadina `#181818`, površina `#1e1e1e`/`#252525`, ivice `#333`, tekst `#e8e8e8`; akcenat ostaje orange `#ff6b00`
+- **Settings → Izgled tab** — vizualni picker s thumbnail prikazom obje teme; klik odmah primijenjuje temu bez restarta
+- **Tema se pamti** između sesija u `localStorage` pod ključem `fk-theme`
+- **`data-theme` atribut** na `<html>` elementu — sve CSS varijable reaguju automatski
+- **Desni panel proširen** s 240px na 280px — sav sadržaj vidljiv bez odrezivanja
+
+---
+
+## [0.5.1] — 2026-05-18 — 3-kolona layout (identičan ChainGPT preview-u)
+### Izmijenjeno — strukturalna promjena layouta
+- **3-kolona CSS grid** — `app-body: grid-template-columns: 200px 1fr 280px` umjesto starog flex s jednim panelom
+- **Nova `LeftPanel` komponenta** (200px) — aktivna uloga s live dot-om, faza rada (✓/■/□ ikone), info o projektu
+- **TabBar ugrađen u Header** — tabovi su flat nav linkovi unutar 50px header trake; eliminisana zasebna tab bar traka ispod headera
+- **Chat header bar** — kontekst linija iznad chata: `CHAT Projekat · Faza · ROLE MODE`
+- **Metric tiles u desnom panelu** — 2×2 grid: Provider / Model / Faza / Poruke; svaki tile ima corner bracket CSS dekoracije
+- **Corner brackets** na task itemima (CSS `::before/::after`) — direktno iz ChainGPT UI pattern-a
+- Duplicate sekcije uklonjene iz SidePanel (uloga, faza, projekat → prebačeno u LeftPanel)
 
 ---
 
 ## [0.5.0] — 2026-05-18 — ChainGPT Light UI Tema
-### Novo
-- **Potpuno novi vizuelni identitet** inspirisan ChainGPT Labs dizajnom — svjetla siva pozadina `#e8e8e8`, narandžasti akcenat `#ff6b00`, grid layout sa vidljivim 1px border separatorima
-- **Share Tech + Share Tech Mono fontovi** — tech display font za logo/labele, monospace za timestamps i section titles
-- **Flat tab navigacija** (TabBar) — tab linkovi sa `border-bottom: 2px` orange indikatorom umjesto rounded pill stilova; corner bracket dekoracije na aktivnom tabu
-- **Square UI elementi** — `border-radius: 0` konzistentno kroz cijelu aplikaciju; flat, grid-based estetika
-- **Header redesign** — FK orange kvadratni logo mark, flat layout sa 1px border separatorima između zona, orange "HANDOFF ›" CTA button desno
-- **Poruke kao grid redovi** — bubble stilovi zamijenjeni flat row stilom sa border-bottom separatorom; AI poruke dobijaju `border-left: 2px solid orange` on hover; square avatari
-- **■ bullet ispred section labela** u SidePanel — direktno iz ChainGPT UI pattern-a
-- **Orange send button** sa "SEND ›" tekstom — kvadratan, uppercase mono font
-- **Settings modal** — `box-shadow: 4px 4px 0` offset shadow, orange left border na modal headeru, uppercase CTA dugmad
-- **Corner bracket dekoracije** `┌ ┐` na task itemima i porukama (CSS ::before/::after)
-- **Tamni mode** (prethodni dark theme) ostaje očuvan — planiran za implementaciju kao dark mode toggle u v0.5.x
+### Novo — potpuni vizuelni redizajn
+- **ChainGPT Light vizuelni identitet** — pozadina `#e8e8e8`, površina `#f0f0f0`/`#ffffff`, akcenat `#ff6b00`, 1px border grid separatori
+- **Share Tech + Share Tech Mono fontovi** (Google Fonts) — tech display font za logo/labele, monospace za timestamps i section naslove
+- **Flat tab navigacija** — `border-bottom: 2px solid orange` na aktivnom tabu; corner bracket dekoracije na aktivnom tabu
+- **`border-radius: 0`** konzistentno — flat, grid-based estetika bez zaobljenih uglova
+- **Header** — FK orange kvadratni logo mark, flat layout, orange `HANDOFF ›` CTA dugme desno
+- **Poruke kao grid redovi** — flat row stil s `border-bottom` separatorom; AI poruke dobijaju `border-left: 2px orange` on hover; square avatari
+- **`■` bullet** ispred section labela u SidePanel
+- **`SEND ›`** orange send dugme — kvadratan, uppercase mono font
+- **Settings modal** — `box-shadow: 4px 4px 0`, orange left border na headeru, uppercase CTA dugmad
 
 ---
 
 ## [0.4.1] — 2026-05-18 — Settings UI: accordion + NVIDIA test veze
 ### Izmijenjeno
-- **API ključevi kao accordion sekcije** — Anthropic, OpenAI, NVIDIA NIM, GitHub se otvaraju/zatvaraju klikom; svaka sekcija prikazuje status (`✓ Podešeno` / `Nije podešeno`) u header-u bez otvaranja
-- **Modal max-height 88vh** + `overflow-y: auto` na body — header, tabovi i Save dugme uvijek vidljivi, sadržaj scrolluje
-- **NVIDIA NIM — Testiraj vezu** dugme unutar NVIDIA sekcije (testira key + base URL pozivom `/models` endpointa)
-- **SidePanel SESIJA blok** — kompaktni info prikaz: Provider (display name), Model (kratko ime), Context (synced/needs refresh), Poruke; dropdowns za switch ostaju ispod separatora
-- Auto-otvori prvu nepodešenu sekciju pri otvaranju Settings
+- **API ključevi kao accordion sekcije** — Anthropic, OpenAI, NVIDIA NIM, GitHub se otvaraju/zatvaraju; status badge vidljiv bez otvaranja
+- **Modal max-height 88vh** + `overflow-y: auto` — header, tabovi i Save uvijek vidljivi, sadržaj scrolluje
+- **NVIDIA NIM „Testiraj vezu"** — testira key + base URL pozivom na `/models` endpoint
+- **SidePanel SESIJA blok** — Provider, Model, Context status, broj poruka u kompaktnom info prikazu
+- Auto-otvori prvu nepodešenu accordion sekciju pri otvaranju Settings
 
 ---
 
@@ -46,16 +70,78 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 ### Novo
 - **Live model switcher u SidePanel** — mijenjaj provider i model tokom aktivnog projekta bez zatvaranja sesije
 - **Custom model ID polje** (samo NVIDIA) — unesi bilo koji NIM model ID koji nije u dropdown listi
-- **ForgeKit Context Re-Prime** — pri promjeni modela aplikacija automatski šalje strukturirani kontekst (projekt, faza, uloga, taskovi, posljednji output) umjesto pune historije; model nastavlja tok bez resetovanja
-- **`[MODEL_SWITCH]` divider** u chatu — vizuelni marker kada je model promijenjen (narančast, s imenima before/after)
-- **Context status badge** — `✓ synced` ili `⚠ refresh` u SidePanel MODEL sekciji
-- **Refresh Context dugme** — ručni trigger za Re-Prime (pojavljuje se samo kada je context `needs_refresh`)
-- **NVIDIA NIM Base URL** u Settings (Globalno) — podesiv endpoint s preset dugmadima:
-  - `[Hosted NVIDIA]` → `https://integrate.api.nvidia.com/v1`
-  - `[Local NIM]` → `http://localhost:8000/v1`
-- **`forgekit-context.ts` utility** — `buildProjectContext`, `buildModelSwitchNotice`, `buildRePrimeMessages`
-- Efektivni model: custom ID override ili dropdown model (InputBar koristi ispravan model pri slanju)
-- Provider/model promijenjen u `setProvider` — automatski triggeruje `needs_refresh` ako postoje poruke
+- **ForgeKit Context Re-Prime** — pri promjeni modela šalje se strukturirani kontekst (projekt, faza, uloga, taskovi, zadnji output) umjesto pune historije
+- **`[MODEL_SWITCH]` divider** u chatu — vizuelni marker s imenima before/after
+- **Context status badge** — `✓ synced` ili `⚠ refresh`; Refresh Context dugme za ručni trigger
+- **NVIDIA NIM Base URL** u Settings — preset dugmad: Hosted NVIDIA / Local NIM
+- **`forgekit-context.ts`** utility — `buildProjectContext`, `buildModelSwitchNotice`, `buildRePrimeMessages`
+
+---
+
+## [0.3.6] — 2026-05-18 — NVIDIA NIM integracija
+### Novo
+- **NVIDIA NIM** kao treći AI provider — besplatan API za 80+ modela, OpenAI-kompatibilan
+- 18 predefinisanih modela: Nemotron, DeepSeek R1/V3, Llama 3.3 405B, QwQ 32B, Kimi, GLM-4, Phi-4, Gemma 3, Mixtral, Qwen 2.5 Coder i dr.
+- NVIDIA NIM API ključ u Settings → Globalno; validacija formata `owner/model`
+
+---
+
+## [0.3.5] — 2026-05-18 — UX: Handoff vs Novi projekat
+### Izmijenjeno
+- `+ Nova sesija` → `📋 Handoff projekta` — jasno označava checkpoint, ne brisanje
+- Tab `+` → `＋ Novi projekat` s accent bojom
+- Limit label: `4/4` → `max 4 projekta`; opisni tooltips na oba dugmeta
+
+---
+
+## [0.3.4] — 2026-05-18 — Perzistencija tabova
+### Novo
+- Svi otvoreni tabovi se čuvaju pri gašenju; restauriraju se pri sljedećem pokretanju
+- Aktivni tab se pamti — pri startu odmah na istom mjestu
+- Neaktivni tabovi se učitavaju lazy (tek pri prelasku)
+- Nova IPC: `tabs:save-state`, `tabs:load-state`, `project:read-file-from-path`, `project:set-active-path`
+
+---
+
+## [0.3.3] — 2026-05-18 — Validacija provider/model
+### Novo
+- Validacija mismatch-a pri učitavanju sesije — automatska ispravka (npr. `anthropic + gpt-4o` → ispravni model)
+- Greška „API ključ nije podešen" prikazuje dugme **⚙ Otvori Settings** direktno u chatu
+
+---
+
+## [0.3.2] — 2026-05-18 — Nova sesija = checkpoint
+### Izmijenjeno
+- Nova sesija više ne briše razgovor — dodaje vizuelni separator (datum + vrijeme)
+- Handoff dokument se kreira; taskovi, faza i sve ostalo ostaju netaknuti
+
+---
+
+## [0.3.1] — 2026-05-18 — OpenAI modeli
+### Izmijenjeno
+- Dodati: `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`; zadržani: `gpt-4o`, `gpt-4o-mini`
+
+---
+
+## [0.3.0] — 2026-05-18 — Multi-tab projekti
+### Novo
+- Do 4 projekta istovremeno kao tabovi; svaki tab ima potpuno nezavisnu sesiju
+- `+` za novi projekat, `✕` za zatvaranje; streaming indikator na aktivnom tabu
+- Prebacivanje između projekata čuva puno stanje u memoriji
+
+---
+
+## [0.2.1] — 2026-05-18 — Handoff dokument + In-app update
+### Novo
+- Handoff dokument (`handoff_<datum>.md`) se automatski kreira u projektnom folderu pri novoj sesiji
+- In-app update: `electron-updater` preuzima i instalira bez preusmjeravanja na browser
+
+---
+
+## [0.2.0] — 2026-05-12 — Project Settings + Provider per projekat
+### Novo
+- Settings modal: **Globalno** (API ključevi, GitHub) i **Projekat** (naziv, folder, provider, model)
+- Provider i model per-projekat, snimaju se u `session.json`
 
 ---
 
@@ -65,120 +151,13 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
-## [0.1.0] — 2026-05-12
-### Novo — inicijalno izdanje
+## [0.1.0] — 2026-05-12 — Inicijalno izdanje
+### Novo
 - AI chat sa streaming odgovorima (Anthropic Claude i OpenAI GPT)
 - ForgeKit uloge: ORCHESTRATOR, THINKER, BUILDER, REVIEWER, MEMORY CURATOR, OBSERVER
-- Automatska detekcija uloge iz AI odgovora (`[ROLE]` tag)
-- Automatska detekcija taskova iz AI odgovora (`- [ ]` format)
+- Automatska detekcija uloge (`[ROLE]` tag) i taskova (`- [ ]` format) iz AI odgovora
 - Faze rada: F1 Fundament, F2 ForgeKit Logika, F3 Multi-model
-- Desni panel: aktivna uloga, faze, taskovi, Memory Curator, projekat, sesija
-- Memory Curator: automatski kreira i uploaduje zapis na GitHub kada AI preuzme ulogu `[MEMORY CURATOR]`
-- GitHub integracija: token + repo konfiguracija, test konekcije
-- Projektni folder: kreiranje novog ili odabir postojeceg, `project_security_manifest.md` se automatski kreira
-- Perzistencija sesije: `session.json` u projektnom folderu (poruke, taskovi, faza)
-- Settings modal: API kljucevi (Anthropic, OpenAI), GitHub integracija
-- Auto-update: `electron-updater` sa GitHub Releases (`ibolabs-git/ForgeKit_Interface`)
-- NSIS Windows installer sa desktop i Start menu precicama
-
----
-
----
-
-## [0.3.6] — 2026-05-18 — NVIDIA NIM integracija (besplatni AI modeli)
-### Novo
-- **NVIDIA NIM** kao treći AI provider — besplatan API pristup za 80+ modela
-- Endpoint: `integrate.api.nvidia.com/v1` (OpenAI-kompatibilan standard)
-- 18 predefinisanih modela: Nemotron, DeepSeek R1/V3, Llama 3.3 405B, QwQ 32B, Kimi, MiniMax, GLM-4, Phi-4, Gemma 3, Mixtral, Qwen 2.5 Coder i dr.
-- NVIDIA NIM API ključ polje u Settings → Globalno (sa linkom na build.nvidia.com)
-- Automatska validacija modela: NVIDIA modeli imaju format `owner/model` (sadrže `/`)
-- Default NVIDIA model: `nvidia/llama-3.3-nemotron-super-49b-v1`
-
----
-
-## [0.3.5] — 2026-05-18 — UX: jasno razlikovanje Handoff vs Novi projekat
-### Izmijenjeno
-- **`+ Nova sesija`** → **`📋 Handoff projekta`** — jasno označava da se arhivira/checkpointira, ne briše
-- **Tab `+`** → **`＋ Novi projekat`** sa tekstom i accent bojom — jasno otvara novi projekat u novom tabu
-- Limit label: `4/4` → `max 4 projekta`
-- Oba dugmeta sada imaju opisne tooltip poruke
-
----
-
-## [0.3.4] — 2026-05-18 — Perzistencija tabova
-### Novo
-- Svi otvoreni tabovi se čuvaju pri gašenju i automatski restauriraju pri slijedećem pokretanju
-- Aktivni tab se pamti — pri startu odmah otvaraš tamo gdje si stao
-- Neaktivni tabovi se učitavaju **lazy** — sesija se čita tek kada pređeš na taj tab
-- `setProjectPath` sinhronizuje electron-store pri svakoj promjeni foldera (ispravlja edge-case pri pisanju session.json)
-- `loadSession` čita direktno iz projektnog foldera (neovisno od interno sačuvanog puta)
-- Nova IPC komunikacija: `tabs:save-state`, `tabs:load-state`, `project:read-file-from-path`, `project:set-active-path`
-
----
-
-## [0.3.3] — 2026-05-18 — Validacija provider/model + bolja greška za API ključ
-### Novo
-- Validacija provider/model pri učitavanju sesije — mismatch se automatski ispravlja (npr. `anthropic + gpt-4o` → `anthropic + claude-sonnet-4-6`)
-- Greška "API ključ nije podešen" sada prikazuje dugme **⚙ Otvori Settings → API Ključevi** direktno u chatu — jedan klik do rješenja
-
----
-
-## [0.3.2] — 2026-05-18 — Nova sesija = checkpoint, ne brisanje
-### Izmijenjeno
-- **Nova sesija** više ne briše razgovor — dodaje vizuelni separator u chat (datum + vremenska oznaka)
-- Handoff dokument se i dalje kreira u projektnom folderu
-- Taskovi, faza i sve ostalo ostaju netaknuti
-- Ispravljena semantika: sesija je radni period unutar projekta, ne reset projekta
-
----
-
-## [0.3.1] — 2026-05-18 — OpenAI modeli ažurirani
-### Izmijenjeno
-- OpenAI lista modela: dodati `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`
-- Zadržani: `gpt-4o`, `gpt-4o-mini`
-
----
-
-## [0.3.0] — 2026-05-18 — Multi-tab projekti
-### Novo
-- **Do 4 projekta istovremeno** kao tabovi ispod headera
-- Svaki tab ima **potpuno nezavisnu sesiju**: poruke, taskovi, faza, folder, provider/model, Memory Curator
-- **`+`** dugme za novi projekat — automatski otvara setup modal
-- **`✕`** za zatvaranje taba (nije moguće zatvoriti jedini tab)
-- **Streaming indikator** na tabu koji čeka AI odgovor (pulsiranje)
-- Tab header se automatski ažurira kada se promijeni naziv/folder projekta
-- Prebacivanje između projekata čuva puno stanje u memoriji
-
----
-
-## [0.2.1] — 2026-05-18 — Header cleanup + Handoff dokument + In-app update
-### Novo
-- **Nova sesija → Handoff dokument**: prije brisanja sesije automatski se kreira `handoff_<datum>.md` u projektnom folderu sa pregledom zadataka, faze i posljednjih poruka
-- **In-app azuriranje**: `electron-updater` preuzima i instalira novu verziju direktno unutar aplikacije (bez preusmjeravanja na browser); fallback na GitHub link ako `latest.yml` nije dostupan
-
-### Izmijenjeno / uklonjeno
-- **Header**: uklonjeni dropdown meniji za Provider i Model — odabir je isključivo u Settings → Projekat
-- Provajder i model ostaju vidljivi u desnom panelu (Sesija sekcija)
-
----
-
-## [0.2.0] — 2026-05-12 — Project Settings + Provider per projekat
-### Novo
-- Settings modal podijeljen na dvije sekcije: **Globalno** (API ključevi, GitHub) i **Projekat**
-- Project Settings: naziv projekta, folder, provider, model — sve vezano za projekat, ne globalno
-- Provider i model biraju se per-projekat i snimaju u `session.json`
-- OpenAI modeli dostupni za izbor per-projekat
-- Vidljivost projektnog foldera u Project Settings
-
----
-
-## Planirano
-
-### [0.2.1] — Handoff dokument
-- Pri kliku "Nova sesija" — opcija za čuvanje handoff dokumenta u projektni folder
-- Handoff sadrži: šta je urađeno, status taskova, otvorena pitanja
-
-### [0.3.0] — Multi-tab projekti
-- Do 3 otvorena projekta istovremeno kao tabovi
-- Svaki tab ima nezavisnu sesiju (poruke, taskovi, faza, folder, provider/model)
-- `+` dugme za novi projekat, `✕` za zatvaranje taba
+- Memory Curator: automatski upload zapisa na GitHub
+- GitHub integracija: token + repo, test konekcije
+- Projektni folder + `project_security_manifest.md`; perzistencija sesije u `session.json`
+- Auto-update s GitHub Releases; NSIS Windows installer
