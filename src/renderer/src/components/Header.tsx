@@ -93,7 +93,7 @@ export function Header(): JSX.Element {
 
   const handleNewSession = async () => {
     if (!window.confirm(
-      'Kreirati checkpoint?\n\nHandoff dokument ce biti sacuvan u projektni folder.\nRazgovor i taskovi ostaju — samo se oznacava nova radna sesija.'
+      'Sačuvati Handoff projekta?\n\nHandoff dokument ce biti sacuvan u projektni folder.\nRazgovor i taskovi ostaju netaknuti — samo se dodaje vremenski separator.'
     )) return
 
     // Sačuvaj handoff u projektni folder
@@ -141,9 +141,9 @@ export function Header(): JSX.Element {
         <button
           className="new-session-btn"
           onClick={handleNewSession}
-          title="Nova sesija (sacuva handoff)"
+          title="Sacuvaj handoff dokument i oznaci novi radni period (razgovor ostaje)"
         >
-          ＋ Nova sesija
+          📋 Handoff projekta
         </button>
         <button className="settings-btn" onClick={() => setShowSettings(true)} title="Podesavanja">
           ⚙

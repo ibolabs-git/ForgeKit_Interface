@@ -105,25 +105,30 @@
 
 /* Dugme za novi tab */
 .tab-add {
-  width: 28px;
   height: 28px;
+  padding: 0 10px;
   border-radius: 6px;
-  font-size: 18px;
-  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
   background: transparent;
-  border: 1px solid transparent;
+  border: 1px solid var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   flex-shrink: 0;
+  white-space: nowrap;
   line-height: 1;
   transition: all 0.12s;
   cursor: pointer;
+  opacity: 0.75;
 }
 .tab-add:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-color: var(--border);
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Limit dostignut */

@@ -35,15 +35,15 @@ export function TabBar(): JSX.Element {
         <button
           className="tab-add"
           onClick={addTab}
-          title={`Novi projekat (${tabs.length}/${MAX_TABS})`}
+          title={`Otvori novi projekat u novom tabu (${tabs.length}/${MAX_TABS})`}
         >
-          +
+          ＋ Novi projekat
         </button>
       )}
 
       {tabs.length >= MAX_TABS && (
-        <span className="tab-limit" title="Maksimalan broj projekata dostignut">
-          {MAX_TABS}/{MAX_TABS}
+        <span className="tab-limit" title="Maksimalan broj otvorenih projekata dostignut (4/4)">
+          max 4 projekta
         </span>
       )}
     </div>

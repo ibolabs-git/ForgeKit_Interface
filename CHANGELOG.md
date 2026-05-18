@@ -30,6 +30,15 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.5] — 2026-05-18 — UX: jasno razlikovanje Handoff vs Novi projekat
+### Izmijenjeno
+- **`+ Nova sesija`** → **`📋 Handoff projekta`** — jasno označava da se arhivira/checkpointira, ne briše
+- **Tab `+`** → **`＋ Novi projekat`** sa tekstom i accent bojom — jasno otvara novi projekat u novom tabu
+- Limit label: `4/4` → `max 4 projekta`
+- Oba dugmeta sada imaju opisne tooltip poruke
+
+---
+
 ## [0.3.4] — 2026-05-18 — Perzistencija tabova
 ### Novo
 - Svi otvoreni tabovi se čuvaju pri gašenju i automatski restauriraju pri slijedećem pokretanju
