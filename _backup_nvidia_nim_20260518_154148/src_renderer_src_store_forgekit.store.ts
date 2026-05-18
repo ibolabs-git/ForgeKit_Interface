@@ -17,19 +17,15 @@ const MAX_TABS = 4
 // Mapiranje: koji modeli pripadaju kom provideru
 const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
   anthropic: ['claude'],
-  openai:    ['gpt', 'o1', 'o3'],
-  nvidia:    []  // NVIDIA NIM modeli imaju format "owner/model" — provjera po znaku /
+  openai:    ['gpt', 'o1', 'o3']
 }
 
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
-  openai:    'gpt-5.4',
-  nvidia:    'nvidia/llama-3.3-nemotron-super-49b-v1'
+  openai:    'gpt-5.4'
 }
 
 function isModelCompatible(provider: string, model: string): boolean {
-  // NVIDIA NIM: svi modeli imaju format "owner/model" (sadrže /)
-  if (provider === 'nvidia') return model.includes('/')
   const prefixes = PROVIDER_MODEL_PREFIXES[provider]
   if (!prefixes) return false
   return prefixes.some((p) => model.toLowerCase().startsWith(p))

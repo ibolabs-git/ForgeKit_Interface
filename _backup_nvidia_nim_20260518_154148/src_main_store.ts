@@ -9,7 +9,6 @@ interface SavedTab {
 interface AppSettings {
   anthropicApiKey: string
   openaiApiKey: string
-  nvidiaApiKey: string
   defaultProvider: 'anthropic' | 'openai'
   defaultAnthropicModel: string
   defaultOpenAIModel: string
@@ -24,7 +23,6 @@ interface AppSettings {
 const defaults: AppSettings = {
   anthropicApiKey: '',
   openaiApiKey: '',
-  nvidiaApiKey: '',
   defaultProvider: 'anthropic',
   defaultAnthropicModel: 'claude-sonnet-4-6',
   defaultOpenAIModel: 'gpt-4o',
@@ -42,13 +40,10 @@ export const settingsStore = new Store<AppSettings>({
   defaults
 })
 
-export function getApiKey(provider: 'anthropic' | 'openai' | 'nvidia' | string): string {
-  switch (provider) {
-    case 'anthropic': return settingsStore.get('anthropicApiKey')
-    case 'openai':    return settingsStore.get('openaiApiKey')
-    case 'nvidia':    return settingsStore.get('nvidiaApiKey')
-    default:          return ''
-  }
+export function getApiKey(provider: 'anthropic' | 'openai'): string {
+  return provider === 'anthropic'
+    ? settingsStore.get('anthropicApiKey')
+    : settingsStore.get('openaiApiKey')
 }
 
 export function getGitHubConfig() {

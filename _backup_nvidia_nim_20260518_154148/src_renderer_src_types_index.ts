@@ -40,7 +40,6 @@ export interface ModelInfo {
 export interface AppSettings {
   hasAnthropicKey: boolean
   hasOpenAIKey: boolean
-  hasNvidiaKey: boolean
   defaultProvider: 'anthropic' | 'openai'
   defaultAnthropicModel: string
   defaultOpenAIModel: string

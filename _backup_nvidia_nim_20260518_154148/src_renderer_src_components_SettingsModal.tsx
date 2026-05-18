@@ -13,10 +13,8 @@ export function SettingsModal(): JSX.Element | null {
   // Global tab state
   const [anthropicKey, setAnthropicKey] = useState('')
   const [openaiKey, setOpenaiKey] = useState('')
-  const [nvidiaKey, setNvidiaKey] = useState('')
   const [hasAnthropicKey, setHasAnthropicKey] = useState(false)
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false)
-  const [hasNvidiaKey, setHasNvidiaKey] = useState(false)
   const [githubToken, setGithubToken] = useState('')
   const [githubRepo, setGithubRepo] = useState('')
   const [hasGithubToken, setHasGithubToken] = useState(false)
@@ -37,12 +35,10 @@ export function SettingsModal(): JSX.Element | null {
       window.api.getSettings().then((s) => {
         setHasAnthropicKey(s.hasAnthropicKey)
         setHasOpenAIKey(s.hasOpenAIKey)
-        setHasNvidiaKey(s.hasNvidiaKey)
         setHasGithubToken(s.hasGithubToken)
         setGithubRepo(s.githubRepo || '')
         setAnthropicKey('')
         setOpenaiKey('')
-        setNvidiaKey('')
         setGithubToken('')
         setSaved(false)
         setGithubTestStatus('idle')
@@ -73,7 +69,6 @@ export function SettingsModal(): JSX.Element | null {
     await window.api.saveSettings({
       anthropicApiKey: anthropicKey || undefined,
       openaiApiKey: openaiKey || undefined,
-      nvidiaApiKey: nvidiaKey || undefined,
       githubToken: githubToken || undefined,
       githubRepo: githubRepo || undefined
     })
@@ -150,22 +145,6 @@ export function SettingsModal(): JSX.Element | null {
                   value={openaiKey} onChange={(e) => setOpenaiKey(e.target.value)}
                   placeholder={hasOpenAIKey ? '••••••• (unesi za promenu)' : 'sk-...'}
                 />
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">
-                  NVIDIA NIM API Key
-                  {hasNvidiaKey && <span className="key-set">✓ Podeseno</span>}
-                </label>
-                <input
-                  type="password" className="settings-input"
-                  value={nvidiaKey} onChange={(e) => setNvidiaKey(e.target.value)}
-                  placeholder={hasNvidiaKey ? '••••••• (unesi za promenu)' : 'nvapi-...'}
-                />
-                <div className="settings-field-hint">
-                  Besplatan pristup 80+ modela · Registracija:{' '}
-                  <span className="settings-link">build.nvidia.com</span>
-                </div>
               </div>
 
               <div className="settings-divider" />

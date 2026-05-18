@@ -1,6 +1,5 @@
 import { AnthropicProvider } from './anthropic'
 import { OpenAIProvider } from './openai'
-import { NvidiaProvider } from './nvidia'
 import type { AIProvider } from './interface'
 
 export function createProvider(providerName: string, apiKey: string): AIProvider {
@@ -9,8 +8,6 @@ export function createProvider(providerName: string, apiKey: string): AIProvider
       return new AnthropicProvider(apiKey)
     case 'openai':
       return new OpenAIProvider(apiKey)
-    case 'nvidia':
-      return new NvidiaProvider(apiKey)
     default:
       throw new Error(`Nepoznat provider: ${providerName}`)
   }
@@ -18,6 +15,5 @@ export function createProvider(providerName: string, apiKey: string): AIProvider
 
 export const AVAILABLE_PROVIDERS = [
   { id: 'anthropic', name: 'Anthropic (Claude)' },
-  { id: 'openai',    name: 'OpenAI (GPT)' },
-  { id: 'nvidia',    name: 'NVIDIA NIM (besplatno)' }
+  { id: 'openai', name: 'OpenAI (GPT)' }
 ]

@@ -53,14 +53,12 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('get-settings', () => ({
     anthropicApiKey: settingsStore.get('anthropicApiKey') ? '***' : '',
     openaiApiKey: settingsStore.get('openaiApiKey') ? '***' : '',
-    nvidiaApiKey: settingsStore.get('nvidiaApiKey') ? '***' : '',
     defaultProvider: settingsStore.get('defaultProvider'),
     defaultAnthropicModel: settingsStore.get('defaultAnthropicModel'),
     defaultOpenAIModel: settingsStore.get('defaultOpenAIModel'),
     theme: settingsStore.get('theme'),
     hasAnthropicKey: !!settingsStore.get('anthropicApiKey'),
     hasOpenAIKey: !!settingsStore.get('openaiApiKey'),
-    hasNvidiaKey: !!settingsStore.get('nvidiaApiKey'),
     githubRepo: settingsStore.get('githubRepo'),
     hasGithubToken: !!settingsStore.get('githubToken'),
     currentProjectPath: settingsStore.get('currentProjectPath')
@@ -71,8 +69,6 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       settingsStore.set('anthropicApiKey', settings.anthropicApiKey)
     if (typeof settings.openaiApiKey === 'string' && settings.openaiApiKey !== '***')
       settingsStore.set('openaiApiKey', settings.openaiApiKey)
-    if (typeof settings.nvidiaApiKey === 'string' && settings.nvidiaApiKey !== '***')
-      settingsStore.set('nvidiaApiKey', settings.nvidiaApiKey)
     if (typeof settings.githubToken === 'string' && settings.githubToken !== '***')
       settingsStore.set('githubToken', settings.githubToken)
     if (typeof settings.githubRepo === 'string' && settings.githubRepo)

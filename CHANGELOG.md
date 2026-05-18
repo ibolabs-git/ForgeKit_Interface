@@ -30,6 +30,17 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.6] — 2026-05-18 — NVIDIA NIM integracija (besplatni AI modeli)
+### Novo
+- **NVIDIA NIM** kao treći AI provider — besplatan API pristup za 80+ modela
+- Endpoint: `integrate.api.nvidia.com/v1` (OpenAI-kompatibilan standard)
+- 18 predefinisanih modela: Nemotron, DeepSeek R1/V3, Llama 3.3 405B, QwQ 32B, Kimi, MiniMax, GLM-4, Phi-4, Gemma 3, Mixtral, Qwen 2.5 Coder i dr.
+- NVIDIA NIM API ključ polje u Settings → Globalno (sa linkom na build.nvidia.com)
+- Automatska validacija modela: NVIDIA modeli imaju format `owner/model` (sadrže `/`)
+- Default NVIDIA model: `nvidia/llama-3.3-nemotron-super-49b-v1`
+
+---
+
 ## [0.3.5] — 2026-05-18 — UX: jasno razlikovanje Handoff vs Novi projekat
 ### Izmijenjeno
 - **`+ Nova sesija`** → **`📋 Handoff projekta`** — jasno označava da se arhivira/checkpointira, ne briše

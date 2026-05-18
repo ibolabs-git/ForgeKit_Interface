@@ -178,18 +178,6 @@
   margin: 4px 0;
 }
 
-.settings-field-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.settings-link {
-  color: var(--accent);
-  opacity: 0.85;
-  cursor: default;
-}
-
 .github-test-row {
   display: flex;
   align-items: center;
