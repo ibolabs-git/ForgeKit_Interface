@@ -30,9 +30,12 @@ export class OpenAIProvider implements AIProvider {
 
   getAvailableModels(): ModelInfo[] {
     return [
-      { id: 'gpt-4o', name: 'GPT-4o' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-      { id: 'o1-mini', name: 'o1-mini' }
+      { id: 'gpt-5.5',      name: 'GPT-5.5' },
+      { id: 'gpt-5.4',      name: 'GPT-5.4' },
+      { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini' },
+      { id: 'gpt-5.4-nano', name: 'GPT-5.4 Nano' },
+      { id: 'gpt-4o',       name: 'GPT-4o' },
+      { id: 'gpt-4o-mini',  name: 'GPT-4o Mini' }
     ]
   }
 }
