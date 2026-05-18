@@ -28,9 +28,25 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+---
+
+## [0.2.0] — 2026-05-12 — Project Settings + Provider per projekat
+### Novo
+- Settings modal podijeljen na dvije sekcije: **Globalno** (API ključevi, GitHub) i **Projekat**
+- Project Settings: naziv projekta, folder, provider, model — sve vezano za projekat, ne globalno
+- Provider i model biraju se per-projekat i snimaju u `session.json`
+- OpenAI modeli dostupni za izbor per-projekat
+- Vidljivost projektnog foldera u Project Settings
+
+---
+
 ## Planirano
 
-### [0.2.0] — Multi-tab projekti
-- Do 4 otvorena projekta istovremeno kao tabovi
-- Svaki tab ima nezavisnu sesiju (poruke, taskovi, faza, folder)
+### [0.2.1] — Handoff dokument
+- Pri kliku "Nova sesija" — opcija za čuvanje handoff dokumenta u projektni folder
+- Handoff sadrži: šta je urađeno, status taskova, otvorena pitanja
+
+### [0.3.0] — Multi-tab projekti
+- Do 3 otvorena projekta istovremeno kao tabovi
+- Svaki tab ima nezavisnu sesiju (poruke, taskovi, faza, folder, provider/model)
 - `+` dugme za novi projekat, `✕` za zatvaranje taba

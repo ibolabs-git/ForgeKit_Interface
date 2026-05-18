@@ -57,12 +57,13 @@ interface ForgeKitStore {
   currentPhase: ForgeKitPhase
   tasks: Task[]
 
-  // Provider / model
+  // Provider / model — per projekat
   selectedProvider: string
   selectedModel: string
 
   // Settings modal
   showSettings: boolean
+  settingsTab: 'global' | 'project'
 
   // Memory records
   memoryRecords: MemoryRecord[]
@@ -93,6 +94,7 @@ interface ForgeKitStore {
 
   // Settings
   setShowSettings: (show: boolean) => void
+  setSettingsTab: (tab: 'global' | 'project') => void
 
   // Memory
   addMemoryRecord: (content: string) => void
@@ -124,6 +126,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   selectedModel: 'claude-sonnet-4-6',
 
   showSettings: false,
+  settingsTab: 'global',
 
   memoryRecords: [],
   projectPath: null,
@@ -261,6 +264,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   setModel: (model) => set({ selectedModel: model }),
 
   setShowSettings: (show) => set({ showSettings: show }),
+  setSettingsTab: (tab) => set({ settingsTab: tab }),
 
   addMemoryRecord: (content) => {
     const record: MemoryRecord = {
@@ -297,6 +301,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       tasks: s.tasks,
       messages: s.messages.filter((m) => !m.isStreaming),
       currentPhase: s.currentPhase,
+      selectedProvider: s.selectedProvider,
+      selectedModel: s.selectedModel,
       savedAt: Date.now()
     }
     await window.api.projectWriteFile('session.json', JSON.stringify(data, null, 2))
@@ -311,12 +317,16 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         tasks?: Task[]
         messages?: ChatMessage[]
         currentPhase?: ForgeKitPhase
+        selectedProvider?: string
+        selectedModel?: string
       }
       set((s) => ({
         projectName: data.projectName ?? s.projectName,
         tasks: data.tasks ?? [],
         messages: data.messages ?? [],
-        currentPhase: data.currentPhase ?? s.currentPhase
+        currentPhase: data.currentPhase ?? s.currentPhase,
+        selectedProvider: data.selectedProvider ?? s.selectedProvider,
+        selectedModel: data.selectedModel ?? s.selectedModel
       }))
     } catch { /* korumpiran fajl, ignorisemo */ }
   }
