@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Header } from './components/Header'
+import { TabBar } from './components/TabBar'
 import { ChatWindow } from './components/ChatWindow'
 import { InputBar } from './components/InputBar'
 import { SidePanel } from './components/SidePanel'
@@ -9,12 +10,14 @@ import { useForgeKitStore } from './store/forgekit.store'
 import './App.css'
 
 export function App(): JSX.Element {
-  const { setProjectPath, setShowProjectSetup, loadSession, saveSession, messages, tasks } =
-    useForgeKitStore()
+  const {
+    setProjectPath, setShowProjectSetup, loadSession, saveSession,
+    messages, tasks, activeTabId
+  } = useForgeKitStore()
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Startup — ucitaj projektni folder i sesiju
+  // Startup — učitaj projektni folder i sesiju za inicijalni tab
   useEffect(() => {
     window.api.projectGetPath().then(async (path) => {
       if (path) {
@@ -26,16 +29,17 @@ export function App(): JSX.Element {
     })
   }, [])
 
-  // Auto-save sesije pri promeni poruka ili taskova (debounce 1s)
+  // Auto-save aktivnog taba pri promeni poruka ili taskova (debounce 1.2s)
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => { saveSession() }, 1000)
+    saveTimer.current = setTimeout(() => { saveSession() }, 1200)
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [messages, tasks])
+  }, [messages, tasks, activeTabId])
 
   return (
     <div className="app-shell">
       <Header />
+      <TabBar />
       <div className="app-body">
         <main className="app-main">
           <ChatWindow />

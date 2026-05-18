@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { app, ipcMain, BrowserWindow } from 'electron'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
 import { settingsStore, getApiKey, getGitHubConfig } from './store'
 import {
@@ -13,6 +13,7 @@ import {
   readProjectFile,
   initProjectFolder
 } from './project-manager'
+import { checkForLatestRelease, checkAndNotifyFallback } from './updater'
 
 export function registerIpcHandlers(win: BrowserWindow): void {
 
@@ -153,5 +154,18 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     const projectPath = settingsStore.get('currentProjectPath')
     if (!projectPath) return null
     return readProjectFile(projectPath, filename)
+  })
+
+  // ── APP INFO & UPDATE ─────────────────────────────────────────────────────
+
+  ipcMain.handle('app:get-version', () => app.getVersion())
+
+  ipcMain.handle('app:check-update', async () => {
+    return checkForLatestRelease()
+  })
+
+  ipcMain.handle('app:trigger-update', async () => {
+    await checkAndNotifyFallback(win)
+    return { ok: true }
   })
 }

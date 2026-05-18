@@ -1,0 +1,137 @@
+.tab-bar {
+  height: var(--tabbar-h);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+}
+
+/* Lista tabova */
+.tab-list {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Jedan tab */
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 8px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  min-width: 80px;
+  max-width: 200px;
+  flex-shrink: 1;
+  transition: all 0.12s;
+  user-select: none;
+}
+
+.tab-item:hover {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.tab-item.active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border);
+  border-bottom-color: var(--accent);
+}
+
+/* Ikona */
+.tab-icon {
+  font-size: 10px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.tab-item.active .tab-icon { color: var(--accent); }
+
+/* Naziv */
+.tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+/* Streaming indikator (pulsiranje) */
+.tab-streaming {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: tab-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tab-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* Dugme za zatvaranje */
+.tab-close {
+  font-size: 9px;
+  color: transparent;
+  padding: 2px 3px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: all 0.1s;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+.tab-item:hover .tab-close { color: var(--text-muted); }
+.tab-close:hover { color: var(--danger) !important; background: var(--bg-tertiary); }
+.tab-close:disabled { opacity: 0; pointer-events: none; }
+
+/* Dugme za novi tab */
+.tab-add {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 18px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.tab-add:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border-color: var(--border);
+}
+
+/* Limit dostignut */
+.tab-limit {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}

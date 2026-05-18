@@ -41,5 +41,15 @@ contextBridge.exposeInMainWorld('api', {
   projectGetPath: () => ipcRenderer.invoke('project:get-path'),
   projectWriteFile: (filename: string, content: string) =>
     ipcRenderer.invoke('project:write-file', filename, content),
-  projectReadFile: (filename: string) => ipcRenderer.invoke('project:read-file', filename)
+  projectReadFile: (filename: string) => ipcRenderer.invoke('project:read-file', filename),
+
+  // App info & update
+  getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  checkForUpdate: () => ipcRenderer.invoke('app:check-update'),
+  triggerUpdate: () => ipcRenderer.invoke('app:trigger-update'),
+  onUpdateDownloadProgress: (cb: (pct: number) => void) => {
+    const h = (_: Electron.IpcRendererEvent, pct: number) => cb(pct)
+    ipcRenderer.on('update-download-progress', h)
+    return () => ipcRenderer.removeListener('update-download-progress', h)
+  }
 })

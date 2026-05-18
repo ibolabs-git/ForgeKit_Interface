@@ -30,6 +30,29 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.0] — 2026-05-18 — Multi-tab projekti
+### Novo
+- **Do 4 projekta istovremeno** kao tabovi ispod headera
+- Svaki tab ima **potpuno nezavisnu sesiju**: poruke, taskovi, faza, folder, provider/model, Memory Curator
+- **`+`** dugme za novi projekat — automatski otvara setup modal
+- **`✕`** za zatvaranje taba (nije moguće zatvoriti jedini tab)
+- **Streaming indikator** na tabu koji čeka AI odgovor (pulsiranje)
+- Tab header se automatski ažurira kada se promijeni naziv/folder projekta
+- Prebacivanje između projekata čuva puno stanje u memoriji
+
+---
+
+## [0.2.1] — 2026-05-18 — Header cleanup + Handoff dokument + In-app update
+### Novo
+- **Nova sesija → Handoff dokument**: prije brisanja sesije automatski se kreira `handoff_<datum>.md` u projektnom folderu sa pregledom zadataka, faze i posljednjih poruka
+- **In-app azuriranje**: `electron-updater` preuzima i instalira novu verziju direktno unutar aplikacije (bez preusmjeravanja na browser); fallback na GitHub link ako `latest.yml` nije dostupan
+
+### Izmijenjeno / uklonjeno
+- **Header**: uklonjeni dropdown meniji za Provider i Model — odabir je isključivo u Settings → Projekat
+- Provajder i model ostaju vidljivi u desnom panelu (Sesija sekcija)
+
+---
+
 ## [0.2.0] — 2026-05-12 — Project Settings + Provider per projekat
 ### Novo
 - Settings modal podijeljen na dvije sekcije: **Globalno** (API ključevi, GitHub) i **Projekat**

@@ -253,8 +253,68 @@
 .btn-project-setup:hover { border-color: var(--accent); color: var(--text-primary); }
 
 /* Session */
-.panel-session { margin-top: auto; }
+.panel-session { }
 .session-info { display: flex; flex-direction: column; gap: 6px; }
 .session-row { display: flex; justify-content: space-between; font-size: 12px; }
 .session-key { color: var(--text-muted); }
 .session-val { color: var(--text-secondary); font-family: monospace; font-size: 11px; }
+
+/* Verzija + Update */
+.panel-version {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-bottom: none;
+}
+
+.version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.version-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.version-badge {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  padding: 1px 7px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.update-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-check-update {
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.btn-check-update:hover:not(:disabled) { border-color: var(--accent); color: var(--text-primary); }
+.btn-check-update:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-check-update.up-to-date { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+.btn-check-update.available { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.btn-check-update.error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+
+.update-msg {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.update-msg-available { color: var(--accent); font-weight: 600; }
+.update-msg-up-to-date { color: var(--success); }
+.update-msg-error { color: var(--danger); }

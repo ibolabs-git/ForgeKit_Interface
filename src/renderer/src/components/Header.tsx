@@ -1,40 +1,117 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
-import type { ProviderInfo, ModelInfo } from '../types'
+import type { ChatMessage, Task, ForgeKitPhase } from '../types'
 import './Header.css'
 
-export function Header(): JSX.Element {
-  const { selectedProvider, selectedModel, projectName, setProvider, setModel, setShowSettings, setProjectName, newSession } =
-    useForgeKitStore()
+function buildHandoffDoc(
+  projectName: string,
+  phase: ForgeKitPhase,
+  tasks: Task[],
+  messages: ChatMessage[],
+  provider: string,
+  model: string
+): string {
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const timeStr = now.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
 
-  const [providers, setProviders] = useState<ProviderInfo[]>([])
-  const [models, setModels] = useState<ModelInfo[]>([])
+  const completed = tasks.filter((t) => t.completed)
+  const pending = tasks.filter((t) => !t.completed)
+
+  const taskList = tasks.length > 0
+    ? tasks.map((t) => `- [${t.completed ? 'x' : ' '}] ${t.content}`).join('\n')
+    : '_Nema evidentiranih zadataka_'
+
+  const lastMsgs = messages.slice(-6)
+  const msgPreview = lastMsgs.length > 0
+    ? lastMsgs.map((m) => {
+        const roleLabel = m.role === 'user' ? 'Korisnik' : `ForgeKit [${m.forgeRole}]`
+        const preview = m.content.length > 300
+          ? m.content.slice(0, 300) + '...'
+          : m.content
+        return `**${roleLabel}:**\n${preview}`
+      }).join('\n\n---\n\n')
+    : '_Nema poruka u sesiji_'
+
+  const phaseNames: Record<ForgeKitPhase, string> = {
+    F1: 'F1 — Fundament',
+    F2: 'F2 — ForgeKit Logika',
+    F3: 'F3 — Multi-model'
+  }
+
+  return `# Handoff dokument — ${projectName}
+
+**Datum:** ${dateStr} u ${timeStr}
+**Faza:** ${phaseNames[phase]}
+**Model:** ${provider} / ${model}
+
+---
+
+## Status zadataka
+
+| Kategorija | Broj |
+|---|---|
+| Završeni | ${completed.length} |
+| Na čekanju | ${pending.length} |
+| Ukupno | ${tasks.length} |
+
+### Lista zadataka
+
+${taskList}
+
+---
+
+## Izvod sesije
+
+Ukupno poruka u sesiji: **${messages.length}**
+
+### Poslednje poruke
+
+${msgPreview}
+
+---
+
+*Handoff dokument generisan automatski — ForgeKit Interface*
+*Nova sesija je pokrenuta nakon ovog zapisa.*
+`
+}
+
+export function Header(): JSX.Element {
+  const {
+    projectName, setProjectName, setShowSettings, newSession,
+    currentPhase, tasks, messages, selectedProvider, selectedModel, projectPath
+  } = useForgeKitStore()
+
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState(projectName)
 
-  useEffect(() => {
-    window.api.getProviders().then(setProviders)
-  }, [])
-
-  useEffect(() => {
-    window.api.getModels(selectedProvider).then((m) => {
-      setModels(m)
-      if (m.length > 0) {
-        const exists = m.find((x) => x.id === selectedModel)
-        setProvider(selectedProvider, exists ? exists.id : m[0].id)
-      }
-    })
-  }, [selectedProvider])
-
-  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    window.api.getModels(e.target.value).then((m) => {
-      setProvider(e.target.value, m[0]?.id ?? '')
-    })
+  const handleNameSubmit = () => {
+    setProjectName(nameInput.trim() || projectName)
+    setEditingName(false)
   }
 
-  const handleNameSubmit = () => {
-    setProjectName(nameInput)
-    setEditingName(false)
+  const handleNewSession = async () => {
+    const hasProject = !!projectPath
+    const confirmMsg = hasProject
+      ? 'Pokrenuti novu sesiju?\n\nHandoff dokument ce biti sacuvan u projektni folder pre brisanja razgovora.'
+      : 'Pokrenuti novu sesiju? Trenutni razgovor ce biti obrisan (nema aktivnog projektnog foldera za handoff).'
+
+    if (!window.confirm(confirmMsg)) return
+
+    // Save handoff to project folder
+    if (hasProject) {
+      try {
+        const handoffContent = buildHandoffDoc(
+          projectName, currentPhase, tasks, messages, selectedProvider, selectedModel
+        )
+        const ts = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-')
+        await window.api.projectWriteFile(`handoff_${ts}.md`, handoffContent)
+      } catch (err) {
+        console.error('Greska pri cuvanju handoff dokumenta:', err)
+      }
+    }
+
+    newSession()
   }
 
   return (
@@ -51,37 +128,21 @@ export function Header(): JSX.Element {
             autoFocus
           />
         ) : (
-          <span className="project-name" onClick={() => setEditingName(true)} title="Klikni za izmenu">
+          <span
+            className="project-name"
+            onClick={() => { setEditingName(true); setNameInput(projectName) }}
+            title="Klikni za izmenu naziva"
+          >
             {projectName}
           </span>
         )}
       </div>
 
       <div className="header-right">
-        <select
-          className="provider-select"
-          value={selectedProvider}
-          onChange={handleProviderChange}
-        >
-          {providers.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
-
-        <select
-          className="model-select"
-          value={selectedModel}
-          onChange={(e) => setModel(e.target.value)}
-        >
-          {models.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-
         <button
           className="new-session-btn"
-          onClick={() => { if (confirm('Poceti novu sesiju? Trenutni razgovor ce biti izbrisan.')) newSession() }}
-          title="Nova sesija"
+          onClick={handleNewSession}
+          title="Nova sesija (sacuva handoff)"
         >
           ＋ Nova sesija
         </button>

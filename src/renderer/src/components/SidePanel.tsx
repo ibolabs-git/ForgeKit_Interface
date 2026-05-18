@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import type { ForgeKitPhase } from '../types'
 import './SidePanel.css'
@@ -53,6 +53,35 @@ export function SidePanel(): JSX.Element {
   } = useForgeKitStore()
 
   const [newTaskInput, setNewTaskInput] = useState('')
+  const [appVersion, setAppVersion] = useState('')
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
+  const [updateMsg, setUpdateMsg] = useState('')
+
+  useEffect(() => {
+    window.api.getAppVersion().then(setAppVersion).catch(() => {})
+  }, [])
+
+  const handleCheckUpdate = async () => {
+    setUpdateStatus('checking')
+    setUpdateMsg('')
+    try {
+      const result = await window.api.checkForUpdate()
+      if (result.hasUpdate) {
+        setUpdateStatus('available')
+        setUpdateMsg(`v${result.latestVersion} dostupan`)
+      } else {
+        setUpdateStatus('up-to-date')
+        setUpdateMsg('Najnovija verzija')
+      }
+    } catch {
+      setUpdateStatus('error')
+      setUpdateMsg('Greska pri provjeri')
+    }
+  }
+
+  const handleTriggerUpdate = async () => {
+    await window.api.triggerUpdate()
+  }
 
   const roleColor = ROLE_COLORS[activeRole] ?? '#888'
   const roleIcon = ROLE_ICONS[activeRole] ?? '●'
@@ -227,6 +256,31 @@ export function SidePanel(): JSX.Element {
             <span className="session-key">Poruke</span>
             <span className="session-val">{messages.length}</span>
           </div>
+        </div>
+      </section>
+
+      {/* Verzija + Update */}
+      <section className="panel-section panel-version">
+        <div className="version-row">
+          <span className="version-label">ForgeKit Interface</span>
+          {appVersion && <span className="version-badge">v{appVersion}</span>}
+        </div>
+        <div className="update-row">
+          <button
+            className={`btn-check-update ${updateStatus}`}
+            onClick={updateStatus === 'available' ? handleTriggerUpdate : handleCheckUpdate}
+            disabled={updateStatus === 'checking'}
+            title={updateStatus === 'available' ? 'Klikni za instalaciju' : 'Provjeri azuriranje'}
+          >
+            {updateStatus === 'checking' && '⟳ Provjera...'}
+            {updateStatus === 'idle' && '↑ Provjeri update'}
+            {updateStatus === 'up-to-date' && '✓ Azurno'}
+            {updateStatus === 'available' && '↓ Instaliraj update'}
+            {updateStatus === 'error' && '↑ Pokusaj ponovo'}
+          </button>
+          {updateMsg && (
+            <span className={`update-msg update-msg-${updateStatus}`}>{updateMsg}</span>
+          )}
         </div>
       </section>
     </aside>

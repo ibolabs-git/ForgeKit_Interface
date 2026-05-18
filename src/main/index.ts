@@ -1,6 +1,7 @@
-import { app, BrowserWindow, shell, dialog } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc-handlers'
+import { runStartupUpdateCheck } from './updater'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -44,37 +45,12 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
-  // Update provjera — samo u production buildu
+  // Provjera azuriranja — samo u production buildu, sa odgodom od 5s
   if (!process.env['ELECTRON_RENDERER_URL']) {
-    setTimeout(() => checkForUpdate(win), 3000)
+    setTimeout(() => runStartupUpdateCheck(win), 5000)
   }
 })
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
-
-async function checkForUpdate(win: BrowserWindow): Promise<void> {
-  try {
-    const res = await fetch(
-      'https://api.github.com/repos/ibolabs-git/ForgeKit_Interface/releases/latest',
-      { headers: { 'User-Agent': 'ForgeKit-Interface-App' } }
-    )
-    if (!res.ok) return
-    const data = await res.json() as { tag_name?: string; html_url?: string }
-    const latest = data.tag_name?.replace('v', '') ?? ''
-    const current = app.getVersion()
-    if (latest && latest !== current) {
-      const result = await dialog.showMessageBox(win, {
-        type: 'info',
-        title: 'Nova verzija dostupna',
-        message: `ForgeKit Interface v${latest} je dostupan (trenutna: v${current})`,
-        detail: 'Klikni "Preuzmi" da odes na stranicu za download.',
-        buttons: ['Preuzmi', 'Kasnije']
-      })
-      if (result.response === 0 && data.html_url) {
-        shell.openExternal(data.html_url)
-      }
-    }
-  } catch { /* nema interneta ili greska, ignorisemo */ }
-}

@@ -78,6 +78,16 @@ export interface ElectronAPI {
   projectGetPath: () => Promise<string | null>
   projectWriteFile: (filename: string, content: string) => Promise<{ ok: boolean; message?: string }>
   projectReadFile: (filename: string) => Promise<string | null>
+  // App info & update
+  getAppVersion: () => Promise<string>
+  checkForUpdate: () => Promise<{
+    hasUpdate: boolean
+    currentVersion: string
+    latestVersion: string
+    message: string
+  }>
+  triggerUpdate: () => Promise<{ ok: boolean }>
+  onUpdateDownloadProgress: (cb: (pct: number) => void) => () => void
 }
 
 declare global {
