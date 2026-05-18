@@ -146,6 +146,7 @@ interface ForgeKitStore {
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
   addErrorMessage: (error: string, messageId: string) => void
+  addSessionDivider: () => void
 
   // ── Akcije — ForgeKit stanje ──
   toggleTask: (id: string) => void
@@ -360,6 +361,18 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
           ? { ...m, content: `Greska: ${error}`, isStreaming: false, forgeRole: 'SYSTEM' as ForgeKitRole }
           : m
       )
+    }))
+  },
+
+  addSessionDivider: () => {
+    set((s) => ({
+      messages: [...s.messages, {
+        id: `divider-${Date.now()}`,
+        role: 'assistant' as const,
+        content: '[SESSION_DIVIDER]',
+        forgeRole: 'SYSTEM' as ForgeKitRole,
+        timestamp: Date.now()
+      }]
     }))
   },
 

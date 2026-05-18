@@ -78,8 +78,9 @@ ${msgPreview}
 
 export function Header(): JSX.Element {
   const {
-    projectName, setProjectName, setShowSettings, newSession,
-    currentPhase, tasks, messages, selectedProvider, selectedModel, projectPath
+    projectName, setProjectName, setShowSettings,
+    addSessionDivider, currentPhase, tasks, messages,
+    selectedProvider, selectedModel, projectPath
   } = useForgeKitStore()
 
   const [editingName, setEditingName] = useState(false)
@@ -91,15 +92,12 @@ export function Header(): JSX.Element {
   }
 
   const handleNewSession = async () => {
-    const hasProject = !!projectPath
-    const confirmMsg = hasProject
-      ? 'Pokrenuti novu sesiju?\n\nHandoff dokument ce biti sacuvan u projektni folder pre brisanja razgovora.'
-      : 'Pokrenuti novu sesiju? Trenutni razgovor ce biti obrisan (nema aktivnog projektnog foldera za handoff).'
+    if (!window.confirm(
+      'Kreirati checkpoint?\n\nHandoff dokument ce biti sacuvan u projektni folder.\nRazgovor i taskovi ostaju — samo se oznacava nova radna sesija.'
+    )) return
 
-    if (!window.confirm(confirmMsg)) return
-
-    // Save handoff to project folder
-    if (hasProject) {
+    // Sačuvaj handoff u projektni folder
+    if (projectPath) {
       try {
         const handoffContent = buildHandoffDoc(
           projectName, currentPhase, tasks, messages, selectedProvider, selectedModel
@@ -111,7 +109,8 @@ export function Header(): JSX.Element {
       }
     }
 
-    newSession()
+    // Dodaj vizuelni separator u razgovor — NE brišemo ništa
+    addSessionDivider()
   }
 
   return (

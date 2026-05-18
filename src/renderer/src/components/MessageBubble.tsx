@@ -17,6 +17,20 @@ interface Props {
 }
 
 export function MessageBubble({ message }: Props): JSX.Element {
+  // Session divider — poseban prikaz, ne normalna poruka
+  if (message.content === '[SESSION_DIVIDER]') {
+    const d = new Date(message.timestamp)
+    const label = d.toLocaleDateString('sr-RS', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' · ' + d.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+    return (
+      <div className="session-divider">
+        <div className="session-divider-line" />
+        <span className="session-divider-label">⬡ Nova sesija — {label}</span>
+        <div className="session-divider-line" />
+      </div>
+    )
+  }
+
   const color = ROLE_COLORS[message.forgeRole] ?? '#888'
   const isUser = message.role === 'user'
 

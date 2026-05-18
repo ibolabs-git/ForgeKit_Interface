@@ -30,6 +30,15 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.2] — 2026-05-18 — Nova sesija = checkpoint, ne brisanje
+### Izmijenjeno
+- **Nova sesija** više ne briše razgovor — dodaje vizuelni separator u chat (datum + vremenska oznaka)
+- Handoff dokument se i dalje kreira u projektnom folderu
+- Taskovi, faza i sve ostalo ostaju netaknuti
+- Ispravljena semantika: sesija je radni period unutar projekta, ne reset projekta
+
+---
+
 ## [0.3.1] — 2026-05-18 — OpenAI modeli ažurirani
 ### Izmijenjeno
 - OpenAI lista modela: dodati `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`
