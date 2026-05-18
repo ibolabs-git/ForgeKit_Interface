@@ -4,8 +4,12 @@ import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord } fro
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
-const TASK_REGEX = /^- \[( |x)\] (.+)$/gm
 const PHASE_REGEX = /\b(F1|F2|F3)\b/
+
+// Ključne riječi koje signaliziraju task sekciju (case-insensitive)
+const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
+// Checkbox format
+const CHECKBOX_RE = /^[-*] \[( |x)\] (.+)$/
 
 const VALID_ROLES: ForgeKitRole[] = [
   'ORCHESTRATOR', 'THINKER', 'BUILDER',
@@ -50,13 +54,27 @@ function extractRole(content: string): ForgeKitRole {
 
 function extractTasks(content: string, sourceMessageId?: string): Task[] {
   const tasks: Task[] = []
-  let m: RegExpExecArray | null
-  TASK_REGEX.lastIndex = 0
-  while ((m = TASK_REGEX.exec(content)) !== null) {
+  const lines = content.split('\n')
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    const checkMatch = CHECKBOX_RE.exec(line)
+    if (!checkMatch) continue
+
+    // Provjeri da li postoji keyword za taskove u prethodnih 8 redova (uključujući trenutni)
+    let hasTaskContext = false
+    for (let j = Math.max(0, i - 8); j <= i; j++) {
+      if (TASK_KEYWORD_RE.test(lines[j])) {
+        hasTaskContext = true
+        break
+      }
+    }
+    if (!hasTaskContext) continue
+
     tasks.push({
       id: `task-${Date.now()}-${Math.random()}`,
-      content: m[2],
-      completed: m[1] === 'x',
+      content: checkMatch[2].trim(),
+      completed: checkMatch[1] === 'x',
       sourceMessageId
     })
   }
