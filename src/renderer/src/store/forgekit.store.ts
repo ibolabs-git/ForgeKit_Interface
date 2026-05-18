@@ -24,7 +24,7 @@ const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
   openai:    'gpt-5.4',
-  nvidia:    'nvidia/llama-3.3-nemotron-super-49b-v1'
+  nvidia:    'nvidia/nemotron-3-nano-30b-a3b'
 }
 
 function isModelCompatible(provider: string, model: string): boolean {
