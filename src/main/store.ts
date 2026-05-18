@@ -1,5 +1,11 @@
 import Store from 'electron-store'
 
+interface SavedTab {
+  id: string
+  projectPath: string
+  projectName: string
+}
+
 interface AppSettings {
   anthropicApiKey: string
   openaiApiKey: string
@@ -10,6 +16,8 @@ interface AppSettings {
   githubToken: string
   githubRepo: string
   currentProjectPath: string
+  openTabs: SavedTab[]
+  activeTabId: string
 }
 
 const defaults: AppSettings = {
@@ -21,7 +29,9 @@ const defaults: AppSettings = {
   theme: 'dark',
   githubToken: '',
   githubRepo: '',
-  currentProjectPath: ''
+  currentProjectPath: '',
+  openTabs: [],
+  activeTabId: ''
 }
 
 export const settingsStore = new Store<AppSettings>({

@@ -89,6 +89,18 @@ export interface ElectronAPI {
   }>
   triggerUpdate: () => Promise<{ ok: boolean }>
   onUpdateDownloadProgress: (cb: (pct: number) => void) => () => void
+  // Prošireni project fajl operacije
+  projectReadFileFromPath: (projectPath: string, filename: string) => Promise<string | null>
+  setActivePath: (path: string) => Promise<{ ok: boolean }>
+  // Perzistencija tabova
+  tabsSaveState: (
+    tabs: Array<{ id: string; projectPath: string | null; projectName: string }>,
+    activeTabId: string
+  ) => Promise<{ ok: boolean }>
+  tabsLoadState: () => Promise<{
+    tabs: Array<{ id: string; projectPath: string; projectName: string }>
+    activeTabId: string
+  }>
 }
 
 declare global {

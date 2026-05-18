@@ -179,6 +179,10 @@ interface ForgeKitStore {
   setPhase: (phase: ForgeKitPhase) => void
   setProjectName: (name: string) => void
   newSession: () => void
+  initTabsFromSaved: (
+    savedTabs: Array<{ id: string; projectPath: string; projectName: string }>,
+    savedActiveId: string
+  ) => void
 
   // ── Akcije — provider ──
   setProvider: (provider: string, model: string) => void
@@ -269,23 +273,44 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   },
 
   switchToTab: (id) => {
-    const { activeTabId, tabSnapshots } = get()
+    const { activeTabId, tabSnapshots, tabs } = get()
     if (id === activeTabId) return
 
     // Sačuvaj trenutni tab
     const currentSnapshot = captureSnapshot(get())
-    // Učitaj ciljni tab
-    const targetSnapshot = tabSnapshots[id] ?? makeDefaultSnapshot()
+    const targetSnapshot = tabSnapshots[id]
+    const targetHeader = tabs.find((t) => t.id === id)
+
+    if (!targetSnapshot && targetHeader?.projectPath) {
+      // Tab je restaurisan ali sesija još nije učitana — lazy load
+      const path = targetHeader.projectPath
+      window.api.setActivePath(path)
+      set((s) => ({
+        tabSnapshots: { ...s.tabSnapshots, [activeTabId]: currentSnapshot },
+        tabs: s.tabs.map((t) => t.id === activeTabId
+          ? { ...t, projectName: currentSnapshot.projectName, projectPath: currentSnapshot.projectPath, isStreaming: false }
+          : t
+        ),
+        activeTabId: id,
+        ...makeDefaultSnapshot({ projectPath: path, projectName: targetHeader.projectName })
+      }))
+      // Učitaj session.json iz projektnog foldera
+      get().loadSession()
+      return
+    }
+
+    // Normalan prelaz iz memorijskog snapshot-a
+    const snap = targetSnapshot ?? makeDefaultSnapshot()
+    if (snap.projectPath) window.api.setActivePath(snap.projectPath)
 
     set((s) => ({
       tabSnapshots: { ...s.tabSnapshots, [activeTabId]: currentSnapshot },
-      // Ažuriraj header prethodnog taba
       tabs: s.tabs.map((t) => t.id === activeTabId
         ? { ...t, projectName: currentSnapshot.projectName, projectPath: currentSnapshot.projectPath, isStreaming: false }
         : t
       ),
       activeTabId: id,
-      ...targetSnapshot
+      ...snap
     }))
   },
 
@@ -443,6 +468,34 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     projectPath: s.projectPath
   })),
 
+  initTabsFromSaved: (savedTabs, savedActiveId) => {
+    if (savedTabs.length === 0) return
+
+    const tabHeaders: TabHeader[] = savedTabs.map((t) => ({
+      id: t.id,
+      projectName: t.projectName,
+      projectPath: t.projectPath,
+      isStreaming: false
+    }))
+
+    // Odaberi aktivni tab — preferiraj sačuvani, inače prvi
+    const activeId = savedTabs.find((t) => t.id === savedActiveId)
+      ? savedActiveId
+      : savedTabs[0].id
+    const activeTab = savedTabs.find((t) => t.id === activeId) ?? savedTabs[0]
+
+    // Postavi electron-store currentProjectPath na aktivni tab
+    if (activeTab.projectPath) window.api.setActivePath(activeTab.projectPath)
+
+    set({
+      tabs: tabHeaders,
+      activeTabId: activeId,
+      tabSnapshots: {},              // Snapshoti se pune lazy (pri prelasku ili loadSession)
+      projectPath: activeTab.projectPath,
+      projectName: activeTab.projectName
+    })
+  },
+
   // ── Provider ──
 
   setProvider: (provider, model) => set({ selectedProvider: provider, selectedModel: model }),
@@ -478,11 +531,14 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   // ── Projekat ──
 
-  setProjectPath: (path) => set((s) => ({
-    projectPath: path,
-    // Sinhroniziraj tab header
-    tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, projectPath: path } : t)
-  })),
+  setProjectPath: (path) => {
+    // Sinhroniziraj electron-store currentProjectPath kako bi write operacije koristile pravi folder
+    if (path) window.api.setActivePath(path)
+    set((s) => ({
+      projectPath: path,
+      tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, projectPath: path } : t)
+    }))
+  },
 
   setShowProjectSetup: (show) => set({ showProjectSetup: show }),
 
@@ -504,7 +560,10 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   },
 
   loadSession: async () => {
-    const raw = await window.api.projectReadFile('session.json')
+    const path = get().projectPath
+    if (!path) return
+    // Čitamo direktno iz projektnog foldera — neovisno od electron-store currentProjectPath
+    const raw = await window.api.projectReadFileFromPath(path, 'session.json')
     if (!raw) return
     try {
       const data = JSON.parse(raw) as {

@@ -157,6 +157,35 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     return readProjectFile(projectPath, filename)
   })
 
+  // Čitanje fajla iz eksplicitnog foldera (bez oslanjanja na currentProjectPath)
+  ipcMain.handle('project:read-file-from-path', (_e, projectPath: string, filename: string) => {
+    if (!projectPath) return null
+    return readProjectFile(projectPath, filename)
+  })
+
+  // Postavljanje aktivnog projekta (sinhronizacija pri prelasku između tabova)
+  ipcMain.handle('project:set-active-path', (_e, path: string) => {
+    if (path) settingsStore.set('currentProjectPath', path)
+    return { ok: true }
+  })
+
+  // ── TABOVI — perzistencija ─────────────────────────────────────────────────
+
+  ipcMain.handle('tabs:save-state', (_e,
+    tabs: Array<{ id: string; projectPath: string | null; projectName: string }>,
+    activeTabId: string
+  ) => {
+    const validTabs = tabs.filter((t) => t.projectPath !== null) as Array<{ id: string; projectPath: string; projectName: string }>
+    settingsStore.set('openTabs', validTabs)
+    settingsStore.set('activeTabId', activeTabId)
+    return { ok: true }
+  })
+
+  ipcMain.handle('tabs:load-state', () => ({
+    tabs: settingsStore.get('openTabs') ?? [],
+    activeTabId: settingsStore.get('activeTabId') ?? ''
+  }))
+
   // ── APP INFO & UPDATE ─────────────────────────────────────────────────────
 
   ipcMain.handle('app:get-version', () => app.getVersion())

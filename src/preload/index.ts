@@ -51,5 +51,18 @@ contextBridge.exposeInMainWorld('api', {
     const h = (_: Electron.IpcRendererEvent, pct: number) => cb(pct)
     ipcRenderer.on('update-download-progress', h)
     return () => ipcRenderer.removeListener('update-download-progress', h)
-  }
+  },
+
+  // Prošireni project fajl operacije
+  projectReadFileFromPath: (projectPath: string, filename: string) =>
+    ipcRenderer.invoke('project:read-file-from-path', projectPath, filename),
+  setActivePath: (path: string) =>
+    ipcRenderer.invoke('project:set-active-path', path),
+
+  // Perzistencija tabova
+  tabsSaveState: (
+    tabs: Array<{ id: string; projectPath: string | null; projectName: string }>,
+    activeTabId: string
+  ) => ipcRenderer.invoke('tabs:save-state', tabs, activeTabId),
+  tabsLoadState: () => ipcRenderer.invoke('tabs:load-state')
 })

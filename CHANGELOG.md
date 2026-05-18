@@ -30,6 +30,17 @@ Sve verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.4] — 2026-05-18 — Perzistencija tabova
+### Novo
+- Svi otvoreni tabovi se čuvaju pri gašenju i automatski restauriraju pri slijedećem pokretanju
+- Aktivni tab se pamti — pri startu odmah otvaraš tamo gdje si stao
+- Neaktivni tabovi se učitavaju **lazy** — sesija se čita tek kada pređeš na taj tab
+- `setProjectPath` sinhronizuje electron-store pri svakoj promjeni foldera (ispravlja edge-case pri pisanju session.json)
+- `loadSession` čita direktno iz projektnog foldera (neovisno od interno sačuvanog puta)
+- Nova IPC komunikacija: `tabs:save-state`, `tabs:load-state`, `project:read-file-from-path`, `project:set-active-path`
+
+---
+
 ## [0.3.3] — 2026-05-18 — Validacija provider/model + bolja greška za API ključ
 ### Novo
 - Validacija provider/model pri učitavanju sesije — mismatch se automatski ispravlja (npr. `anthropic + gpt-4o` → `anthropic + claude-sonnet-4-6`)
