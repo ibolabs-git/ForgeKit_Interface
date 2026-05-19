@@ -46,13 +46,13 @@ for await (const chunk of stream) {
 }
 ```
 
-Provider abstraction layer treba da normalizuje oba u isti `AsyncGenerator<string>` format.
+Provider abstraction layer normalizuje oba u isti `AsyncGenerator<string>` format.
 
 ---
 
 ## TN-003 — Role Tag detekcija
 
-AI odgovori ce sadrzati ForgeKit role tagove u formatu `[ROLE_NAME]`.
+AI odgovori sadrze ForgeKit role tagove u formatu `[ROLE_NAME]`.
 
 Regex za detekciju:
 ```typescript
@@ -61,7 +61,18 @@ const ROLE_REGEX = /^\[([A-Z\s]+)\]/
 
 Uloge: `ORCHESTRATOR`, `THINKER`, `BUILDER`, `REVIEWER`, `MEMORY CURATOR`, `OBSERVER`
 
-Svaka uloga dobija svoju boju u UI-ju.
+Svaka uloga ima zasebnu boju u UI-ju:
+
+| Uloga | Svetla tema | Tamna tema |
+|---|---|---|
+| ORCHESTRATOR | `#1e4d7a` komandno plava | `#7eb5e8` pastelna plava |
+| THINKER | `#1a5c32` sumska zelena | `#7ec49a` mint |
+| BUILDER | `#6b3a14` hrastova smeda | `#c4976a` topla tan |
+| REVIEWER | `#4a1e6e` duboka ljubicasta | `#b082cc` lavanda |
+| MEMORY CURATOR | `#1e3d5e` arhivska mornaricka | `#82aec4` slate plava |
+| OBSERVER | `#3a4a5a` celicna siva | `#a0b4c4` sivo-plava |
+
+Implementacija: `data-role` atribut na `.lp-role-tile` + CSS `[data-role="..."]` selektori.
 
 ---
 
@@ -72,61 +83,93 @@ API kljucevi se NE smeju cuvati u:
 - Hardkodovano u kodu
 - Commitovano u git
 
-Koristiti `electron-store` sa enkripcijom:
+Koristiti `safeStorage` (Windows DPAPI / macOS Keychain) kroz `electron-store`:
 ```typescript
-import Store from 'electron-store'
-const store = new Store({ encryptionKey: 'forgekit-app-key' })
-store.set('anthropic_api_key', key)
+// store.ts — SEC-04 implementacija
+const secureStore = new Store<SecureData>({ name: 'forgekit-secure' })
+// Enkriptuj pre snimanja:
+safeStorage.encryptString(value).toString('base64')
+// Dekriptuj pri citanju:
+safeStorage.decryptString(Buffer.from(stored, 'base64'))
 ```
+
+Soft migracija: ako `safeStorage` verzija ne postoji, cita iz legacy `encryptionKey` store-a.
 
 ---
 
-## TN-005 — Folder struktura projekta
+## TN-005 — Folder struktura projekta (azurirano)
 
 ```
 ForgeKit_Interface_App/          ← projektni dokumenti (ForgeKit)
-src/
-  main/                          ← Electron main process
-    index.ts
-    ipc-handlers.ts
-    providers/
-      anthropic.ts
-      openai.ts
-      provider.interface.ts
-      provider.factory.ts
-  renderer/                      ← React UI
-    App.tsx
-    components/
-      ChatWindow/
-      MessageBubble/
-      InputBar/
-      SidePanel/
-      ModelSelector/
-    store/
-      forgekit.store.ts
-    prompts/
-      system-prompt.ts
-  shared/
-    types.ts
+├── app/                         ← Electron aplikacija (git repo)
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── index.ts         ← Electron main entry
+│   │   │   ├── ipc-handlers.ts  ← IPC kanali, AI pozivi, GitHub, projekat
+│   │   │   ├── system-prompt.ts ← ForgeKit bundlovani fallback prompt (SEC-05)
+│   │   │   ├── store.ts         ← electron-store: settings, API kljucevi
+│   │   │   ├── github.ts        ← GitHub API layer (fetch, upload, template)
+│   │   │   ├── project-manager.ts ← File I/O za projektne fajlove
+│   │   │   ├── updater.ts       ← electron-updater logika
+│   │   │   └── providers/
+│   │   │       ├── anthropic.ts
+│   │   │       ├── openai.ts
+│   │   │       ├── nvidia.ts
+│   │   │       ├── interface.ts
+│   │   │       └── factory.ts
+│   │   ├── preload/
+│   │   │   └── index.ts         ← contextBridge API (window.api)
+│   │   └── renderer/src/
+│   │       ├── App.tsx + App.css ← Root, teme, layout grid
+│   │       ├── hooks/
+│   │       │   └── useSendMessage.ts  ← Zajednicki send hook + READ_TEMPLATE
+│   │       ├── store/
+│   │       │   └── forgekit.store.ts  ← Zustand store (ceo state)
+│   │       ├── types/
+│   │       │   └── index.ts     ← ForgeKitRole, ForgeKitPhase, Message, ElectronAPI...
+│   │       ├── utils/
+│   │       │   └── forgekit-context.ts  ← Re-Prime builder
+│   │       └── components/
+│   │           ├── Header.tsx / .css
+│   │           ├── TabBar.tsx / .css
+│   │           ├── LeftPanel.tsx / .css
+│   │           ├── ChatWindow.tsx / .css
+│   │           ├── MessageBubble.tsx / .css
+│   │           ├── InputBar.tsx / .css
+│   │           ├── SidePanel.tsx / .css
+│   │           ├── SettingsModal.tsx / .css
+│   │           ├── ProjectSetupModal.tsx / .css
+│   │           ├── SessionSummaryModal.tsx / .css
+│   │           └── HandoffModal.tsx
+│   ├── package.json             ← verzija, build config, GitHub release config
+│   └── dist/                   ← generiše se pri `npm run package`
+├── CHANGELOG.md
+├── technical_notes.md
+├── handoff.md
+├── task_list.md
+├── intake.md
+├── product_spec.md
+├── decisions.md
+└── validation_plan.md
 ```
 
 ---
 
-## TN-006 — System Prompt strategija
+## TN-006 — System Prompt strategija (azurirano v1.0.8+)
 
-ForgeKit system prompt je staticni tekst koji se salje kao `system` poruka pri svakom API pozivu.
+**SEC-05**: Prompt zivi ISKLJUCIVO u main procesu. Renderer ga ne salje kroz IPC.
 
-Prompt mora sadrzati:
-- ForgeKit uloge i njihove granice
-- Pravilo role tagging-a (`[ROLE]` format)
-- Pilar rezim kao podrazumevani tok
-- Instrukcije za task pracenje
-- Instrukcije za fazni rad (F1/F2/F3)
+**Hijerarhija izvora (v1.0.8+)**:
+1. GitHub — `Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md` iz `masterToolRepo`
+2. GitHub fallback — ostali kandidati (orchestrator_prompt.md, root putanje)
+3. Bundlovani fallback — `src/main/system-prompt.ts` (uvek dostupan offline)
 
-Prompt ne sme biti predugacak — optimizovati za token efikasnost.
-Preporucena duzina: do 1500 tokena.
+**Caching**: Prompt se fetchuje jednom po app sesiji (pri prvoj `send-message`) i keshira u `cachedSystemPrompt` varijabli u main procesu.
 
-**SEC-05**: Prompt zivi ISKLJUCIVO u `src/main/system-prompt.ts`. Renderer ne prima i ne salje system prompt kroz IPC — main ga dodaje sam pri svakom pozivu.
+**Prompt source indikator** (v1.0.10): `promptSource` varijabla (`'github' | 'bundled' | 'pending'`) dostupna kroz `github:prompt-source` IPC, prikazana u SidePanel-u:
+- `■ PROMPT: GITHUB` — teal, GitHub fetch uspeo
+- `■ PROMPT: BUNDLED` — narandzasta, koristi se lokalni fallback
+- `■ PROMPT: —` — sivo, jos nije poslana poruka
 
 ---
 
@@ -168,11 +211,11 @@ Browseri koriste per-glyph fallback — za latinicna slova koristi Share Tech, z
 
 ---
 
-## TN-010 — useSendMessage hook i invoke arhitektura
+## TN-010 — useSendMessage hook i invoke arhitektura (azurirano v1.0.11)
 
 `src/renderer/src/hooks/useSendMessage.ts` je zajednicki hook koji enkapsulira kompletnu logiku slanja poruka ka AI-u. Koriste ga InputBar (normalne poruke) i LeftPanel (invoke komande).
 
-Invoke tok:
+**Invoke tok:**
 ```
 Klik na tile → send('[INVOKE:BUILDER]')
   → addUserMessage() → startAssistantMessage()
@@ -181,49 +224,109 @@ Klik na tile → send('[INVOKE:BUILDER]')
   → BUILDER tile dobija zvezdicu
 ```
 
+**Kljucne implementacione odluke (v1.0.11):**
+
+`contentRef` — `useRef<string>` akumulira streaming sadrzaj lokalno (pored Zustand `streamingContent`). Neophodan za READ_TEMPLATE detekciju jer se `streamingContent` resetuje pri `finalizeMessage`.
+
+`sendRef` — `useRef<send fn>` uvek drzi najsveziju verziju `send` callback-a. Resava closure stale problem: `onStreamComplete` handler se kreira pri svakom `send()` pozivu, ali treba da pokrene novi `send()` sa `isStreaming: false`. Bez `sendRef`, koristio bi staro zatvorenje gde je `isStreaming: true`.
+
+```typescript
+// Pattern:
+const sendRef = useRef(send)
+sendRef.current = send  // osvezi na svakom renderu
+
+// U onStreamComplete:
+setTimeout(() => { sendRef.current(injectText) }, 80)
+```
+
 ---
 
-## TN-011 — Dual-repo GitHub konfiguracija
+## TN-011 — GitHub konfiguracija (finalna, v1.0.9+)
 
-Master_ForgeKit_Tool je u zasebnom repo-u — nije deo app repo-a.
+Master_ForgeKit_Tool je u zasebnom repo-u od app repo-a.
 
 **Repozitorijumi:**
-- App repo: `ibolabs-git/ForgeKit_Interface` — za memoriju i upload
-- Master Tool repo: `ibolabs-git/ForgeKit_tool` — instrukcije i template-i
+- App repo: `ibolabs-git/ForgeKit_Interface` — GitHub Releases, auto-updater
+- Master Tool repo: `ibolabs-git/ForgeKit_tool` — ForgeKit instrukcije, template-i, memorija
 
 **Putanja u ForgeKit_tool repo-u:**
 ```
 https://github.com/ibolabs-git/ForgeKit_tool/tree/main/Master_ForgeKit_Tool
 ```
-Sve instrukcije i template-i su unutar `Master_ForgeKit_Tool/` podfolder-a u root-u repo-a.
+Sva dokumentacija je unutar `Master_ForgeKit_Tool/` podfolder-a.
 
-**Konfiguracija — dva polja u Settings:**
+**Settings — jedno relevantno polje:**
 
 | Store polje | UI label | Vrednost |
 |---|---|---|
-| `githubRepo` | Repozitorijum | `ibolabs-git/ForgeKit_Interface` |
 | `masterToolRepo` | Master Tool Repozitorijum | `ibolabs-git/ForgeKit_tool` |
+| `githubRepo` | (legacy, nekoriscen aktivno) | — |
 
-`getMasterToolConfig()` u `store.ts` vraca config za Master Tool: koristi `masterToolRepo` ako je podesen, inace pada na `githubRepo`. Isti GitHub Token vazi za oba.
+`getMasterToolConfig()` u `store.ts` vraca config za Master Tool: koristi `masterToolRepo` ako je podesen, inace pada na `githubRepo`.
 
-**System prompt tok (v1.0.8)**:
-```
-send-message handler → getMasterToolConfig()
-  → fetchSystemPromptFromGitHub(masterToolConfig)
-  → tries: 'Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md'  ← puna putanja
-           'Master_ForgeKit_Tool/00_SYSTEM/orchestrator_prompt.md'
-           '00_SYSTEM/forgekit_mode_prompt.md'  ← fallback (root repo)
-           'system-prompt.md'
-  → cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT (bundlovani)
-```
+**Sve GitHub operacije koriste masterToolRepo:**
+- `fetchSystemPromptFromGitHub` — cita system prompt
+- `fetchTemplateFromGitHub` — cita template fajlove
+- `uploadMemoryRecord` — upisuje memoriju u `Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/`
+- `testGitHubConnection` — testira konekciju
 
 **fetchTemplateFromGitHub — logika putanje:**
 ```typescript
-// Agent prosledjuje: '03_STANDARD/technical_notes.md'
-// Funkcija uvek pokusava sa Master_ForgeKit_Tool/ prefiksom prvo:
+// Uvek pokusava sa Master_ForgeKit_Tool/ prefiksom prvo:
 //   1. 'Master_ForgeKit_Tool/03_STANDARD/technical_notes.md'  ← prava putanja
 //   2. '03_STANDARD/technical_notes.md'                       ← fallback
 
 const result = await window.api.githubFetchTemplate('03_STANDARD/technical_notes.md')
 // → { ok: true, content: '...' }
+```
+
+---
+
+## TN-012 — READ_TEMPLATE mehanizam (v1.0.11)
+
+Mehanizam koji omogucava AI agentima da zatraže sadrzaj fajlova iz Master_ForgeKit_Tool tokom sesije.
+
+**Tag format:**
+```
+[READ_TEMPLATE: 00_SYSTEM/rules.md]
+[READ_TEMPLATE: 03_STANDARD/technical_notes.md]
+```
+
+AI moze da posalje vise tagova u jednom odgovoru — svi se obradjuju odjednom.
+
+**Tok:**
+```
+1. AI odgovori sa [READ_TEMPLATE: 00_SYSTEM/rules.md] u tekstu
+2. useSendMessage detektuje tag iz contentRef (lokalni buffer) nakon stream-complete
+3. window.api.githubFetchTemplate('00_SYSTEM/rules.md') → IPC
+4. main: fetchTemplateFromGitHub(masterToolConfig, '00_SYSTEM/rules.md')
+5. GitHub API → Master_ForgeKit_Tool/00_SYSTEM/rules.md (pokusava sa prefiksom)
+6. Sadrzaj se formatira kao [TEMPLATE_INJECT] poruka
+7. setTimeout(80ms) → sendRef.current(injectText)
+8. Inject poruka se salje kao korisnička poruka, AI dobija sadrzaj
+9. AI nastavlja rad koristeci sadrzaj dokumenta
+```
+
+**Format inject poruke (u chat istoriji):**
+```
+[TEMPLATE_INJECT]
+=== 00_SYSTEM/rules.md ===
+
+{sadrzaj fajla}
+
+---
+
+=== 00_SYSTEM/workflow.md ===
+
+{sadrzaj fajla}
+```
+
+**UI prikaz**: MessageBubble detektuje `[TEMPLATE_INJECT]` prefiks i prikazuje kompaktni chip umesto normalnog bubble-a:
+- Prikazuje listu ucitanih fajlova
+- Klikabilan za expand/collapse sadrzaja
+- Stil: teal `border-left`, `■ Template ucitan: rules.md`
+
+**Regex za detekciju:**
+```typescript
+const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 ```

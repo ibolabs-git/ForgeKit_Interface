@@ -4,12 +4,14 @@
 2026-05-19
 
 ## Verzija
-v1.0.6 (live na GitHub Releases)
+v1.0.11 (live na GitHub Releases)
 
 ## Status projekta
-**Aktivan razvoj — UI stabilizacija faza**
+**Aktivan razvoj — GitHub integracija i agent pristup dokumentima**
 
-Sve tri originalne faze (F1, F2, F3) su implementirane i funkcionalne. Projekat je prešao u fazu iterativnog poboljšanja UI-ja i proširenja funkcionalnosti na bazi korisničkog feedbacka.
+Sve tri originalne faze (F1, F2, F3) su implementirane. Projekat je usao u fazu proširenja:
+agenti sada mogu citati instrukcije i template-e direktno sa GitHub-a (Master_ForgeKit_Tool),
+a sistem sam prepoznaje i injektuje zatrazene dokumente u razgovor.
 
 ---
 
@@ -17,56 +19,86 @@ Sve tri originalne faze (F1, F2, F3) su implementirane i funkcionalne. Projekat 
 
 ### Jezgro aplikacije
 - Electron 33 + React 18 + TypeScript 5.6 + electron-vite 2
-- Provider abstraction layer: Anthropic (Claude) i OpenAI (GPT), proširiv
-- NVIDIA NIM podrška (OpenAI-kompatibilni endpoint)
+- Provider abstraction layer: Anthropic (Claude), OpenAI (GPT), NVIDIA NIM
 - Streaming odgovori token-po-token kroz IPC kanal
 - Zustand 5 store za kompletan state management
-- electron-store za enkriptovano čuvanje API ključeva
+- electron-store + safeStorage (DPAPI) za enkriptovano cuvanje API kljuceva
 - Auto-updater (electron-updater + GitHub Releases)
 
 ### UI Komponente
+
 | Komponenta | Opis | Fajl |
 |---|---|---|
 | `Header` | Naslov, tab bar, model selector, handoff dugme | `Header.tsx` |
-| `TabBar` | Multi-tab sesije (Novi projekat dugme) | `TabBar.tsx` |
-| `LeftPanel` | Agent role grid (6 tile-ova) + faze + projekat | `LeftPanel.tsx` |
+| `TabBar` | Multi-tab sesije | `TabBar.tsx` |
+| `LeftPanel` | Agent role grid (6 tile-ova, 2×3) + faze + projekat info | `LeftPanel.tsx` |
 | `ChatWindow` | Lista poruka, search, export, streaming | `ChatWindow.tsx` |
-| `MessageBubble` | Markdown render, role tag, task detekcija | `MessageBubble.tsx` |
+| `MessageBubble` | Markdown render, role tag, task detekcija, template inject chip | `MessageBubble.tsx` |
 | `InputBar` | Textarea, Ctrl+Enter send, streaming stop | `InputBar.tsx` |
-| `SidePanel` | Session metrika, re-prime, model switcher, taskovi, memory, verzija | `SidePanel.tsx` |
-| `SettingsModal` | API ključevi (accordioni), GitHub token, model defaults, tema | `SettingsModal.tsx` |
+| `SidePanel` | Session metrika, re-prime, model switcher, taskovi, memory, prompt source indikator, verzija | `SidePanel.tsx` |
+| `SettingsModal` | API kljucevi, GitHub konfiguracija, model defaults, tema | `SettingsModal.tsx` |
 | `ProjectSetupModal` | Naziv projekta + folder | `ProjectSetupModal.tsx` |
 | `SessionSummaryModal` | AI-generisan rezime sesije | `SessionSummaryModal.tsx` |
 | `HandoffModal` | Handoff workflow modal | `HandoffModal.tsx` |
 
 ### ForgeKit Logika
-- System prompt živi isključivo u main procesu (`src/main/system-prompt.ts`) — SEC-05
-- Parser detektuje `[ROLE]` tagove iz AI odgovora i ažurira `activeRole`
-- Parser detektuje `- [ ] task` i `- [x] task` i ažurira task listu
-- Parser detektuje `F1`/`F2`/`F3` i ažurira `currentPhase`
-- Re-Prime mehanizam: pri promeni modela šalje komprimovani kontekst umesto pune istorije
-- Context status (`synced` / `needs_refresh`) vidljiv u SidePanel-u
+- System prompt zivi iskljucivo u main procesu (`src/main/system-prompt.ts`) — SEC-05
+- **GitHub fetch system prompta**: pri prvoj poruci fetchuje `forgekit_mode_prompt.md` iz `masterToolRepo`; keshira za celu sesiju
+- **Prompt source indikator**: SidePanel pokazuje `■ PROMPT: GITHUB` / `■ PROMPT: BUNDLED`
+- Parser detektuje `[ROLE]` tagove iz AI odgovora i azurira `activeRole`
+- Parser detektuje `- [ ] task` / `- [x] task` i azurira task listu
+- Parser detektuje `F1`/`F2`/`F3` i azurira `currentPhase`
+- Re-Prime mehanizam: pri promeni modela salje komprimovani kontekst umesto pune istorije
 
-### Agent Invoke Mehanika (v1.0.6)
+### Agent Role Grid (v1.0.6+)
 - LeftPanel prikazuje 6 agent tile-ova u 2×3 gridu (stilizovano kao metric tiles)
-- Aktivna uloga: animirana zvezda (★) + obojen border-left
-- Klik na tile šalje `[INVOKE:ULOGA]` poruku AI-u
-- AI preuzima ulogu i odgovara u njenom kontekstu
+- Aktivna uloga: animirana zvezda `★` + obojen `border-left` u boji uloge
+- Klik na tile salje `[INVOKE:ULOGA]` poruku AI-u koji preuzima tu ulogu
 - Grid je disabled tokom streaminga
-- `useSendMessage` hook deli logiku slanja između InputBar i LeftPanel
+
+### GitHub Integracija (v1.0.8–v1.0.11)
+- **masterToolRepo**: zasebno polje u Settings za `ibolabs-git/ForgeKit_tool`
+- Sve GitHub operacije koriste `getMasterToolConfig()` koji daje prioritet `masterToolRepo`
+- **Memorija**: upisuje se u `Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/` u ForgeKit_tool repo
+- `github:fetch-template` IPC handler za citanje bilo kog fajla iz Master Tool repo-a
+
+### READ_TEMPLATE mehanizam (v1.0.11)
+AI moze da zatrazi fajl tagom `[READ_TEMPLATE: putanja]` u odgovoru.
+App detektuje tag, fetchuje fajl sa GitHub-a i auto-injektuje sadrzaj nazad u razgovor.
+UI prikazuje kompaktni chip (klikabilan za expand) umesto normalnog bubble-a.
+
+```
+[READ_TEMPLATE: 00_SYSTEM/rules.md]
+  → useSendMessage detektuje tag (contentRef buffer)
+  → window.api.githubFetchTemplate()
+  → Master_ForgeKit_Tool/00_SYSTEM/rules.md sa GitHub-a
+  → auto-send kao [TEMPLATE_INJECT] poruka
+  → AI dobija sadrzaj i nastavlja rad
+```
 
 ### Tema sistema
-- Dve teme: Light (default) i Dark
+- Dve teme: Light i Dark
 - Light: `#f0f0e4` pozadina, `#679e88` akcenat, `#fffbf2` paneli
 - Dark: `#3e535c` paneli, `#4f6870` chat oblast, `#334d57` header, `#b7c0c4` akcenat
-- Per-uloga boje na agent tile-ovima (svetla: zasićeni tamni tonovi; tamna: pastelni svetli tonovi)
-- CSS custom properties (`--bg-primary`, `--accent`, itd.) sa `[data-theme="dark"]` override
+- Per-uloga boje na agent tile-ovima (svetla: zasiceni tamni tonovi; tamna: pastelni svetli tonovi)
 
 ### Bezbednost
-- SEC-05: system prompt se ne prosleđuje kroz IPC, main ga dodaje sam
-- API ključevi enkriptovani u electron-store
+- SEC-05: system prompt se ne prosledjuje kroz IPC, main ga dodaje sam
+- API kljucevi enkriptovani kroz safeStorage (DPAPI/Keychain)
 - contextIsolation + nodeIntegration: false
 - preload.ts eksponuje samo dozvoljene funkcije kroz contextBridge
+- SEC-07: putanje pri fetch-template sanitizovane (uklonjen `../`)
+
+---
+
+## GitHub konfiguracija (Settings)
+
+| Polje | Vrednost |
+|---|---|
+| GitHub Token | `ghp_...` (isti token za oba repo-a) |
+| Master Tool Repozitorijum | `ibolabs-git/ForgeKit_tool` |
+
+Master_ForgeKit_Tool dokumentacija: `https://github.com/ibolabs-git/ForgeKit_tool/tree/main/Master_ForgeKit_Tool`
 
 ---
 
@@ -75,136 +107,111 @@ Sve tri originalne faze (F1, F2, F3) su implementirane i funkcionalne. Projekat 
 ```
 Korisnik (InputBar ili LeftPanel tile klik)
   → useSendMessage hook
-    → addUserMessage() [Zustand store]
-    → startAssistantMessage() [Zustand store]
+    → contentRef akumulira streaming tokene (za READ_TEMPLATE)
+    → addUserMessage() + startAssistantMessage() [Zustand store]
     → window.api.sendMessage() [IPC → preload]
       → main/ipc-handlers.ts
-        → system-prompt.ts (dodaje se automatski)
-        → providers/[anthropic|openai|nvidia].ts
-          → AI SDK streaming
-          → stream-token event → renderer
-            → appendStreamToken() [Zustand store]
-        → stream-complete event → renderer
+        → getMasterToolConfig() → fetchSystemPromptFromGitHub() [jednom]
+        → providers/[anthropic|openai|nvidia].ts → AI SDK streaming
+          → stream-token events → renderer → appendStreamToken()
+        → stream-complete → renderer
           → finalizeMessage() → extractRole() + extractTasks() + extractPhase()
+          → READ_TEMPLATE detekcija u contentRef
+            → githubFetchTemplate() per tag
+            → sendRef.current(injectText) — auto-inject
 ```
 
 ---
 
-## Folder struktura (stvarna)
+## Folder struktura (app/)
 
 ```
-ForgeKit_Interface_App/
-├── app/                          ← Electron aplikacija
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── index.ts          ← Electron main entry
-│   │   │   ├── ipc-handlers.ts   ← IPC kanali, AI pozivi
-│   │   │   ├── system-prompt.ts  ← ForgeKit system prompt (SEC-05)
-│   │   │   └── providers/
-│   │   │       ├── anthropic.ts
-│   │   │       ├── openai.ts
-│   │   │       ├── nvidia.ts
-│   │   │       ├── interface.ts
-│   │   │       └── factory.ts
-│   │   ├── preload/
-│   │   │   └── index.ts          ← contextBridge API
-│   │   └── renderer/src/
-│   │       ├── App.tsx + App.css ← Root, teme, layout grid
-│   │       ├── hooks/
-│   │       │   └── useSendMessage.ts  ← Zajednički send hook
-│   │       ├── store/
-│   │       │   └── forgekit.store.ts  ← Zustand store (ceo state)
-│   │       ├── types/
-│   │       │   └── index.ts      ← ForgeKitRole, ForgeKitPhase, Message...
-│   │       ├── utils/
-│   │       │   └── forgekit-context.ts  ← Re-Prime builder
-│   │       └── components/
-│   │           ├── Header.tsx / .css
-│   │           ├── TabBar.tsx / .css
-│   │           ├── LeftPanel.tsx / .css
-│   │           ├── ChatWindow.tsx / .css
-│   │           ├── MessageBubble.tsx / .css
-│   │           ├── InputBar.tsx / .css
-│   │           ├── SidePanel.tsx / .css
-│   │           ├── SettingsModal.tsx / .css
-│   │           ├── ProjectSetupModal.tsx / .css
-│   │           ├── SessionSummaryModal.tsx / .css
-│   │           └── HandoffModal.tsx
-│   ├── package.json              ← v1.0.6, build config, GitHub release config
-│   ├── electron.vite.config.ts
-│   └── dist/                    ← Generiše se pri `npm run package`
-├── intake.md
-├── product_spec.md
-├── decisions.md
-├── technical_notes.md
-├── task_list.md
-├── validation_plan.md
-├── handoff.md                   ← ovaj fajl
-└── CHANGELOG.md
+src/
+├── main/
+│   ├── index.ts            ← Electron main entry
+│   ├── ipc-handlers.ts     ← IPC kanali (AI, Settings, GitHub, Projekat, Tabovi)
+│   ├── system-prompt.ts    ← Bundlovani fallback ForgeKit prompt
+│   ├── store.ts            ← electron-store: settings, safeStorage kljucevi
+│   ├── github.ts           ← GitHub API (fetch, upload, template)
+│   ├── project-manager.ts  ← File I/O za projektne fajlove
+│   ├── updater.ts          ← electron-updater
+│   └── providers/          ← anthropic.ts, openai.ts, nvidia.ts, interface.ts, factory.ts
+├── preload/
+│   └── index.ts            ← contextBridge (window.api)
+└── renderer/src/
+    ├── App.tsx + App.css   ← Root, teme, layout
+    ├── hooks/useSendMessage.ts  ← Send logika + READ_TEMPLATE mehanizam
+    ├── store/forgekit.store.ts  ← Zustand (messages, roles, phases, tasks, tabs)
+    ├── types/index.ts      ← TypeScript tipovi + ElectronAPI interfejs
+    ├── utils/forgekit-context.ts ← Re-Prime builder
+    └── components/         ← sve UI komponente (.tsx + .css parovi)
 ```
 
 ---
 
-## Build i deploy proces
+## Build i deploy
 
 ```bash
 # Development
-cd app
-npm run dev
+cd app && npm run dev
 
-# Produkcioni build
+# Produkcioni build (kompajlira, ne pakuje)
 npm run build
 
-# NSIS installer (.exe)
+# NSIS installer
 npm run package
 # → dist/ForgeKit Interface Setup X.X.X.exe
+# → dist/latest.yml  (za auto-updater)
 
-# GitHub Release (nakon package)
-git add .
-git commit -m "vX.X.X — opis"
-git tag vX.X.X
-git push origin main --tags
-gh release create vX.X.X "dist/ForgeKit Interface Setup X.X.X.exe" \
-  "dist/ForgeKit Interface Setup X.X.X.exe.blockmap" \
-  --title "..." --notes "..."
+# GitHub Release
+cp "dist/ForgeKit Interface Setup X.X.X.exe" "dist/ForgeKit-Interface-Setup-X.X.X.exe"
+cp "dist/ForgeKit Interface Setup X.X.X.exe.blockmap" "dist/ForgeKit-Interface-Setup-X.X.X.exe.blockmap"
+git add -A && git commit -m "vX.X.X — opis" && git push origin main
+gh release create vX.X.X \
+  "dist/ForgeKit-Interface-Setup-X.X.X.exe" \
+  "dist/ForgeKit-Interface-Setup-X.X.X.exe.blockmap" \
+  "dist/latest.yml" \
+  --repo ibolabs-git/ForgeKit_Interface \
+  --title "vX.X.X — naziv"
 ```
 
-Auto-updater: `electron-updater` proverava GitHub Releases (owner: `ibolabs-git`, repo: `ForgeKit_Interface`). Korisnik vidi `↑ Proveri update` u donjem desnom uglu SidePanel-a.
+**Vazno**: GitHub konvertuje razmake u tacke pri uploadu. Fajl mora biti preimenovan sa crticama (npr. `ForgeKit-Interface-Setup-1.0.11.exe`) da bi se poklapao sa `latest.yml` koji koristi crtice.
+
+Auto-updater proverava GitHub Releases (owner: `ibolabs-git`, repo: `ForgeKit_Interface`). Korisnik vidi `↑ Proveri update` u SidePanel-u.
 
 ---
 
 ## Poznati problemi i napomene
 
-### Fontovi — dijakritici
-Share Tech Mono i Share Tech ne sadrže Latin Extended-A glyphs (š, đ, č, ć, ž). Rešeno u v1.0.3/v1.0.4 dodavanjem `'Inter'` kao fallback u `--font-mono` i `--font-tech` CSS varijable. Inter se učitava sa Google Fonts.
-
-**Napomena:** Ako Google Fonts nije dostupan (offline rad), fallback pada na `'Courier New'` / system sans-serif. Dijakritici ostaju ispravni jer je Inter u stack-u pre monospace fontova.
-
-### Re-Prime context
-Kada se promeni model ili context status je `needs_refresh`, `buildRePrimeMessages()` šalje komprimovanu istoriju umesto pune. Ovo može izazvati gubitak konteksta na dugim sesijama. Dugoročno rešenje: implementirati token counting i selektivno slanje poruka.
-
-### Session persist
-State se čuva u Zustand store samo za vreme trajanja app sesije. Restart app-a resetuje chat istoriju. Planirana funkcionalnost: export sesije + reload.
-
-### INVOKE mehanika
-`[INVOKE:ULOGA]` poruka se vidi u chat listi kao korisnikova poruka (normalni bubble). Vizualno može biti zbunjujuće. Razmotriti: skrivanje invoke poruka ili poseban bubble stil.
+### INVOKE poruke u chat-u
+`[INVOKE:ULOGA]` se vidi kao normalni korisnikovi bubble. Razmotriti: poseban stil ili skrivanje.
 
 ### Streaming stop
-`◼` dugme (InputBar) vizualno postoji ali ne prekida API poziv — samo čeka da stream završi. Implementirati `AbortController` za pravo prekidanje.
+`◼` dugme vizualno postoji ali ne prekida API poziv. Treba implementirati `AbortController`.
+
+### READ_TEMPLATE — AI mora znati za mehanizam
+Mehanizam radi samo ako AI zna da moze koristiti `[READ_TEMPLATE: ...]` tag. Ovo mora biti u system promptu ili AI mora biti upoznat kroz razgovor.
+
+### Re-Prime context kompresija
+Na dugim sesijama kompresija moze izgubiti detaljan kontekst. Dugorocno: token counting.
+
+### Template inject — filter iz istorije
+`[TEMPLATE_INJECT]` poruke se salje AI-u kao user message — mogu povecati token potrosnju na dugim sesijama. Razmotriti: filtriranje ili kompresija sadrzaja u Re-Prime-u.
 
 ---
 
-## Što je sledeće (predlozi)
+## Sledeći predlozi
 
 | Prioritet | Stavka |
 |---|---|
-| Visok | Sakriti/stilizovati INVOKE poruke u chat-u |
+| Visok | System prompt dopuniti uputstvom za READ_TEMPLATE koristenje |
 | Visok | AbortController za pravo zaustavljanje streaminga |
+| Srednji | Filtrirati/komprimovati TEMPLATE_INJECT poruke u Re-Prime |
+| Srednji | Sakriti/stilizovati INVOKE poruke u chat-u |
 | Srednji | Session persist (export/import JSON) |
-| Srednji | OBSERVER tile — drugačiji vizualni tretman (pasivna uloga) |
 | Nizak | Ollama provider (lokalni modeli) |
 | Nizak | Token counter u SidePanel-u |
-| Nizak | Keyboard shortcut za invoke ulogu (npr. Ctrl+1..6) |
+| Nizak | Keyboard shortcut za invoke ulogu (Ctrl+1..6) |
 
 ---
 
@@ -223,7 +230,9 @@ State se čuva u Zustand store samo za vreme trajanja app sesije. Restart app-a 
 
 ---
 
-## Kontakt / repo
+## Repozitorijumi
 
-- GitHub: `https://github.com/ibolabs-git/ForgeKit_Interface`
-- Releases: `https://github.com/ibolabs-git/ForgeKit_Interface/releases`
+| Repo | URL | Namena |
+|---|---|---|
+| App | `https://github.com/ibolabs-git/ForgeKit_Interface` | Kod, Releases, auto-updater |
+| Master Tool | `https://github.com/ibolabs-git/ForgeKit_tool` | ForgeKit instrukcije, template-i, memorija |
