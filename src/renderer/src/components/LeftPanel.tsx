@@ -1,6 +1,11 @@
 import { useForgeKitStore } from '../store/forgekit.store'
-import type { ForgeKitPhase } from '../types'
+import { useSendMessage } from '../hooks/useSendMessage'
+import type { ForgeKitPhase, ForgeKitRole } from '../types'
 import './LeftPanel.css'
+
+const ALL_ROLES: ForgeKitRole[] = [
+  'ORCHESTRATOR', 'THINKER', 'BUILDER', 'REVIEWER', 'MEMORY CURATOR', 'OBSERVER'
+]
 
 const ROLE_ICONS: Record<string, string> = {
   ORCHESTRATOR: '🎯',
@@ -19,28 +24,47 @@ const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
 
 export function LeftPanel(): JSX.Element {
   // OPT-08: messages.length selektor umjesto cijelog messages arraya.
-  // LeftPanel koristi samo count — ovako ne re-renderuje na svaki stream token,
-  // samo kad se broj poruka promijeni (nova poruka ili reset sesije).
   const messagesLength = useForgeKitStore((s) => s.messages.length)
   const {
     activeRole, currentPhase,
     projectName, projectPath,
     setPhase, setShowProjectSetup
   } = useForgeKitStore()
+  const { send, isStreaming } = useSendMessage()
 
-  const roleIcon = ROLE_ICONS[activeRole] ?? '●'
   const currentPhaseIndex = PHASES.findIndex((p) => p.id === currentPhase)
+
+  const handleInvoke = (role: ForgeKitRole) => {
+    if (isStreaming) return
+    send(`[INVOKE:${role}]`)
+  }
 
   return (
     <aside className="left-panel">
 
-      {/* Aktivna uloga */}
+      {/* Agent uloge — grid */}
       <section className="lp-section">
-        <div className="lp-label">Aktivna uloga</div>
-        <div className="lp-role-chip" data-role={activeRole.toLowerCase().replace(/\s+/g, '-')}>
-          <span className="lp-role-icon">{roleIcon}</span>
-          <span className="lp-role-name">{activeRole}</span>
-          <span className="lp-live-dot" />
+        <div className="lp-label">Agenti</div>
+        <div className="lp-role-grid">
+          {ALL_ROLES.map((role, i) => {
+            const isActive = activeRole === role
+            const dataRole = role.toLowerCase().replace(/\s+/g, '-')
+            return (
+              <button
+                key={role}
+                className={`lp-role-tile${isActive ? ' active' : ''}`}
+                data-role={dataRole}
+                onClick={() => handleInvoke(role)}
+                disabled={isStreaming}
+                title={isActive ? `Aktivna uloga: ${role}` : `Pozovi ${role}`}
+              >
+                <span className="lrt-num">{String(i + 1).padStart(2, '0')}</span>
+                <div className="lrt-icon">{ROLE_ICONS[role]}</div>
+                <div className="lrt-name">{role}</div>
+                {isActive && <span className="lrt-star">★</span>}
+              </button>
+            )
+          })}
         </div>
       </section>
 

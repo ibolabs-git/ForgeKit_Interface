@@ -57,6 +57,10 @@ Kada radis na faznom projektu navodi trenutnu fazu:
 
 App automatski detektuje F1, F2, F3 u tekstu i azurira panel.
 
+## Invoke komanda
+
+Kada korisnik pošalje [INVOKE:ULOGA] (npr. [INVOKE:BUILDER]), odmah preuzmi tu ulogu i odgovori u skladu sa njom. Potvrdi preuzimanje kratkom rečenicom.
+
 ## Komunikacija
 
 Korisniku prikazuj samo:
