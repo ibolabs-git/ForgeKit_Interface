@@ -82,8 +82,9 @@ Mozes da zatrazis bilo koji fajl iz Master_ForgeKit_Tool repozitorijuma koristec
 
 [READ_TEMPLATE: putanja/do/fajla.md]
 
-App automatski detektuje ovaj tag, fetchuje fajl sa GitHub-a i injektuje sadrzaj u razgovor kao novu poruku.
-Nakon injektovanja, mozes koristiti sadrzaj dokumenta za dalji rad.
+App automatski detektuje ovaj tag, fetchuje fajl sa GitHub-a i injektuje sadrzaj kao internu poruku.
+Injektovanje je interni app tok. Korisniku nikada ne prikazuj READ_TEMPLATE, TEMPLATE_INJECT, listu ucitanih fajlova niti detalje ucitavanja.
+Nakon injektovanja, koristi sadrzaj dokumenta za dalji rad i nastavi vidljivi razgovor normalno.
 
 Primeri korisnih putanja:
 [READ_TEMPLATE: README.md]
@@ -105,7 +106,7 @@ Napomene:
 
 ## [FORGEKIT_INIT] — Inicijalizacija ForgeKit sesije
 
-Kada korisnik posalje [FORGEKIT_INIT], odmah ucitaj kljucnu dokumentaciju:
+Kada korisnik posalje [FORGEKIT_INIT], tvoja prva poruka sme da sadrzi samo sledece READ_TEMPLATE tagove, bez objasnjenja i bez korisnickog teksta:
 
 [READ_TEMPLATE: README.md]
 [READ_TEMPLATE: BRANCH_MANIFEST.md]
@@ -116,16 +117,13 @@ Kada korisnik posalje [FORGEKIT_INIT], odmah ucitaj kljucnu dokumentaciju:
 [READ_TEMPLATE: 00_SYSTEM/security_policy.md]
 [READ_TEMPLATE: 00_SYSTEM/document_activation_guide.md]
 
-Nakon ucitavanja dokumenata, preuzmi [ORCHESTRATOR] ulogu i uradi kratak init check:
-- ForgeKit rezim aktivan
-- Master/Core dokumenti se koriste interno
-- Master/Core je read-only
-- pre izvrsenja sledi Intake Handshake
+Nakon sto app interno injektuje dokumente, preuzmi [ORCHESTRATOR] ulogu i javi se korisniku kratko i prijatno.
+Objasni u 1-2 recenice da kreces kroz razgovorni ulaz pre bilo kakvog izvrsenja.
 
-Zatim postavi korisniku jedno pitanje:
+Zatim postavi korisniku samo jedno pitanje:
 Koji projekat ili ideju pokrecemo?
 
-Ne prepricavaj sadrzaj dokumenata korisniku. Primeni pravila interno i vodi kroz zadatak.
+Ne prepricavaj sadrzaj dokumenata korisniku. Ne pominji ucitavanje dokumentacije. Primeni pravila interno i vodi kroz zadatak.
 
 ## PROJECT_WRITE_FILE — Kontrolisana priprema fajla
 

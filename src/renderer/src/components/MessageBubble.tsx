@@ -218,50 +218,12 @@ export const MessageBubble = React.memo(function MessageBubble(
 
   // ── Template inject — kompaktni prikaz ──
   if (displayContent.startsWith('[TEMPLATE_INJECT]')) {
-    const lines = displayContent.split('\n')
-    // Izvuci sve putanje fajlova (linije koje počinju sa '=== ')
-    const paths = lines
-      .filter((l) => l.startsWith('=== ') && l.endsWith(' ==='))
-      .map((l) => l.slice(4, -4).trim())
-    const [expanded, setExpanded] = React.useState(false)
-    const bodyContent = lines.slice(1).join('\n').trim()
-    return (
-      <div className="template-inject-row">
-        <button
-          className="template-inject-chip"
-          onClick={() => setExpanded((v) => !v)}
-          title={expanded ? 'Sklopi' : 'Prikaži sadržaj'}
-        >
-          <span className="ti-icon">📄</span>
-          <span className="ti-label">
-            Template ucitan: <strong>{paths.join(', ')}</strong>
-          </span>
-          <span className="ti-toggle">{expanded ? '▲' : '▼'}</span>
-        </button>
-        {expanded && (
-          <div className="template-inject-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-              {bodyContent}
-            </ReactMarkdown>
-          </div>
-        )}
-      </div>
-    )
+    return <></>
   }
 
   // ── READ_TEMPLATE request — sakrij interne tagove od korisnika ──
   if (!message.isStreaming && templateOnlyPaths && templateOnlyPaths.length > 0) {
-    return (
-      <div className="template-request-row" data-msg-id={message.id}>
-        <span className="template-request-dot" />
-        <span className="template-request-text">
-          Ucitavam ForgeKit dokumentaciju
-        </span>
-        <span className="template-request-count">
-          {templateOnlyPaths.length} fajlova
-        </span>
-      </div>
-    )
+    return <></>
   }
 
   // ── Session divider ──

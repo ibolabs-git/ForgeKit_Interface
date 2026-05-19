@@ -13,6 +13,21 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.17] — 2026-05-19 — Tihi ForgeKit init tok
+
+### Stabilizacija
+- `READ_TEMPLATE` i `TEMPLATE_INJECT` poruke vise se ne prikazuju u chat UI-u.
+- Template ucitavanje sada radi kao interni tok aplikacije, bez status redova i bez liste fajlova pred korisnikom.
+- Nakon internog ucitavanja, app salje skriveni nastavak modelu da se korisniku javi kao `[ORCHESTRATOR]`.
+- Orchestrator treba kratko i prijatno da povede razgovor kroz Intake Handshake, bez prepricavanja dokumentacije.
+- Istorija koja se salje modelu filtrira interne template poruke da ne zagade dalji tok razgovora.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+- Cilj testa: posle `pokreni forgekit rezim`, korisnik vidi samo normalan Orchestrator ulaz, bez ucitavanja i bez template tagova.
+
+---
+
 ## [1.0.16] — 2026-05-19 — Silent template request UI
 
 ### Stabilizacija

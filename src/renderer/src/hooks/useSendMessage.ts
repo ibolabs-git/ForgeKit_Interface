@@ -1,15 +1,19 @@
 /**
- * useSendMessage — zajednički hook za slanje poruka ka AI-u.
+ * useSendMessage - zajednicki hook za slanje poruka ka AI-u.
  * Koristi ga i InputBar (normalne poruke) i LeftPanel (invoke komande).
  */
 import { useRef, useCallback, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
 
-// Regex za detekciju READ_TEMPLATE taga u AI odgovorima
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
+const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[[A-Z][A-Z\s]+\]\s*)?(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
-const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uključi)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|režim|mode)\b)?/i
+const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uklju\u010di)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|re\u017eim|mode)\b)?/i
+
+interface SendOptions {
+  hiddenUser?: boolean
+}
 
 function normalizeOutboundText(text: string): string {
   const trimmed = text.trim()
@@ -18,11 +22,30 @@ function normalizeOutboundText(text: string): string {
   return text
 }
 
+function isInternalTemplateMessage(content: string): boolean {
+  const trimmed = content.trim()
+  return trimmed.startsWith('[TEMPLATE_INJECT]') || READ_TEMPLATE_ONLY_REGEX.test(trimmed)
+}
+
+function buildTemplateContinuation(fetched: { path: string; content: string }[]): string {
+  const templateBody = fetched.length > 0
+    ? '[TEMPLATE_INJECT]\n' +
+      fetched.map((f) => `=== ${f.path} ===\n\n${f.content}`).join('\n\n---\n\n')
+    : '[TEMPLATE_INJECT]\n'
+
+  return `${templateBody}
+
+[APP_RUNTIME]
+Dokumentacija je ucitana interno. Ne prikazuj korisniku READ_TEMPLATE, TEMPLATE_INJECT, listu fajlova niti detalje ucitavanja.
+Nastavi vidljivi tok kao [ORCHESTRATOR].
+Ako je ovo pocetak ForgeKit rezima, javi se kratko i prijatno, objasni da pre izvrsenja ide pocetni razgovorni ulaz, pa postavi samo jedno pitanje za Intake Handshake.
+Ako ovo nije pocetak rezima, nastavi prethodni korisnicki tok kratko i operativno.`
+}
+
 export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
-  // Akumulira streaming sadrzaj lokalno — koristi se za READ_TEMPLATE detekciju
   const contentRef = useRef('')
-  const fetchedTemplatePathsRef = useRef<Set<string>>(new Set())
+  const templateCacheRef = useRef<Map<string, string>>(new Map())
 
   const {
     messages, isStreaming,
@@ -36,11 +59,10 @@ export function useSendMessage() {
     addProjectFileAction
   } = useForgeKitStore()
 
-  // sendRef uvek drzi najsveziju verziju send funkcije — resava closure stale problem
-  const sendRef = useRef<(text: string) => Promise<void>>(() => Promise.resolve())
+  const sendRef = useRef<(text: string, options?: SendOptions) => Promise<void>>(
+    () => Promise.resolve()
+  )
 
-
-  // Cleanup listenera pri unmount (OPT-06)
   useEffect(() => {
     return () => {
       activeListenersRef.current.forEach((fn) => fn())
@@ -48,12 +70,12 @@ export function useSendMessage() {
     }
   }, [])
 
-  const send = useCallback(async (text: string) => {
+  const send = useCallback(async (text: string, options: SendOptions = {}) => {
     if (!text.trim() || isStreaming) return
 
     const outboundText = normalizeOutboundText(text)
-    contentRef.current = ''  // reset buffer za novu poruku
-    addUserMessage(text)
+    contentRef.current = ''
+    if (!options.hiddenUser) addUserMessage(text)
 
     const messageId = `ai-${Date.now()}`
     startAssistantMessage(messageId)
@@ -76,7 +98,8 @@ export function useSendMessage() {
       history = messages
         .filter((m) => !m.isStreaming
           && !m.content.startsWith('[SESSION_DIVIDER]')
-          && !m.content.startsWith('[MODEL_SWITCH:'))
+          && !m.content.startsWith('[MODEL_SWITCH:')
+          && !isInternalTemplateMessage(m.content))
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
       history.push({ role: 'user', content: outboundText })
     }
@@ -84,9 +107,10 @@ export function useSendMessage() {
     const removeToken = window.api.onStreamToken((token, id) => {
       if (id === messageId) {
         appendStreamToken(token, messageId)
-        contentRef.current += token  // lokalna akumulacija za READ_TEMPLATE detekciju
+        contentRef.current += token
       }
     })
+
     const removeComplete = window.api.onStreamComplete(async (id) => {
       if (id !== messageId) return
 
@@ -97,11 +121,6 @@ export function useSendMessage() {
       removeToken(); removeComplete(); removeError()
       activeListenersRef.current = []
 
-      // ── READ_TEMPLATE detekcija ──
-      // Ako AI odgovor sadrzi [READ_TEMPLATE: putanja], fetchujemo fajl sa GitHub-a
-      // i auto-injektujemo sadrzaj nazad u razgovor
-      // PROJECT_WRITE_FILE detekcija: AI ne pise direktno u fajl.
-      // App kreira pending akciju koju korisnik potvrdjuje u SidePanel-u.
       const fileMatches = [...fullContent.matchAll(PROJECT_WRITE_REGEX)]
       for (const match of fileMatches) {
         const filename = match[1].trim()
@@ -112,28 +131,33 @@ export function useSendMessage() {
       const matches = [...fullContent.matchAll(READ_TEMPLATE_REGEX)]
       if (matches.length === 0) return
 
+      const isTemplateOnlyRequest = READ_TEMPLATE_ONLY_REGEX.test(fullContent.trim())
       const fetched: { path: string; content: string }[] = []
+
       for (const match of matches) {
         const filePath = match[1].trim()
-        if (fetchedTemplatePathsRef.current.has(filePath)) continue
+        const cachedContent = templateCacheRef.current.get(filePath)
+        if (cachedContent) {
+          fetched.push({ path: filePath, content: cachedContent })
+          continue
+        }
         try {
           const result = await window.api.githubFetchTemplate(filePath)
           if (result.ok && result.content) {
             fetched.push({ path: filePath, content: result.content })
-            fetchedTemplatePathsRef.current.add(filePath)
+            templateCacheRef.current.set(filePath, result.content)
           }
-        } catch { /* ignorisi gresku pri fetchu */ }
+        } catch {
+          // Ucitavanje template-a je interni mehanizam; greska ne sme prekinuti chat.
+        }
       }
 
-      if (fetched.length === 0) return
+      if (fetched.length === 0 && !isTemplateOnlyRequest) return
 
-      // Formatiramo sadrzaj — poseban prefiks prepoznaje MessageBubble za kompaktni prikaz
-      const injectText = '[TEMPLATE_INJECT]\n' +
-        fetched.map((f) => `=== ${f.path} ===\n\n${f.content}`).join('\n\n---\n\n')
-
-      // Kratak timeout da React obradi finalizeMessage pre nego sto krenemo novi send
-      setTimeout(() => { sendRef.current(injectText) }, 80)
+      const injectText = buildTemplateContinuation(fetched)
+      setTimeout(() => { sendRef.current(injectText, { hiddenUser: true }) }, 80)
     })
+
     const removeError = window.api.onStreamError((error, id) => {
       if (id === messageId) {
         addErrorMessage(error, messageId)
@@ -141,9 +165,9 @@ export function useSendMessage() {
         activeListenersRef.current = []
       }
     })
+
     activeListenersRef.current = [removeToken, removeComplete, removeError]
 
-    // SEC-05: systemPrompt se ne šalje — main process ga dodaje sam
     window.api.sendMessage({
       messages: history,
       provider: selectedProvider,
@@ -159,7 +183,6 @@ export function useSendMessage() {
     addProjectFileAction
   ])
 
-  // Osvezi sendRef na svaki render da onStreamComplete uvek ima svezu verziju
   sendRef.current = send
 
   return { send, isStreaming }
