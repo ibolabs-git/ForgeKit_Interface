@@ -31,6 +31,18 @@ function Assert-Command {
     }
 }
 
+function Invoke-Native {
+    param(
+        [string]$Exe,
+        [string[]]$Args
+    )
+
+    & $Exe @Args
+    if ($LASTEXITCODE -ne 0) {
+        throw "Komanda nije uspela: $Exe $($Args -join ' ')"
+    }
+}
+
 Assert-Command "git"
 Assert-Command "npm.cmd"
 Assert-Command "gh"
@@ -60,7 +72,7 @@ Write-Host "Version: $Version"
 Write-Host "Tag:     $tag"
 
 Run-Step "Provera GitHub autentifikacije" {
-    gh auth status | Out-Host
+    Invoke-Native "gh" @("auth", "status")
 }
 
 Run-Step "Provera da li tag vec postoji lokalno" {
@@ -70,12 +82,15 @@ Run-Step "Provera da li tag vec postoji lokalno" {
 
 Run-Step "Provera da li tag vec postoji na origin" {
     $remoteTag = git ls-remote --tags origin $tag
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git remote provera nije uspela"
+    }
     if ($remoteTag) { throw "Tag vec postoji na GitHub-u: $tag" }
 }
 
 if (-not $SkipBuild) {
     Run-Step "Build installer-a" {
-        npm.cmd run package
+        Invoke-Native "npm.cmd" @("run", "package")
     }
 }
 
@@ -105,16 +120,17 @@ if (-not $DryRun) {
 }
 
 Run-Step "Kreiranje GitHub release-a" {
-    gh release create $tag `
-        --repo "ibolabs-git/ForgeKit_Interface" `
-        --title "ForgeKit Interface v$Version" `
-        --notes-file $notesPath `
-        "$exe" `
-        "$blockmap" `
-        "$latest" `
-        --latest
+    Invoke-Native "gh" @(
+        "release", "create", $tag,
+        "--repo", "ibolabs-git/ForgeKit_Interface",
+        "--title", "ForgeKit Interface v$Version",
+        "--notes-file", $notesPath,
+        $exe,
+        $blockmap,
+        $latest,
+        "--latest"
+    )
 }
 
 Write-Host ""
 Write-Host "Release deploy zavrsen: $tag" -ForegroundColor Green
-
