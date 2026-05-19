@@ -66,6 +66,8 @@ $tag = "v$Version"
 $exe = Join-Path $root "dist\ForgeKit Interface Setup $Version.exe"
 $blockmap = "$exe.blockmap"
 $latest = Join-Path $root "dist\latest.yml"
+$releaseExe = $exe
+$releaseBlockmap = $blockmap
 
 Write-Host "ForgeKit Interface release deploy" -ForegroundColor Green
 Write-Host "Version: $Version"
@@ -101,6 +103,26 @@ Run-Step "Provera release asset-a" {
         }
         Write-Host "OK: $file"
     }
+
+    $latestText = Get-Content -Raw -LiteralPath $latest
+    $pathMatch = [regex]::Match($latestText, '(?m)^path:\s*(.+)$')
+    if ($pathMatch.Success) {
+        $expectedName = $pathMatch.Groups[1].Value.Trim()
+        $expectedExe = Join-Path (Split-Path -Parent $latest) $expectedName
+        $expectedBlockmap = "$expectedExe.blockmap"
+
+        if (-not (Test-Path -LiteralPath $expectedExe)) {
+            Copy-Item -LiteralPath $exe -Destination $expectedExe -Force
+            Write-Host "Kopiran updater asset: $expectedExe"
+        }
+        if (-not (Test-Path -LiteralPath $expectedBlockmap)) {
+            Copy-Item -LiteralPath $blockmap -Destination $expectedBlockmap -Force
+            Write-Host "Kopiran blockmap asset: $expectedBlockmap"
+        }
+
+        $script:releaseExe = $expectedExe
+        $script:releaseBlockmap = $expectedBlockmap
+    }
 }
 
 $notes = @"
@@ -125,8 +147,8 @@ Run-Step "Kreiranje GitHub release-a" {
         "--repo", "ibolabs-git/ForgeKit_Interface",
         "--title", "ForgeKit Interface v$Version",
         "--notes-file", $notesPath,
-        $exe,
-        $blockmap,
+        $releaseExe,
+        $releaseBlockmap,
         $latest,
         "--latest"
     )
