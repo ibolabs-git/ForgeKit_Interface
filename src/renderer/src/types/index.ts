@@ -78,6 +78,7 @@ export interface ElectronAPI {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
     provider: string; model: string; messageId: string
   }) => void
+  cancelMessage: (messageId: string) => void
   onStreamToken: (cb: (token: string, messageId: string) => void) => () => void
   onStreamComplete: (cb: (messageId: string) => void) => () => void
   onStreamError: (cb: (error: string, messageId: string) => void) => () => void

@@ -10,6 +10,11 @@ export interface ModelInfo {
 
 export interface AIProvider {
   readonly providerName: string
-  sendMessage(messages: Message[], systemPrompt: string, model: string): AsyncGenerator<string>
+  sendMessage(
+    messages: Message[],
+    systemPrompt: string,
+    model: string,
+    options?: { signal?: AbortSignal }
+  ): AsyncGenerator<string>
   getAvailableModels(): ModelInfo[]
 }

@@ -223,6 +223,7 @@ interface ForgeKitStore {
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
   addErrorMessage: (error: string, messageId: string) => void
+  cancelStreaming: () => void
   addSessionDivider: () => void
 
   // ── Akcije — ForgeKit stanje ──
@@ -516,6 +517,27 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     }))
   },
 
+  cancelStreaming: () => {
+    const messageId = get().streamingMessageId
+    if (messageId) window.api.cancelMessage(messageId)
+    set((s) => ({
+      isStreaming: false,
+      streamingMessageId: null,
+      streamingContent: '',
+      tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
+      messages: s.messages.map((m) =>
+        m.id === messageId
+          ? {
+              ...m,
+              content: m.content || '[SYSTEM]\nOdgovor je prekinut.',
+              forgeRole: 'SYSTEM' as ForgeKitRole,
+              isStreaming: false
+            }
+          : m
+      )
+    }))
+  },
+
   addSessionDivider: () => {
     set((s) => ({
       messages: [...s.messages, {
@@ -595,7 +617,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   // ── Provider ──
 
-  setProvider: (provider, model) => set({
+  setProvider: (provider, model) => {
+    if (get().isStreaming) return
+    set({
     selectedProvider: provider,
     selectedModel: model,
     customModelId: '',
@@ -603,10 +627,12 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     modelJustChanged: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')),
     contextStatus: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')) ? 'needs_refresh' : 'synced',
     previousEffectiveModel: get().customModelId.trim() || get().selectedModel
-  }),
+    })
+  },
 
   setModel: (newModel) => {
     const s = get()
+    if (s.isStreaming) return
     const oldEffective = s.customModelId.trim() || s.selectedModel
     const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))
 
@@ -634,6 +660,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   setCustomModelId: (id) => {
     const s = get()
+    if (s.isStreaming) return
     const oldEffective = s.customModelId.trim() || s.selectedModel
     const newEffective = id.trim() || s.selectedModel
     const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))

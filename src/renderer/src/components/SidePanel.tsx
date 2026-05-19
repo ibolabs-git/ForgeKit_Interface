@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
+import { useSendMessage } from '../hooks/useSendMessage'
 import { buildProjectContext } from '../utils/forgekit-context'
 import type { ModelInfo } from '../types'
 import './SidePanel.css'
@@ -64,15 +65,17 @@ export function SidePanel(): JSX.Element {
   // stream token, samo kad se promeni broj poruka (nova poruka dodata/sesija resetovana)
   const messagesLength    = useForgeKitStore((s) => s.messages.length)
   const {
+    isStreaming,
     activeRole, currentPhase, tasks,
     selectedProvider, selectedModel, customModelId, contextStatus,
-    setProvider, setModel, setCustomModelId, refreshContext,
+    setProvider, setModel, setCustomModelId,
     memoryRecords, projectFileActions, projectName,
     toggleTask, addManualTask, removeTask, clearTasks,
     updateMemoryStatus, removeMemoryRecord,
     updateProjectFileActionStatus, removeProjectFileAction,
     setHighlightMessageId
   } = useForgeKitStore()
+  const { send } = useSendMessage()
 
   const [newTaskInput, setNewTaskInput] = useState('')
   const [appVersion, setAppVersion] = useState('')
@@ -148,6 +151,16 @@ export function SidePanel(): JSX.Element {
     if (e.key === 'Enter') handleAddTask()
   }
 
+  const handleRefreshContext = async () => {
+    if (isStreaming) return
+    await send(
+      `[APP_REFRESH_CONTEXT]
+Osvezi ForgeKit kontekst za trenutni projekat. Ne donosi nove odluke i ne menjaj opseg.
+Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutne tacke.`,
+      { hiddenUser: true, allowTemplateFollowup: false, timeoutMs: 45_000 }
+    )
+  }
+
   return (
     <aside className="side-panel">
 
@@ -191,7 +204,12 @@ export function SidePanel(): JSX.Element {
         </div>
 
         {contextStatus === 'needs_refresh' && (
-          <button className="btn-refresh-context" onClick={refreshContext}>
+          <button
+            className="btn-refresh-context"
+            onClick={handleRefreshContext}
+            disabled={isStreaming}
+            title={isStreaming ? 'Sacekaj da se trenutni odgovor zavrsi' : 'Osvezi kontekst za aktivni model'}
+          >
             ↺ Refresh ForgeKit kontekst
           </button>
         )}
@@ -215,6 +233,7 @@ export function SidePanel(): JSX.Element {
         <select
           className="model-switcher-select"
           value={selectedProvider}
+          disabled={isStreaming}
           onChange={(e) => {
             const newProvider = e.target.value
             const defaultModels: Record<string, string> = {
@@ -233,6 +252,7 @@ export function SidePanel(): JSX.Element {
         <select
           className="model-switcher-select"
           value={selectedModel}
+          disabled={isStreaming}
           onChange={(e) => setModel(e.target.value)}
           style={{ marginBottom: selectedProvider === 'nvidia' ? '5px' : '0' }}
         >
@@ -246,6 +266,7 @@ export function SidePanel(): JSX.Element {
             <input
               className="model-switcher-input"
               value={customInput}
+              disabled={isStreaming}
               onChange={(e) => setCustomInput(e.target.value)}
               onBlur={() => { if (customInput !== customModelId) setCustomModelId(customInput) }}
               onKeyDown={(e) => { if (e.key === 'Enter') setCustomModelId(customInput) }}
@@ -254,6 +275,7 @@ export function SidePanel(): JSX.Element {
             {customModelId && (
               <button
                 className="model-custom-clear"
+                disabled={isStreaming}
                 onClick={() => { setCustomInput(''); setCustomModelId('') }}
                 title="Resetuj na dropdown model"
               >✕</button>

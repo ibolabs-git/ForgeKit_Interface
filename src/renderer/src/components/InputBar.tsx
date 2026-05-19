@@ -5,7 +5,7 @@ import './InputBar.css'
 export function InputBar(): JSX.Element {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { send, isStreaming } = useSendMessage()
+  const { send, cancel, isStreaming } = useSendMessage()
 
   const handleSend = async () => {
     const text = input.trim()
@@ -47,9 +47,9 @@ export function InputBar(): JSX.Element {
       />
       <button
         className={`send-btn ${isStreaming ? 'loading' : ''}`}
-        onClick={handleSend}
-        disabled={isStreaming || !input.trim()}
-        title="Posalji (Ctrl+Enter)"
+        onClick={isStreaming ? cancel : handleSend}
+        disabled={!isStreaming && !input.trim()}
+        title={isStreaming ? 'Prekini odgovor' : 'Posalji (Ctrl+Enter)'}
       >
         {isStreaming ? '◼' : '▶'}
       </button>

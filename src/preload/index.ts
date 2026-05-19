@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
     provider: string; model: string; messageId: string
   }) => ipcRenderer.send('send-message', payload),
+  cancelMessage: (messageId: string) => ipcRenderer.send('cancel-message', messageId),
 
   onStreamToken: (cb: (token: string, messageId: string) => void) => {
     const h = (_: Electron.IpcRendererEvent, token: string, id: string) => cb(token, id)

@@ -13,6 +13,21 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.19] — 2026-05-19 — Stream lifecycle i context refresh
+
+### Stabilizacija
+- Stop dugme sada stvarno prekida aktivni AI odgovor i odblokira sesiju.
+- Provider, model i custom model kontrole su zaključane dok agent generiše odgovor.
+- Main process podržava `cancel-message` preko `AbortController` kontrole za aktivne AI zahteve.
+- `Refresh ForgeKit kontekst` sada aktivno šalje kratak interni re-prime zahtev modelu i vraća vidljivu potvrdu, umesto da samo ponovo označi `needs_refresh`.
+- Dodat timeout za zahteve koji ne vrate prvi token u očekivanom roku.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+- Cilj testa: tokom generisanja nije moguće menjati model; stop prekida odgovor; context refresh daje kratak Orchestrator odgovor kada nema aktivnog stream-a.
+
+---
+
 ## [1.0.18] — 2026-05-19 — ForgeKit init loop fix
 
 ### Stabilizacija

@@ -9,7 +9,12 @@ export class AnthropicProvider implements AIProvider {
     this.client = new Anthropic({ apiKey })
   }
 
-  async *sendMessage(messages: Message[], systemPrompt: string, model: string): AsyncGenerator<string> {
+  async *sendMessage(
+    messages: Message[],
+    systemPrompt: string,
+    model: string,
+    options?: { signal?: AbortSignal }
+  ): AsyncGenerator<string> {
     const stream = this.client.messages.stream({
       model,
       max_tokens: 4096,
@@ -18,7 +23,7 @@ export class AnthropicProvider implements AIProvider {
         role: m.role,
         content: m.content
       }))
-    })
+    }, { signal: options?.signal })
 
     for await (const event of stream) {
       if (

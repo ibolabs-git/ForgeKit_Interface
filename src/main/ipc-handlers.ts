@@ -46,6 +46,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // Renderer ne može podmetnuti drugačiji system prompt.
   let cachedSystemPrompt: string | null = null
   let promptSource: 'github' | 'bundled' | 'pending' = 'pending'
+  const activeRequests = new Map<string, AbortController>()
 
   ipcMain.on('send-message', async (event, payload: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
@@ -54,6 +55,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     messageId: string
   }) => {
     const { messages, provider, model, messageId } = payload
+    const abortController = new AbortController()
+    activeRequests.set(messageId, abortController)
 
     // Učitaj GitHub verziju prompta jednom po sesiji; koristi masterToolRepo ako je podesen
     if (!cachedSystemPrompt) {
@@ -92,14 +95,26 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
       const options = provider === 'nvidia' ? { baseURL: getNvidiaBaseUrl() } : undefined
       const providerInstance = createProvider(provider, apiKey, options)
-      for await (const token of providerInstance.sendMessage(messages, cachedSystemPrompt, model)) {
+      for await (const token of providerInstance.sendMessage(messages, cachedSystemPrompt, model, { signal: abortController.signal })) {
+        if (abortController.signal.aborted) break
         if (win.isDestroyed()) break
         event.sender.send('stream-token', token, messageId)
       }
-      event.sender.send('stream-complete', messageId)
+      if (!abortController.signal.aborted) event.sender.send('stream-complete', messageId)
     } catch (err: unknown) {
+      if (abortController.signal.aborted) return
       const message = err instanceof Error ? err.message : 'Nepoznata greska'
       event.sender.send('stream-error', message, messageId)
+    } finally {
+      activeRequests.delete(messageId)
+    }
+  })
+
+  ipcMain.on('cancel-message', (_event, messageId: string) => {
+    const controller = activeRequests.get(messageId)
+    if (controller) {
+      controller.abort()
+      activeRequests.delete(messageId)
     }
   })
 

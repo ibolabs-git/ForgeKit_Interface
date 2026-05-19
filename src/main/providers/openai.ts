@@ -9,7 +9,12 @@ export class OpenAIProvider implements AIProvider {
     this.client = new OpenAI({ apiKey })
   }
 
-  async *sendMessage(messages: Message[], systemPrompt: string, model: string): AsyncGenerator<string> {
+  async *sendMessage(
+    messages: Message[],
+    systemPrompt: string,
+    model: string,
+    options?: { signal?: AbortSignal }
+  ): AsyncGenerator<string> {
     const stream = await this.client.chat.completions.create({
       model,
       stream: true,
@@ -20,7 +25,7 @@ export class OpenAIProvider implements AIProvider {
           content: m.content
         }))
       ]
-    })
+    }, { signal: options?.signal })
 
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content

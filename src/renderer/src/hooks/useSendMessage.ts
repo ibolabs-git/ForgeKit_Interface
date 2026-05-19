@@ -24,6 +24,7 @@ const INIT_TEMPLATE_PATHS = [
 interface SendOptions {
   hiddenUser?: boolean
   allowTemplateFollowup?: boolean
+  timeoutMs?: number
 }
 
 function normalizeOutboundText(text: string): string {
@@ -66,6 +67,7 @@ Kratko i prijatno potvrdi da si tu, objasni da pre izvrsenja sledi pocetni razgo
 
 export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
+  const activeMessageIdRef = useRef<string | null>(null)
   const contentRef = useRef('')
   const templateCacheRef = useRef<Map<string, string>>(new Map())
 
@@ -77,7 +79,7 @@ export function useSendMessage() {
     projectName, previousEffectiveModel,
     addUserMessage, startAssistantMessage,
     appendStreamToken, finalizeMessage,
-    addErrorMessage, markContextSynced,
+    addErrorMessage, cancelStreaming, markContextSynced,
     addProjectFileAction
   } = useForgeKitStore()
 
@@ -128,6 +130,7 @@ export function useSendMessage() {
     if (!options.hiddenUser) addUserMessage(text)
 
     const messageId = `ai-${Date.now()}`
+    activeMessageIdRef.current = messageId
     startAssistantMessage(messageId)
 
     const effectiveModel = customModelId.trim() || selectedModel
@@ -154,8 +157,17 @@ export function useSendMessage() {
       history.push({ role: 'user', content: modelInput })
     }
 
+    const timeoutId = window.setTimeout(() => {
+      window.api.cancelMessage(messageId)
+      addErrorMessage('Model nije odgovorio u zadatom vremenu. Zahtev je prekinut; probaj brzi model ili ponovi poruku.', messageId)
+      removeToken(); removeComplete(); removeError()
+      activeListenersRef.current = []
+      activeMessageIdRef.current = null
+    }, options.timeoutMs ?? 90_000)
+
     const removeToken = window.api.onStreamToken((token, id) => {
       if (id === messageId) {
+        window.clearTimeout(timeoutId)
         appendStreamToken(token, messageId)
         contentRef.current += token
       }
@@ -168,8 +180,10 @@ export function useSendMessage() {
       contentRef.current = ''
 
       finalizeMessage(messageId)
+      window.clearTimeout(timeoutId)
       removeToken(); removeComplete(); removeError()
       activeListenersRef.current = []
+      activeMessageIdRef.current = null
 
       const fileMatches = [...fullContent.matchAll(PROJECT_WRITE_REGEX)]
       for (const match of fileMatches) {
@@ -196,8 +210,10 @@ export function useSendMessage() {
     const removeError = window.api.onStreamError((error, id) => {
       if (id === messageId) {
         addErrorMessage(error, messageId)
+        window.clearTimeout(timeoutId)
         removeToken(); removeComplete(); removeError()
         activeListenersRef.current = []
+        activeMessageIdRef.current = null
       }
     })
 
@@ -214,11 +230,19 @@ export function useSendMessage() {
     modelJustChanged, contextStatus, currentPhase, activeRole, tasks,
     projectName, previousEffectiveModel,
     addUserMessage, startAssistantMessage, appendStreamToken,
-    finalizeMessage, addErrorMessage, markContextSynced,
+    finalizeMessage, addErrorMessage, cancelStreaming, markContextSynced,
     addProjectFileAction, loadTemplates
   ])
 
+  const cancel = useCallback(() => {
+    if (!activeMessageIdRef.current) return
+    activeListenersRef.current.forEach((fn) => fn())
+    activeListenersRef.current = []
+    activeMessageIdRef.current = null
+    cancelStreaming()
+  }, [cancelStreaming])
+
   sendRef.current = send
 
-  return { send, isStreaming }
+  return { send, cancel, isStreaming }
 }
