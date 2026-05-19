@@ -393,6 +393,44 @@
   overflow-y: auto;
 }
 
+/* ── Internal template request ── */
+.template-request-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 16px;
+  padding: 6px 10px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.template-request-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  display: inline-block;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.template-request-text {
+  color: var(--text-primary);
+}
+
+.template-request-count {
+  color: var(--text-muted);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
 /* ── Session divider ── */
 .session-divider {
   display: flex;

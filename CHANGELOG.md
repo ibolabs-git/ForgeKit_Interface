@@ -13,6 +13,19 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.16] — 2026-05-19 — Silent template request UI
+
+### Stabilizacija
+- `READ_TEMPLATE` zahtevi koji sluze samo kao interni signal aplikaciji vise se ne prikazuju korisniku kao sirovi tagovi.
+- Chat sada prikazuje kompaktan status `Ucitavam ForgeKit dokumentaciju`, uz broj trazenih fajlova.
+- App preskace vec ucitane template putanje u istom toku, da se isti set dokumenata ne fetchuje vise puta.
+- Time se cuva operativni interfejs: korisnik vidi tok, ali ne i internu mehaniku.
+
+### Validacija
+- Cilj testa: posle `pokreni forgekit rezim`, chat ne sme prikazati zid `[READ_TEMPLATE]` tagova.
+
+---
+
 ## [1.0.15] — 2026-05-19 — ForgeKit runtime init patch
 
 ### Stabilizacija

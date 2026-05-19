@@ -22,6 +22,7 @@ export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
   // Akumulira streaming sadrzaj lokalno — koristi se za READ_TEMPLATE detekciju
   const contentRef = useRef('')
+  const fetchedTemplatePathsRef = useRef<Set<string>>(new Set())
 
   const {
     messages, isStreaming,
@@ -114,10 +115,12 @@ export function useSendMessage() {
       const fetched: { path: string; content: string }[] = []
       for (const match of matches) {
         const filePath = match[1].trim()
+        if (fetchedTemplatePathsRef.current.has(filePath)) continue
         try {
           const result = await window.api.githubFetchTemplate(filePath)
           if (result.ok && result.content) {
             fetched.push({ path: filePath, content: result.content })
+            fetchedTemplatePathsRef.current.add(filePath)
           }
         } catch { /* ignorisi gresku pri fetchu */ }
       }

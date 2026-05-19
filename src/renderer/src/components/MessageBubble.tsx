@@ -45,6 +45,19 @@ const ROLE_COLORS: Record<string, string> = {
   SYSTEM:          '#e74c3c'
 }
 
+const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
+const READ_TEMPLATE_TAG_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
+
+function stripRoleTag(content: string): string {
+  return content.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
+}
+
+function getTemplateOnlyRequest(content: string): string[] | null {
+  const withoutRole = stripRoleTag(content).trim()
+  if (!READ_TEMPLATE_ONLY_REGEX.test(withoutRole)) return null
+  return [...withoutRole.matchAll(READ_TEMPLATE_TAG_REGEX)].map((m) => m[1].trim())
+}
+
 // ── Code block — A2+A3 ───────────────────────────────────────────────────────
 
 function CodeBlock({ language, code }: { language: string; code: string }): JSX.Element {
@@ -196,6 +209,7 @@ export const MessageBubble = React.memo(function MessageBubble(
     message.isStreaming ? s.streamingContent : null
   )
   const displayContent = streamingContent !== null ? streamingContent : message.content
+  const templateOnlyPaths = getTemplateOnlyRequest(displayContent)
 
   const handleOpenSettings = (tab: 'global' | 'project') => {
     setSettingsTab(tab)
@@ -231,6 +245,21 @@ export const MessageBubble = React.memo(function MessageBubble(
             </ReactMarkdown>
           </div>
         )}
+      </div>
+    )
+  }
+
+  // ── READ_TEMPLATE request — sakrij interne tagove od korisnika ──
+  if (!message.isStreaming && templateOnlyPaths && templateOnlyPaths.length > 0) {
+    return (
+      <div className="template-request-row" data-msg-id={message.id}>
+        <span className="template-request-dot" />
+        <span className="template-request-text">
+          Ucitavam ForgeKit dokumentaciju
+        </span>
+        <span className="template-request-count">
+          {templateOnlyPaths.length} fajlova
+        </span>
       </div>
     )
   }
@@ -278,7 +307,7 @@ export const MessageBubble = React.memo(function MessageBubble(
   const isUser = message.role === 'user'
 
   // Ukloni role tag s početka sadržaja (iz displayContent koji može biti streaming buffer)
-  const cleanedContent = displayContent.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
+  const cleanedContent = stripRoleTag(displayContent)
 
   const searchClasses = [
     isSearchMatch  ? 'search-match'   : '',
