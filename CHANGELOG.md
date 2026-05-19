@@ -1,423 +1,178 @@
 # Changelog — ForgeKit Interface App
 
-Verzije prate [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH  
-Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
+Sve verzije su dostupne na [GitHub Releases](https://github.com/ibolabs-git/ForgeKit_Interface/releases).
+
+Format: `[verzija] — datum — opis`
 
 ---
 
-## [1.0.1] — 2026-05-19 — Bugfix: dijakritika u SessionSummary + ijekavica → ekavica
+## [1.0.6] — 2026-05-19 — Agent role grid + invoke mehanika
 
-### ISS-001 — Font fix: dijakritička slova u SessionSummaryModal
-
-- **Problem:** Slova `š`, `đ`, `č`, `ć`, `ž` prikazivala se kao □ u Session Summary modalu tokom i nakon AI streaminga.
-- **Uzrok:** `Share Tech` i `Share Tech Mono` (Google Fonts) nemaju Latin Extended-A glifove (Unicode 0100–017F). `.summary-content` nije imao eksplicitnu `font-family` deklaraciju, pa su headings (`h1-h3`) nasljeđivali `var(--font-tech)` = Share Tech bez fallbacka.
-- **Rješenje:** Dodata `font-family: var(--font)` deklaracija direktno na `.summary-content` — Inter font koji se koristi za UI tekst (u `--font` varijabli) ima punu Latin Extended-A podršku. Headings `h1-h3` unutar `.summary-content` dobili su `var(--font-tech), var(--font)` stack — Share Tech gdje dostupan, Inter kao sigurni fallback.
-- **Fajl:** `src/renderer/src/components/SessionSummaryModal.css`
-
-### Jezička ispravka: ijekavica → ekavica
-
-- **Problem:** UI tekst, AI prompts i interni stringovi koristili su ijekavski dijalekt (provjeri, sljedeći, promijenjen, posljednji, itd.) — srpsko govorno područje koristi ekavski dijalekt.
-- **Izmjene — vidljivi UI tekst:**
-  - `SidePanel`: "Provjeri update" → "Proveri update" · "Provjera..." → "Provera..." · "Greška pri provjeri" → "Greška pri proveri" · "Provjeri ažuriranje" → "Proveri ažuriranje"
-  - `ChatWindow`: tooltip "Sljedeća (Enter)" → "Sledeća (Enter)"
-  - `HandoffModal`: "posljednjih 6 poruka" → "poslednjih 6 poruka"
-  - `MessageBubble`: "Model promijenjen" → "Model promenjen" (divider u chatu)
-  - `SessionSummaryModal`: "Sljedeći koraci" → "Sledeći koraci" · "250 riječi" → "250 reči" (u AI promptu)
-- **Izmjene — AI prompts (forgekit-context.ts):**
-  - `FORGEKIT_SYSTEM_PREAMBLE`: "provjera" → "provera" · "zahtijeva" → "zahteva" · "mijenjati" → "menjati"
-  - `buildModelSwitchNotice`: "promijenjen" → "promenjen" · "mijenjaj" → "menjaj"
-  - `buildRePrimeMessages`: "sljedeća poruka" → "sledeća poruka" (×2)
-  - `buildHandoffDoc`: "Posljednje poruke" → "Poslednje poruke" · "POSLJEDNJI OUTPUT" → "POSLEDNJI OUTPUT"
-- **Izmjene — user-visible string u updater.ts:**
-  - "Nije moguce provjeriti azuriranje" → "Nije moguće proveriti ažuriranje (bez mreže)"
-  - "Previse preusmjeravanja" → "Previše preusmeravanja"
-- **Izmjene — komentari (konzistentnost):** `ipc-handlers.ts`, `store.ts`, `github.ts`, `updater.ts`, `system-prompt.ts`, `InputBar.tsx`, `WindowControls.tsx`, `SettingsModal.tsx`, `App.tsx`, `forgekit.store.ts`
-
----
-
-## [1.0.0] — 2026-05-19 — PROLAZ 4: Arhitektura — streaming buffer, safeStorage, systemPrompt
-
-### Arhitekturalne promjene — 3 poboljšanja
-
-- **OPT-02 — Streaming O(n) → O(1): streaming buffer + React.memo** (`forgekit.store.ts`, `MessageBubble.tsx`, `ChatWindow.tsx`)
-  - **Problem:** `appendStreamToken` pozivao `.map()` nad cijelim `messages` array-om na svaki token (10–50x u sekundi tokom streaminga); svaka MessageBubble, LeftPanel, SidePanel re-renderovala na svaki token
-  - **Rješenje (3 dijela):**
-    1. **Store:** novi `streamingContent: string` field — `appendStreamToken` samo nadodaje na string (`O(1)`), `finalizeMessage` jednom upisuje kompletan sadržaj u `messages` array
-    2. **MessageBubble:** omotan s `React.memo` — re-renderuje samo ako se props promijene; streaming MessageBubble čita `streamingContent` direktno iz store-a, sve ostale ostaju "zamrznute"
-    3. **ChatWindow:** auto-scroll premješten na `streamingContent` effect umjesto `messages` effect
-  - **Efekt:** Tokom streaminga, jedino aktivna streaming MessageBubble re-renderuje; sve završene poruke su statične
-  - **Fajlovi:** `src/renderer/src/store/forgekit.store.ts`, `src/renderer/src/components/MessageBubble.tsx`, `src/renderer/src/components/ChatWindow.tsx`
-
-- **SEC-04 — safeStorage za API ključeve** (`store.ts`, `ipc-handlers.ts`)
-  - **Problem:** API ključevi čuvani u `electron-store` s hardkodovanim `encryptionKey: 'forgekit-secure-storage-2026'` — isti ključ na svim instalacijama, dostupan u source kodu i binarnoj datoteci
-  - **Rješenje:** Novi `forgekit-secure` store bez encryptionKey — vrijednosti API ključeva enkriptovane s `safeStorage.encryptString()` (Windows DPAPI / macOS Keychain) i snimljene kao base64; čitanje kroz `safeStorage.decryptString()`
-  - **Soft migracija:** Stari `forgekit-settings` store s encryptionKey zadržan samo za čitanje starih podataka (fallback); pri prvom snimanju Settings-a, ključevi se automatski premještaju u novi safeStorage format
-  - **Fallback:** Ako `safeStorage.isEncryptionAvailable()` nije dostupan (headless/CI okruženje), čuva se kao plaintext u zasebnom store-u
-  - **Fajlovi:** `src/main/store.ts`, `src/main/ipc-handlers.ts`
-
-- **SEC-05 — `systemPrompt` premješten u main process** (`system-prompt.ts`, `ipc-handlers.ts`, `InputBar.tsx`, `preload/index.ts`)
-  - **Problem:** Renderer (`InputBar.tsx`) importovao `FORGEKIT_SYSTEM_PROMPT` i slao ga kroz IPC `send-message` payload; zlonamjerni sadržaj koji se renderuje mogao je podmetnuti drugačiji system prompt kroz IPC
-  - **Rješenje:** `FORGEKIT_SYSTEM_PROMPT` premješten u `src/main/system-prompt.ts`; main process ga dodaje sam — renderer više ne šalje `systemPrompt` u payloadu; main pokušava učitati GitHub verziju (uvijek ima prednost), fallback na bundlovani prompt; `cachedSystemPrompt` se puni jednom po sesiji
-  - **Fajlovi:** `src/main/system-prompt.ts` (novo), `src/main/ipc-handlers.ts`, `src/renderer/src/components/InputBar.tsx`, `src/preload/index.ts`
-
-### Backup
-- Pre-prolaz4 backup: `v0.9.5-pre-prolaz4-stable`
-- Ovaj prolaz: `v1.0.0-stable`
-
----
-
-## [0.9.5] — 2026-05-19 — PROLAZ 3: Performance optimizacija
-
-### Performanse — 6 promjena
-
-- **OPT-01 — Bundle smanjen sa 1.648MB na 832KB (−49%)** (`MessageBubble.tsx`)
-  - **Problem:** `import { Prism as SyntaxHighlighter }` učitava sve Prism jezike (150+) pri startu aplikacije, čak i one koji se nikad ne koriste (COBOL, Fortran, Assembly...)
-  - **Rješenje:** Zamijenjeno sa `PrismLight` koji dolazi prazan; ručno registrovani samo relevantni jezici za ForgeKit radne tokove: `typescript`, `tsx`, `javascript`, `jsx`, `python`, `bash`/`sh`, `json`, `css`, `markdown`, `sql`
-  - **Efekt:** Renderer bundle 1648 kB → 832 kB; aplikacija se brže učitava, manji RAM footprint
-  - **Fajlovi:** `src/renderer/src/components/MessageBubble.tsx`
-
-- **OPT-03 — SidePanel ne re-renderuje na svaki stream token** (`SidePanel.tsx`)
-  - **Problem:** SidePanel subscribeovao na cijeli `messages` array kroz `useForgeKitStore()` destrukturiranje; svaki token koji stigne tokom streaminga mijenja array i triggeruje re-render SidePanel-a (10–50x u sekundi)
-  - **Rješenje:** `messages` zamijenjen sa `messagesLength = useForgeKitStore((s) => s.messages.length)` za metric tile; Zustand sada re-renderuje SidePanel samo kad se broj poruka promijeni — ne na svaki token
-  - **Fajlovi:** `src/renderer/src/components/SidePanel.tsx`
-
-- **OPT-05 — `matchIds.includes()` O(n) → `Set.has()` O(1) u ChatWindow** (`ChatWindow.tsx`)
-  - **Problem:** `matchIds.includes(msg.id)` se pozivao za svaku poruku u render loopu; pri 100 poruka i 20 match-ova to je 2000 string komparacija po renderu; pri aktivnoj pretrazi tokom streaminga to se ponavlja 10–50x u sekundi
-  - **Rješenje:** Dodan `matchSet = useMemo(() => new Set(matchIds), [matchIds])` koji se kreira samo kad se `matchIds` promijeni; koristi se `matchSet.has(msg.id)` umjesto `includes()`
-  - **Fajlovi:** `src/renderer/src/components/ChatWindow.tsx`
-
-- **OPT-06 — Memory leak: stream listeneri se čiste pri unmount** (`InputBar.tsx`)
-  - **Problem:** Stream event listeneri (`onStreamToken`, `onStreamComplete`, `onStreamError`) čistili su se samo unutar vlastitih callback-a na `complete` ili `error`; ako bi komponenta bila unmountovana tokom aktivnog streaminga (npr. u budućim verzijama s destrukcijom taba), listeneri bi ostali na `ipcRenderer`
-  - **Rješenje:** Dodan `activeListenersRef` koji pamti sve aktivne `remove*` funkcije; `useEffect` cleanup poziva ih pri unmount-u; lista se prazni i na normalni complete/error završetak
-  - **Fajlovi:** `src/renderer/src/components/InputBar.tsx`
-
-- **OPT-07 — `reprimePreviewText` izračunava se samo kad je preview otvoren** (`SidePanel.tsx`)
-  - **Problem:** `buildProjectContext()` bio u `useMemo` koji se re-evaluira na svaki token jer `messages` je u dep arrayu; preview panel je 99% vremena zatvoren, ali CPU se troši na računanje svakog tokena
-  - **Rješenje:** Logika premještena u posebnu komponentu `ReprimePreviewContent` koja se mountuje/unmountuje sa `{reprimePreviewOpen && <ReprimePreviewContent />}`; kada je preview zatvoren, komponenta ne postoji i ne subscribeuje na store uopšte
-  - **Fajlovi:** `src/renderer/src/components/SidePanel.tsx`
-
-- **OPT-08 — LeftPanel ne re-renderuje na svaki stream token** (`LeftPanel.tsx`)
-  - **Problem:** LeftPanel subscribeovao na cijeli `messages` array ali ga koristio samo za `messages.length` u prikazu broja poruka
-  - **Rješenje:** Zamijenjen sa `messagesLength = useForgeKitStore((s) => s.messages.length)`; identičan efekt kao OPT-03 — re-render samo pri dodavanju/brisanju poruke
-  - **Fajlovi:** `src/renderer/src/components/LeftPanel.tsx`
-
-### Bonus fix
-- **COMP-09 (SidePanel)** — zaostali `gpt-5.4` u provider switcher defaultModels ispravljen na `gpt-4o`
-
-### Backup
-- Pre-prolaz3 backup: `v0.9.4-pre-prolaz3-stable`
-- Ovaj prolaz: `v0.9.5-stable`
-
----
-
-## [0.9.4] — 2026-05-19 — PROLAZ 2: Kompatibilnost + bugovi
-
-### Kompatibilnost — 5 popravki
-
-- **COMP-01 — `mdComponents` typed** (`MessageBubble.tsx`)
-  - **Problem:** `mdComponents` objekt je bio typed kao `any`, TypeScript nije mogao provjeriti ispravnost implementiranih react-markdown overridea; promjena API-ja ne bi bila uhvaćena u compile-time
-  - **Rješenje:** Importovana `Components` vrsta iz `react-markdown` i dodijeljena kao eksplicitan tip; uklonjen `// eslint-disable-next-line @typescript-eslint/no-explicit-any` komentar
-  - **Fajlovi:** `src/renderer/src/components/MessageBubble.tsx`
-
-- **COMP-03 — `useEffect` deps u SettingsModal dokumentovani** (`SettingsModal.tsx`)
-  - **Problem:** `selectedProvider`, `projectName`, `selectedModel` su korišćeni u effectu ali nisu bili navedeni u dependency arrayu — ESLint je prijavljivao warning; bez komentara nije bilo jasno da li je to bug ili namjera
-  - **Rješenje:** Dodan eksplicitan `// eslint-disable-next-line react-hooks/exhaustive-deps` komentar s obrazloženjem: effect se pokreće samo pri otvaranju modala i tada čita aktualne store vrijednosti; dodavanje ostalih depsova bi resetovalo korisnikove in-progress izmjene u otvorenom modalu
-  - **Fajlovi:** `src/renderer/src/components/SettingsModal.tsx`
-
-- **COMP-06 — `catch (err as Error)` → `instanceof` provjera** (3 mjesta)
-  - **Problem:** `(err as Error).message` je TypeScript type assertion koji može pući u runtime ako thrown vrijednost nije `Error` objekt (npr. string, null, broj) — u TypeScript 4+ `catch` varijabla je `unknown`
-  - **Rješenje:** Zamijenjeno sa `err instanceof Error ? err.message : 'Nepoznata greška'` na svim mjestima: `github.ts` (2x) i `updater.ts` (1x)
-  - **Fajlovi:** `src/main/github.ts`, `src/main/updater.ts`
-
-- **COMP-09 — Default OpenAI model ispravljen** (`forgekit.store.ts`)
-  - **Problem:** `DEFAULT_MODELS.openai` bio je postavljen na `'gpt-5.4'` koji ne postoji kao validni OpenAI model ID; svaki auto-fallback pri provider/model mismatch-u vodio bi na nepostojeći model i API grešku
-  - **Rješenje:** Promijenjeno na `'gpt-4o'` — validni, stabilni OpenAI model
-  - **Fajlovi:** `src/renderer/src/store/forgekit.store.ts`
-
-- **OPT-09 — Uklonjen nepotreban temp file u github.ts** (`github.ts`)
-  - **Problem:** `uploadMemoryRecord` pisao je `content` u temp fajl na disku (`os.tmpdir()`), zatim koristio originalnu `content` varijablu (ne temp fajl) za upload na GitHub, i na kraju brisao temp fajl — temp fajl nikad nije bio pročitan
-  - **Rješenje:** Uklonjena sva `fs.writeFileSync` / `fs.existsSync` / `fs.unlinkSync` logika; `content` se direktno prosljeđuje `uploadFileToGitHub`; uklonjen import `os`, `fs`, `path` koji više nisu potrebni
-  - **Fajlovi:** `src/main/github.ts`
-
-### Backup
-- Pre-prolaz2 backup: `v0.9.3-pre-prolaz2-stable`
-- Ovaj prolaz: `v0.9.4-stable`
-
----
-
-## [0.9.3] — 2026-05-19 — PROLAZ 1: Security hardening (IPC validacija + CSP)
-
-### Bezbjednost — 5 popravki
-
-- **SEC-01 — Path traversal blokiran** (`project-manager.ts`)
-  - **Problem:** `writeProjectFile` i `readProjectFile` koristili su `path.join` bez validacije; napadač (ili zlonamjerni sadržaj koji se renderuje) mogao je poslati `filename = "../../AppData/Roaming/malware.exe"` i pisati/čitati van projektnog foldera
-  - **Rješenje:** Nova interna funkcija `assertSafePath(projectPath, filename)` rezolvira apsolutnu putanju i provjerava da li ona počinje s `projectPath + path.sep`; ako ne — baca grešku koja se hvata u IPC handleru
-  - **Fajlovi:** `src/main/project-manager.ts`
-
-- **SEC-02 — Validacija `projectPath` u `project:read-file-from-path`** (`ipc-handlers.ts`)
-  - **Problem:** Handler je primao proizvoljan `projectPath` string od renderer procesa i čitao fajl iz njega bez ikakve provjere; mogao se čitati bilo koji fajl na disku
-  - **Rješenje:** Handler sada čita listu poznatih putanja iz `electron-store` (`openTabs` + `currentProjectPath`), rezolvira obje putanje kroz `path.resolve` i dozvoljava čitanje samo ako postoji poklapanje; svaki odbijeni pokušaj loguje upozorenje
-  - **Fajlovi:** `src/main/ipc-handlers.ts`
-
-- **SEC-03 — `sandbox: true`** (`main/index.ts`)
-  - **Problem:** `sandbox: false` je eksplicitno postavljeno bez razloga, proširujući attack surface BrowserWindow-a
-  - **Rješenje:** Promijenjeno na `sandbox: true`; preload koristi samo `ipcRenderer` i `contextBridge` koji su dostupni u sandbox modu — nikakva funkcionalnost nije narušena
-  - **Fajlovi:** `src/main/index.ts`
-
-- **SEC-06 — Limit veličine payloada za GitHub upload** (`ipc-handlers.ts`)
-  - **Problem:** `github:upload-memory` handler nije provjeravao veličinu `content` polja; renderer je mogao poslati neograničeno veliki payload što bi moglo prouzrokovati OOM greške ili zloupotrebu GitHub API kvote
-  - **Rješenje:** Dodana provjera `payload.content.length > 50_000` (50KB); ako je sadržaj preveći, handler vraća `{ ok: false, message: '...' }` bez pozivanja GitHub API-ja
-  - **Fajlovi:** `src/main/ipc-handlers.ts`
-
-- **SEC-07 — Eksplicitna CSP politika** (`renderer/index.html`)
-  - **Problem:** CSP je definisao samo `default-src`, `script-src` i `style-src`; `connect-src` nije bio ograničen, što je teoretski dozvoljavalo renderer procesu da direktno poziva AI API-je (zaobilazeći main process i IPC)
-  - **Rješenje:** Dodano: `connect-src 'none'` (blokira sve fetch/XHR/WebSocket iz renderer-a — API pozivi smiju ići samo kroz IPC); `font-src 'self' data: https://fonts.gstatic.com` (Google Fonts fajlovi); `style-src` proširen s `https://fonts.googleapis.com` (Google Fonts CSS import); `img-src 'self' data:` (base64 slike)
-  - **Fajlovi:** `src/renderer/index.html`
-
-### Backup
-- Pre-audit backup: `v0.9.2-pre-audit-stable`
-- Ovaj prolaz: `v0.9.3-stable`
-
----
-
-## [0.9.2] — 2026-05-19 — Light theme bg boja
-### Izmijenjeno
-- `--bg-primary` `#e8e8e8` → `#F5F2EB` (topla kremasta paleta)
-- `--bg-secondary` `#f0f0f0` → `#EDE9E0` (usklađena sa primarnom)
-
----
-
-## [0.9.1] — 2026-05-19 — Bugfix: task ekstrakcija po proximity
-### Ispravka
-- **Task lista** — zamijenjen globalni regex sa proximity-based parserima: checkbox postaje task samo ako se u prethodnih 8 redova pojavljuje keyword (`taskovi`, `zadaci`, `akcije`, `todo`)
-- Markdown liste aktivnosti, doc outline-i i slični checkbox blokovi bez task konteksta se više ne dodaju u task panel
-
----
-
-## [0.9.0] — 2026-05-19 — FAZA D: Error boundary, Window controls, Onboarding
 ### Novo
-- **D4 — Error boundary** — React `ErrorBoundary` wrapa cijelu App; pri crash-u prikazuje ForgeKit recovery screen (poruka greške + "↺ PONOVO POKRETANJE"); sesija ostaje sačuvana u `session.json`
-- **D5 — Custom window controls** — `frame: false` + tri dugmeta (─ □ ✕) u desnom uglu header-a; dugme ✕ crveni hover; □ toggleuje maximize/restore stanje; sve bez OS title bar-a
-- **D6 — Onboarding** — pri prvom pokretanju (nema nijednog API ključa: Anthropic, OpenAI, NVIDIA) Settings modal se automatski otvara na "Globalno" tabu; korisnik odmah vidi gdje upisati ključ
+- **Agent role grid**: levi panel sada prikazuje svih 6 uloga kao interaktivni 2×3 grid
+  - Vizualni stil identičan metric tiles iz desnog panela (corner brackets, redni broj, ikonica, naziv)
+  - Aktivna uloga: animirana zvezda `★` + obojen border-left u boji uloge
+  - Hover: prikazuje boju uloge na nazivu
+- **Invoke mehanika**: klik na tile šalje `[INVOKE:ULOGA]` poruku AI-u; AI preuzima ulogu i odgovara u njenom kontekstu
+- Grid je `disabled` tokom streaminga (ne može se slučajno pozvati dok AI piše)
+- System prompt dopunjen `## Invoke komanda` sekcijom
+
+### Refaktor
+- `useSendMessage` hook izvučen iz `InputBar.tsx` — zajednička logika slanja za InputBar i LeftPanel
+- Uklonjen duplirani listener management kod
+
+### Fajlovi promenjeni
+`LeftPanel.tsx`, `LeftPanel.css`, `InputBar.tsx`, `system-prompt.ts`, `package.json`
+`hooks/useSendMessage.ts` ← novi fajl
 
 ---
 
-## [0.8.1] — 2026-05-19 — Session Summary (FAZA C3)
+## [1.0.5] — 2026-05-19 — Pozadina panela + per-uloga boje
+
+### Promene
+- **Svetla tema**: paneli (`--bg-secondary`) promenjeni sa `#EDE9E0` na `#fffbf2` (neutralna topla bela, manje žuta)
+- **Per-uloga boje na role chip-u**: svaka uloga dobila zasebnu boju za border-left, naziv i live dot
+
+| Uloga | Svetla tema | Tamna tema |
+|---|---|---|
+| ORCHESTRATOR | `#1e4d7a` komandno plava | `#7eb5e8` pastelna plava |
+| THINKER | `#1a5c32` šumska zelena | `#7ec49a` mint |
+| BUILDER | `#6b3a14` hrastova smeđa | `#c4976a` topla tan |
+| REVIEWER | `#4a1e6e` duboka ljubičasta | `#b082cc` lavanda |
+| MEMORY CURATOR | `#1e3d5e` arhivska mornarička | `#82aec4` slate plava |
+| OBSERVER | `#3a4a5a` čelična siva | `#a0b4c4` sivo-plava |
+
+### Implementacija
+- `data-role` atribut dodat na `.lp-role-chip` div u `LeftPanel.tsx`
+- CSS `[data-role="..."]` selektori za per-ulogu stilizaciju u light i dark temi
+
+### Fajlovi promenjeni
+`App.css`, `LeftPanel.tsx`, `LeftPanel.css`, `package.json`
+
+---
+
+## [1.0.4] — 2026-05-19 — Kompletna promena teme + popravka fontova
+
+### Svetla tema
+- Akcentna boja: `#ff6b00` (narandzasta) → `#679e88` (teal-zelena)
+- Hover: `#ff8c33` → `#4e8480`
+- `--accent-bg`: `rgba(255,107,0,0.07)` → `rgba(103,158,136,0.07)`
+- `--accent-border`: `rgba(255,107,0,0.28)` → `rgba(103,158,136,0.28)`
+
+### Tamna tema — potpuno novi kolorit
+- Paneli (levo/desno): `#3e535c` (slate-teal)
+- Chat oblast: `#4f6870` (zasićeniji teal, poseban override)
+- Header: `#334d57` (zasebna nijansa, tamnija od panela)
+- Akcenat: `#b7c0c4` (silver-grey)
+- Pozadina: `#2c3f47`
+- Granice: `--border: #4a6470`, `--border2: #3d5560`
+- Tekst: `--text-primary: #dde6ea`, `--text-secondary: #9db0b8`
+- Send dugme u tamnoj temi: silver tekst na tamnoj pozadini, hover invertuje (silver pozadina, tamni tekst)
+
+### Popravka fontova (ISS-001 nastavak)
+- `--font-mono`: dodat `'Inter'` fallback → `'Share Tech Mono', 'Courier New', 'Inter', monospace`
+- `--font-tech`: dodat `'Inter'` fallback → `'Share Tech', 'Inter', sans-serif`
+- Dijakritici sada ispravni u role tagovima, md naslovima i svim mono elementima
+
+### Čišćenje hardkodovanih vrednosti
+- Svi `#ff6b00`, `#ff8c33`, `rgba(255,107,0,...)` zamenjeni CSS varijablama ili novim vrednostima
+- `rgba(255,107,0,0.06)` u `.chat-header-btn.active` → `var(--accent-bg)`
+- `rgba(255,107,0,0.4)` u `.api-accordion.open` i `.theme-option:hover` → `var(--accent-border)`
+- `rgba(255,107,0,0.5)` u `.model-switcher-select:hover` → `var(--accent-border)`
+- Hardkodovani `#ff6b00` u `.theme-option-preview::before` → `#679e88`
+
+### Fajlovi promenjeni
+`App.css`, `Header.css`, `InputBar.css`, `ChatWindow.css`, `MessageBubble.css`,
+`SidePanel.css`, `ProjectSetupModal.css`, `SettingsModal.css`, `package.json`
+
+---
+
+## [1.0.3] — 2026-05-18 — Scrollbar i box-shadow stilizacija
+
 ### Novo
-- **SUMMARY dugme** u chat headeru (pored EXPORT i SEARCH) — disabled dok nema poruka ili dok AI streama
-- Klik otvara modal koji odmah počinje streamovati AI-generisani sažetak sesije
-- Streaming je **lokalan** — ne ide u chat historiju, ne utiče na store
-- Sažetak uključuje: projekat i kontekst, ključne odluke, urađeno, sljedeći koraci
-- **Kopiraj** — kopira sažetak u clipboard
-- **+ Dodaj u chat** — ubacuje sažetak kao poruku u aktivnu sesiju
-- Koristi isti provider/model kao aktivna sesija; radi sa svim providerima (Anthropic, OpenAI, NVIDIA)
+- Custom webkit scrollbar: 8px širina, `border-radius: 4px`, hover → `var(--accent)`
+- Firefox scrollbar: `@supports (scrollbar-color: auto)` blok
+- Dark tema scrollbar override: teal borderi
+- `app-main` dobio card box-shadow u svetloj temi: `0 4px 6px -1px rgba(44,37,32,0.04), 0 10px 15px -3px rgba(44,37,32,0.08)`
+- Dark tema: `app-main` shadow uklonjen (`box-shadow: none`)
+- `input-textarea` dobio inset shadow: `inset 0 1px 2px rgba(44,37,32,0.05)`
+
+### Fajlovi promenjeni
+`App.css`, `InputBar.css`, `package.json`
 
 ---
 
-## [0.8.0] — 2026-05-18 — Re-Prime preview + Handoff modal (FAZA C1+C2)
-### Novo
-- **C1 — Re-Prime preview** — kolapsibilna sekcija "▸ RE-PRIME KONTEKST" u panelu SESIJA; pokazuje tačno šta će biti poslato modelu pri sljedećem re-prime requestu (projekat, faza, uloga, taskovi, sažetak outputa)
-- **C2 — Handoff modal** — zamjenjuje `window.confirm()`: pravi modal s preview-om dokumenta, toggle opcijama (uključi/isključi taskove i izvod sesije), info o broju poruka i fajlu; preview se osvježava u realnom vremenu pri promjeni opcija
-- `buildHandoffDoc` premješten iz `Header.tsx` u `forgekit-context.ts` — zajednička utility funkcija
-- `HandoffModal` komponenta dodata u App render tree
+## [1.0.2] — 2026-05-18 — Pozadina svetle teme
+
+### Promene
+- `--bg-primary` u svetloj temi: `#ffffff` → `#f0f0e4` (topla bela pozadina)
+
+### Fajlovi promenjeni
+`App.css`, `package.json`
 
 ---
 
-## [0.7.1] — 2026-05-18 — Jump to message (FAZA B3)
-### Novo
-- **Jump to message** — svaki task koji je AI generisao u chatu dobija `↗` dugme (vidljivo na hover)
-- Klik na `↗` skrola chat do originalne poruke i narandžasto je flesha (animacija 1.6s)
-- `Task` struktura proširena sa `sourceMessageId` — sprema se automatski pri parsiranju AI odgovora
-- Ručno dodani taskovi nemaju `↗` dugme (nemaju izvornu poruku)
+## [1.0.1] — 2026-05-18 — Dijakritici i ijekavica
+
+### Ispravke (ISS-001)
+- `SessionSummaryModal`: modal sadržaj sada koristi `var(--font)` (Inter) umesto Share Tech fontova — ispravlja renderovanje š, đ, č, ć, ž kao □
+- `SessionSummaryModal`: naslovi h1/h2/h3 dobili eksplicitni `font-family: var(--font-tech), var(--font)` fallback
+
+### Ijekavica → Ekavica
+- Sve pojave ijekavičkih oblika zamenjene ekavicom kroz celu codebase:
+  - "implementirano" umesto "implementirano" (ijekav. "implementovano")
+  - "primijenjena" → "primenjena"
+  - "vjerovatno" → "verovatno"
+  - i ostale sistemske korekcije u komentarima, string literalima i dokumentaciji
+
+### Fajlovi promenjeni
+`SessionSummaryModal.css`, višestruki `.ts`/`.tsx` fajlovi (komentari i stringovi)
 
 ---
 
-## [0.7.0] — 2026-05-18 — Search u chatu + Export razgovora (FAZA B1+B2)
-### Novo
-- **Search bar** (`Ctrl+F`) — otvara se ispod chat header-a s narandžastim border-om; `Enter` = sljedeći match, `Shift+Enter` = prethodni, `Escape` = zatvori
-- **Match highlight** — poruke koje sadrže upit dobijaju blago narandžastu pozadinu; trenutna match ima jaču boju i narandžasti lijevi border
-- **Match counter** — `1 / 5` prikazano u search baru uz ↑↓ navigacijske dugmad
-- **EXPORT ›** dugme u chat header-u — dropdown s dvije opcije:
-  - **Markdown (.md)** — naslovi, uloge, timestamps, session separator-i
-  - **Plaintext (.txt)** — ista struktura u plain tekstu
-- Export fajl sprema se u aktivni projektni folder: `chat_export_YYYY-MM-DD_HH-MM.md/txt`
-- Export dugme disabled ako nema projektnog foldera ili poruka
+## [1.0.0] — 2026-05-17 — Inicijalni release
 
----
+### Implementirano u v1.0.0
 
-## [0.6.1] — 2026-05-18 — Keyboard shortcuts (FAZA A4)
-### Novo
-- **`Ctrl+Enter`** — šalje poruku (ranije `Enter`); plain `Enter` i `Shift+Enter` = novi red u textarea
-- **`Ctrl+Tab`** — ciklično prebacivanje na sljedeći otvoreni tab (wrap-around)
-- **`Ctrl+,`** — otvara Settings modal direktno
-- Placeholder i tooltip na send dugmetu ažurirani
+**F1 — Fundament**
+- Electron 33 + React 18 + TypeScript 5.6 + electron-vite 2 setup
+- Provider abstraction layer: `AIProvider` interfejs
+- `AnthropicProvider` — Anthropic SDK, streaming kroz `messages.stream()`
+- `OpenAIProvider` — OpenAI SDK, streaming kroz `chat.completions.create({ stream: true })`
+- `NvidiaProvider` — OpenAI-kompatibilni endpoint (NIM)
+- IPC arhitektura: `contextIsolation: true`, `nodeIntegration: false`, preload bridge
+- Streaming token-po-token kroz IPC events (`stream-token`, `stream-complete`, `stream-error`)
+- Chat UI: `ChatWindow`, `MessageBubble`, `InputBar` sa Ctrl+Enter shortcutom
+- React-Markdown renderer sa GFM podrškom, syntax highlighter za kod blokove
 
----
+**F2 — ForgeKit Logika**
+- Zustand 5 store: kompletan state management (messages, activeRole, currentPhase, tasks)
+- Role tag parser: `extractRole()` detektuje `[ROLE]` pattern iz AI odgovora
+- Task parser: `extractTasks()` detektuje `- [ ]` / `- [x]` format
+- Phase parser: detektuje F1/F2/F3 u tekstu
+- System prompt u main procesu (SEC-05 bezbednosna kontrola)
+- Re-Prime mehanizam za kompresiju konteksta pri promeni modela
+- Session Summary Modal (AI-generisan rezime)
+- `LeftPanel`: aktivna uloga, faze, info o projektu
+- `SidePanel`: session metrika tiles, context status, re-prime dugme, model switcher, task lista, Memory Curator, verzija + auto-updater
 
-## [0.6.0] — 2026-05-18 — Markdown rendering + Syntax highlighting (FAZA A1+A2+A3)
-### Novo
-- **Markdown rendering** (`react-markdown` + `remark-gfm`) — bold, italic, headings, liste, tabele, blockquote, HR
-- **Syntax highlighting** (`react-syntax-highlighter` / Prism / vscDarkPlus tema) — automatski za sve code blokove
-- **Copy dugme** na svakom code bloku — `COPY ›`, nakon klika prikazuje `✓ KOPIRANO` 2s
-- **GFM task liste** — checkbox stilizacija s corner bracket UI
-- **Role tag + timestamp** u jednom header redu iznad poruke
-- Inline code stilizacija: `font-mono`, orange boja, tanki border
+**F3 — Multi-model i Settings**
+- `SettingsModal`: accordion API sekcije za Anthropic, OpenAI, NVIDIA
+- GitHub token podrška za auto-updater
+- Custom model ID input (override dropdown modela)
+- Light/Dark tema switcher
+- `TabBar`: multi-tab sesije
+- `Header`: model selector dropdown, HANDOFF dugme
+- electron-builder NSIS installer
+- GitHub Releases auto-updater (electron-updater)
 
----
+**Bezbednost**
+- SEC-05: system prompt živi samo u main procesu
+- API ključevi enkriptovani u electron-store
+- contextBridge eksponuje minimalan API set
 
-## [0.5.4] — 2026-05-18 — Metric tiles: tekst u dva reda
-### Ispravka
-- `.m-val` u desnom panelu: uklonjen `white-space: nowrap` i `text-overflow: ellipsis`
-- Dodan `word-break: break-word` + `line-height: 1.3` — dugi nazivi (npr. "Claude Sonnet 4.6") sada prelaze u drugi red umjesto da budu odrezani
-- Font smanjen s 12px na 11px za bolji fit u 2×2 tile grid
-
----
-
-## [0.5.3] — 2026-05-18 — FK logo sivi u tamnoj temi
-### Ispravka
-- `[data-theme="dark"] .header-logo-mark { background: #5c6370 }` — FK kvadrat postaje neutralno sivi u tamnoj temi
-- Svi ostali narandzasti akcenti ostaju nepromijenjeni u obje teme
-
----
-
-## [0.5.2] — 2026-05-18 — Tamna tema + Settings Izgled tab
-### Novo
-- **Tamna tema** — CSS varijable pod `[data-theme="dark"]`: pozadina `#181818`, površina `#1e1e1e`/`#252525`, ivice `#333`, tekst `#e8e8e8`; akcenat ostaje orange `#ff6b00`
-- **Settings → Izgled tab** — vizualni picker s thumbnail prikazom obje teme; klik odmah primijenjuje temu bez restarta
-- **Tema se pamti** između sesija u `localStorage` pod ključem `fk-theme`
-- **`data-theme` atribut** na `<html>` elementu — sve CSS varijable reaguju automatski
-- **Desni panel proširen** s 240px na 280px — sav sadržaj vidljiv bez odrezivanja
-
----
-
-## [0.5.1] — 2026-05-18 — 3-kolona layout (identičan ChainGPT preview-u)
-### Izmijenjeno — strukturalna promjena layouta
-- **3-kolona CSS grid** — `app-body: grid-template-columns: 200px 1fr 280px` umjesto starog flex s jednim panelom
-- **Nova `LeftPanel` komponenta** (200px) — aktivna uloga s live dot-om, faza rada (✓/■/□ ikone), info o projektu
-- **TabBar ugrađen u Header** — tabovi su flat nav linkovi unutar 50px header trake; eliminisana zasebna tab bar traka ispod headera
-- **Chat header bar** — kontekst linija iznad chata: `CHAT Projekat · Faza · ROLE MODE`
-- **Metric tiles u desnom panelu** — 2×2 grid: Provider / Model / Faza / Poruke; svaki tile ima corner bracket CSS dekoracije
-- **Corner brackets** na task itemima (CSS `::before/::after`) — direktno iz ChainGPT UI pattern-a
-- Duplicate sekcije uklonjene iz SidePanel (uloga, faza, projekat → prebačeno u LeftPanel)
-
----
-
-## [0.5.0] — 2026-05-18 — ChainGPT Light UI Tema
-### Novo — potpuni vizuelni redizajn
-- **ChainGPT Light vizuelni identitet** — pozadina `#e8e8e8`, površina `#f0f0f0`/`#ffffff`, akcenat `#ff6b00`, 1px border grid separatori
-- **Share Tech + Share Tech Mono fontovi** (Google Fonts) — tech display font za logo/labele, monospace za timestamps i section naslove
-- **Flat tab navigacija** — `border-bottom: 2px solid orange` na aktivnom tabu; corner bracket dekoracije na aktivnom tabu
-- **`border-radius: 0`** konzistentno — flat, grid-based estetika bez zaobljenih uglova
-- **Header** — FK orange kvadratni logo mark, flat layout, orange `HANDOFF ›` CTA dugme desno
-- **Poruke kao grid redovi** — flat row stil s `border-bottom` separatorom; AI poruke dobijaju `border-left: 2px orange` on hover; square avatari
-- **`■` bullet** ispred section labela u SidePanel
-- **`SEND ›`** orange send dugme — kvadratan, uppercase mono font
-- **Settings modal** — `box-shadow: 4px 4px 0`, orange left border na headeru, uppercase CTA dugmad
-
----
-
-## [0.4.1] — 2026-05-18 — Settings UI: accordion + NVIDIA test veze
-### Izmijenjeno
-- **API ključevi kao accordion sekcije** — Anthropic, OpenAI, NVIDIA NIM, GitHub se otvaraju/zatvaraju; status badge vidljiv bez otvaranja
-- **Modal max-height 88vh** + `overflow-y: auto` — header, tabovi i Save uvijek vidljivi, sadržaj scrolluje
-- **NVIDIA NIM „Testiraj vezu"** — testira key + base URL pozivom na `/models` endpoint
-- **SidePanel SESIJA blok** — Provider, Model, Context status, broj poruka u kompaktnom info prikazu
-- Auto-otvori prvu nepodešenu accordion sekciju pri otvaranju Settings
-
----
-
-## [0.4.0] — 2026-05-18 — Model Switch System + ForgeKit Context Re-Prime
-### Novo
-- **Live model switcher u SidePanel** — mijenjaj provider i model tokom aktivnog projekta bez zatvaranja sesije
-- **Custom model ID polje** (samo NVIDIA) — unesi bilo koji NIM model ID koji nije u dropdown listi
-- **ForgeKit Context Re-Prime** — pri promjeni modela šalje se strukturirani kontekst (projekt, faza, uloga, taskovi, zadnji output) umjesto pune historije
-- **`[MODEL_SWITCH]` divider** u chatu — vizuelni marker s imenima before/after
-- **Context status badge** — `✓ synced` ili `⚠ refresh`; Refresh Context dugme za ručni trigger
-- **NVIDIA NIM Base URL** u Settings — preset dugmad: Hosted NVIDIA / Local NIM
-- **`forgekit-context.ts`** utility — `buildProjectContext`, `buildModelSwitchNotice`, `buildRePrimeMessages`
-
----
-
-## [0.3.6] — 2026-05-18 — NVIDIA NIM integracija
-### Novo
-- **NVIDIA NIM** kao treći AI provider — besplatan API za 80+ modela, OpenAI-kompatibilan
-- 18 predefinisanih modela: Nemotron, DeepSeek R1/V3, Llama 3.3 405B, QwQ 32B, Kimi, GLM-4, Phi-4, Gemma 3, Mixtral, Qwen 2.5 Coder i dr.
-- NVIDIA NIM API ključ u Settings → Globalno; validacija formata `owner/model`
-
----
-
-## [0.3.5] — 2026-05-18 — UX: Handoff vs Novi projekat
-### Izmijenjeno
-- `+ Nova sesija` → `📋 Handoff projekta` — jasno označava checkpoint, ne brisanje
-- Tab `+` → `＋ Novi projekat` s accent bojom
-- Limit label: `4/4` → `max 4 projekta`; opisni tooltips na oba dugmeta
-
----
-
-## [0.3.4] — 2026-05-18 — Perzistencija tabova
-### Novo
-- Svi otvoreni tabovi se čuvaju pri gašenju; restauriraju se pri sljedećem pokretanju
-- Aktivni tab se pamti — pri startu odmah na istom mjestu
-- Neaktivni tabovi se učitavaju lazy (tek pri prelasku)
-- Nova IPC: `tabs:save-state`, `tabs:load-state`, `project:read-file-from-path`, `project:set-active-path`
-
----
-
-## [0.3.3] — 2026-05-18 — Validacija provider/model
-### Novo
-- Validacija mismatch-a pri učitavanju sesije — automatska ispravka (npr. `anthropic + gpt-4o` → ispravni model)
-- Greška „API ključ nije podešen" prikazuje dugme **⚙ Otvori Settings** direktno u chatu
-
----
-
-## [0.3.2] — 2026-05-18 — Nova sesija = checkpoint
-### Izmijenjeno
-- Nova sesija više ne briše razgovor — dodaje vizuelni separator (datum + vrijeme)
-- Handoff dokument se kreira; taskovi, faza i sve ostalo ostaju netaknuti
-
----
-
-## [0.3.1] — 2026-05-18 — OpenAI modeli
-### Izmijenjeno
-- Dodati: `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`; zadržani: `gpt-4o`, `gpt-4o-mini`
-
----
-
-## [0.3.0] — 2026-05-18 — Multi-tab projekti
-### Novo
-- Do 4 projekta istovremeno kao tabovi; svaki tab ima potpuno nezavisnu sesiju
-- `+` za novi projekat, `✕` za zatvaranje; streaming indikator na aktivnom tabu
-- Prebacivanje između projekata čuva puno stanje u memoriji
-
----
-
-## [0.2.1] — 2026-05-18 — Handoff dokument + In-app update
-### Novo
-- Handoff dokument (`handoff_<datum>.md`) se automatski kreira u projektnom folderu pri novoj sesiji
-- In-app update: `electron-updater` preuzima i instalira bez preusmjeravanja na browser
-
----
-
-## [0.2.0] — 2026-05-12 — Project Settings + Provider per projekat
-### Novo
-- Settings modal: **Globalno** (API ključevi, GitHub) i **Projekat** (naziv, folder, provider, model)
-- Provider i model per-projekat, snimaju se u `session.json`
-
----
-
-## [0.1.1] — 2026-05-12
-### Izmijenjeno
-- Ikona aplikacije promijenjena na proton-native atom logo
-
----
-
-## [0.1.0] — 2026-05-12 — Inicijalno izdanje
-### Novo
-- AI chat sa streaming odgovorima (Anthropic Claude i OpenAI GPT)
-- ForgeKit uloge: ORCHESTRATOR, THINKER, BUILDER, REVIEWER, MEMORY CURATOR, OBSERVER
-- Automatska detekcija uloge (`[ROLE]` tag) i taskova (`- [ ]` format) iz AI odgovora
-- Faze rada: F1 Fundament, F2 ForgeKit Logika, F3 Multi-model
-- Memory Curator: automatski upload zapisa na GitHub
-- GitHub integracija: token + repo, test konekcije
-- Projektni folder + `project_security_manifest.md`; perzistencija sesije u `session.json`
-- Auto-update s GitHub Releases; NSIS Windows installer
+**Dizajn**
+- ChainGPT-inspired flat UI: oštri uglovi, monofonts, accent boje po ulozi
+- Share Tech + Share Tech Mono + Inter (Google Fonts)
+- 3-kolumna layout: 200px levo | flex chat | 280px desno
+- CSS custom properties za temu, bez CSS framework zavisnosti
