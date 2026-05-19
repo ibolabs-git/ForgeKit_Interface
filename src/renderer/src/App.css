@@ -83,14 +83,40 @@ body {
   overflow: hidden;
   border-left: 1px solid var(--border);
   border-right: 1px solid var(--border);
+  /* Senka — "lebdeći" card efekat za centralni radni prostor */
+  box-shadow: 0 4px 6px -1px rgba(44,37,32,0.04),
+              0 10px 15px -3px rgba(44,37,32,0.08);
+  position: relative;
+  z-index: 1;
 }
 
 button { cursor: pointer; border: none; background: none; font-family: var(--font); }
 input, textarea, select { font-family: var(--font); }
 ul { list-style: none; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+/* ── Scrollbar — light tema ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); border-radius: 4px; }
+::-webkit-scrollbar-thumb {
+  background-color: #D8CBB5;
+  border-radius: 4px;
+  border: 2px solid var(--bg-primary);
+  transition: background-color 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--accent); }
+
+/* Firefox */
+@supports (scrollbar-color: auto) {
+  * { scrollbar-width: thin; scrollbar-color: #D8CBB5 var(--bg-primary); }
+}
+
+/* Dark tema — override scrollbar boja */
+[data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: var(--border2);
+  border-color: var(--bg-secondary);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background-color: var(--accent); }
+
+/* Dark tema — ukloni senku na app-main (senke ne funkcionišu na tamnoj temi) */
+[data-theme="dark"] .app-main { box-shadow: none; }
