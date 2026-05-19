@@ -1,8 +1,33 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { buildProjectContext } from '../utils/forgekit-context'
 import type { ModelInfo } from '../types'
 import './SidePanel.css'
+
+// OPT-07 + OPT-03: ReprimePreviewContent je posebna komponenta koja se mountuje SAMO
+// kad je preview otvoren. Ona sama subscribeuje na messages — SidePanel ne treba da
+// subscribeuje na messages i ne re-renderuje se na svaki stream token.
+function ReprimePreviewContent(): JSX.Element {
+  const messages      = useForgeKitStore((s) => s.messages)
+  const projectName   = useForgeKitStore((s) => s.projectName)
+  const currentPhase  = useForgeKitStore((s) => s.currentPhase)
+  const activeRole    = useForgeKitStore((s) => s.activeRole)
+  const tasks         = useForgeKitStore((s) => s.tasks)
+  const selectedModel = useForgeKitStore((s) => s.selectedModel)
+  const customModelId = useForgeKitStore((s) => s.customModelId)
+
+  const text = buildProjectContext({
+    projectName,
+    currentPhase,
+    activeRole,
+    tasks,
+    messages,
+    selectedModel: customModelId.trim() || selectedModel,
+    previousEffectiveModel: selectedModel
+  })
+
+  return <pre className="reprime-preview-text">{text}</pre>
+}
 
 async function uploadRecord(
   id: string,
@@ -20,8 +45,11 @@ async function uploadRecord(
 }
 
 export function SidePanel(): JSX.Element {
+  // OPT-03: messages zamijenjen sa messagesLength — SidePanel ne re-renderuje na svaki
+  // stream token, samo kad se promijeni broj poruka (nova poruka dodata/sesija resetovana)
+  const messagesLength    = useForgeKitStore((s) => s.messages.length)
   const {
-    activeRole, currentPhase, tasks, messages,
+    activeRole, currentPhase, tasks,
     selectedProvider, selectedModel, customModelId, contextStatus,
     setProvider, setModel, setCustomModelId, refreshContext,
     memoryRecords, projectName,
@@ -74,20 +102,6 @@ export function SidePanel(): JSX.Element {
   }
 
   const completedCount = tasks.filter((t) => t.completed).length
-
-  // C1 — Re-Prime preview tekst
-  const reprimePreviewText = useMemo(() =>
-    buildProjectContext({
-      projectName,
-      currentPhase,
-      activeRole,
-      tasks,
-      messages,
-      selectedModel: customModelId.trim() || selectedModel,
-      previousEffectiveModel: selectedModel
-    }),
-    [projectName, currentPhase, activeRole, tasks, messages, selectedModel, customModelId]
-  )
   const effectiveModelId = customModelId.trim() || selectedModel
   const isCustomActive = Boolean(customModelId.trim())
 
@@ -141,7 +155,7 @@ export function SidePanel(): JSX.Element {
           <div className="metric-tile">
             <span className="m-num">04</span>
             <div className="m-label">PORUKE</div>
-            <div className="m-val orange">{messages.length}</div>
+            <div className="m-val orange">{messagesLength}</div>
           </div>
         </div>
 
@@ -167,9 +181,7 @@ export function SidePanel(): JSX.Element {
           >
             {reprimePreviewOpen ? '▾' : '▸'} RE-PRIME KONTEKST
           </button>
-          {reprimePreviewOpen && (
-            <pre className="reprime-preview-text">{reprimePreviewText}</pre>
-          )}
+          {reprimePreviewOpen && <ReprimePreviewContent />}
         </div>
       </section>
 
@@ -184,7 +196,7 @@ export function SidePanel(): JSX.Element {
             const newProvider = e.target.value
             const defaultModels: Record<string, string> = {
               anthropic: 'claude-sonnet-4-6',
-              openai: 'gpt-5.4',
+              openai: 'gpt-4o',  // COMP-09 fix: gpt-5.4 ne postoji
               nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
             }
             setProvider(newProvider, defaultModels[newProvider] ?? '')

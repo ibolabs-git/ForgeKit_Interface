@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { FORGEKIT_SYSTEM_PROMPT } from '../prompts/system-prompt'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
@@ -7,6 +7,18 @@ import './InputBar.css'
 export function InputBar(): JSX.Element {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // OPT-06: čuva reference na aktivne remove funkcije za stream listenere.
+  // Ako se komponenta unmountuje tokom streaminga (tab switch u budućim verzijama),
+  // useEffect cleanup automatski uklanja sve registrovane listenere i sprječava memory leak.
+  const activeListenersRef = useRef<Array<() => void>>([])
+
+  useEffect(() => {
+    return () => {
+      activeListenersRef.current.forEach((fn) => fn())
+      activeListenersRef.current = []
+    }
+  }, [])
 
   const {
     messages,
@@ -81,19 +93,19 @@ export function InputBar(): JSX.Element {
     const removeComplete = window.api.onStreamComplete((id) => {
       if (id === messageId) {
         finalizeMessage(messageId)
-        removeToken()
-        removeComplete()
-        removeError()
+        removeToken(); removeComplete(); removeError()
+        activeListenersRef.current = []
       }
     })
     const removeError = window.api.onStreamError((error, id) => {
       if (id === messageId) {
         addErrorMessage(error, messageId)
-        removeToken()
-        removeComplete()
-        removeError()
+        removeToken(); removeComplete(); removeError()
+        activeListenersRef.current = []
       }
     })
+    // OPT-06: registruj u ref kako bi unmount cleanup mogao pozvati ako stream ne završi
+    activeListenersRef.current = [removeToken, removeComplete, removeError]
 
     window.api.sendMessage({
       messages: history,

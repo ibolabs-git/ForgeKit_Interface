@@ -18,8 +18,12 @@ const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
 ]
 
 export function LeftPanel(): JSX.Element {
+  // OPT-08: messages.length selektor umjesto cijelog messages arraya.
+  // LeftPanel koristi samo count — ovako ne re-renderuje na svaki stream token,
+  // samo kad se broj poruka promijeni (nova poruka ili reset sesije).
+  const messagesLength = useForgeKitStore((s) => s.messages.length)
   const {
-    activeRole, currentPhase, messages,
+    activeRole, currentPhase,
     projectName, projectPath,
     setPhase, setShowProjectSetup
   } = useForgeKitStore()
@@ -71,7 +75,7 @@ export function LeftPanel(): JSX.Element {
         <div className="lp-label">Projekat</div>
         <div className="lp-project-name">{projectName}</div>
         <div className="lp-project-meta">
-          <span className="lp-meta-row">Poruke: <strong>{messages.length}</strong></span>
+          <span className="lp-meta-row">Poruke: <strong>{messagesLength}</strong></span>
           {projectPath && (
             <span className="lp-meta-row lp-meta-path" title={projectPath}>
               {projectPath.split(/[\\/]/).slice(-1)[0]}

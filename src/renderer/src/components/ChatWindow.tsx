@@ -44,6 +44,10 @@ export function ChatWindow(): JSX.Element {
       .map((m) => m.id)
   }, [messages, searchQuery])
 
+  // OPT-05: Set za O(1) lookup umjesto Array.includes() O(n) u render loopu.
+  // Sa 100 poruka i 20 matchova, includes() pravi 2000 komparacija po renderu.
+  const matchSet = useMemo(() => new Set(matchIds), [matchIds])
+
   // ── Scroll do poruke po ID-u ──────────────────────────────────────────────
   const scrollToId = useCallback((id: string) => {
     const el = document.querySelector(`[data-msg-id="${id}"]`)
@@ -273,7 +277,7 @@ export function ChatWindow(): JSX.Element {
             <MessageBubble
               key={msg.id}
               message={msg}
-              isSearchMatch={matchIds.includes(msg.id)}
+              isSearchMatch={matchSet.has(msg.id)}
               isCurrentMatch={matchIds[matchIndex] === msg.id}
             />
           ))}

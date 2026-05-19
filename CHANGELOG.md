@@ -5,6 +5,50 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.9.5] — 2026-05-19 — PROLAZ 3: Performance optimizacija
+
+### Performanse — 6 promjena
+
+- **OPT-01 — Bundle smanjen sa 1.648MB na 832KB (−49%)** (`MessageBubble.tsx`)
+  - **Problem:** `import { Prism as SyntaxHighlighter }` učitava sve Prism jezike (150+) pri startu aplikacije, čak i one koji se nikad ne koriste (COBOL, Fortran, Assembly...)
+  - **Rješenje:** Zamijenjeno sa `PrismLight` koji dolazi prazan; ručno registrovani samo relevantni jezici za ForgeKit radne tokove: `typescript`, `tsx`, `javascript`, `jsx`, `python`, `bash`/`sh`, `json`, `css`, `markdown`, `sql`
+  - **Efekt:** Renderer bundle 1648 kB → 832 kB; aplikacija se brže učitava, manji RAM footprint
+  - **Fajlovi:** `src/renderer/src/components/MessageBubble.tsx`
+
+- **OPT-03 — SidePanel ne re-renderuje na svaki stream token** (`SidePanel.tsx`)
+  - **Problem:** SidePanel subscribeovao na cijeli `messages` array kroz `useForgeKitStore()` destrukturiranje; svaki token koji stigne tokom streaminga mijenja array i triggeruje re-render SidePanel-a (10–50x u sekundi)
+  - **Rješenje:** `messages` zamijenjen sa `messagesLength = useForgeKitStore((s) => s.messages.length)` za metric tile; Zustand sada re-renderuje SidePanel samo kad se broj poruka promijeni — ne na svaki token
+  - **Fajlovi:** `src/renderer/src/components/SidePanel.tsx`
+
+- **OPT-05 — `matchIds.includes()` O(n) → `Set.has()` O(1) u ChatWindow** (`ChatWindow.tsx`)
+  - **Problem:** `matchIds.includes(msg.id)` se pozivao za svaku poruku u render loopu; pri 100 poruka i 20 match-ova to je 2000 string komparacija po renderu; pri aktivnoj pretrazi tokom streaminga to se ponavlja 10–50x u sekundi
+  - **Rješenje:** Dodan `matchSet = useMemo(() => new Set(matchIds), [matchIds])` koji se kreira samo kad se `matchIds` promijeni; koristi se `matchSet.has(msg.id)` umjesto `includes()`
+  - **Fajlovi:** `src/renderer/src/components/ChatWindow.tsx`
+
+- **OPT-06 — Memory leak: stream listeneri se čiste pri unmount** (`InputBar.tsx`)
+  - **Problem:** Stream event listeneri (`onStreamToken`, `onStreamComplete`, `onStreamError`) čistili su se samo unutar vlastitih callback-a na `complete` ili `error`; ako bi komponenta bila unmountovana tokom aktivnog streaminga (npr. u budućim verzijama s destrukcijom taba), listeneri bi ostali na `ipcRenderer`
+  - **Rješenje:** Dodan `activeListenersRef` koji pamti sve aktivne `remove*` funkcije; `useEffect` cleanup poziva ih pri unmount-u; lista se prazni i na normalni complete/error završetak
+  - **Fajlovi:** `src/renderer/src/components/InputBar.tsx`
+
+- **OPT-07 — `reprimePreviewText` izračunava se samo kad je preview otvoren** (`SidePanel.tsx`)
+  - **Problem:** `buildProjectContext()` bio u `useMemo` koji se re-evaluira na svaki token jer `messages` je u dep arrayu; preview panel je 99% vremena zatvoren, ali CPU se troši na računanje svakog tokena
+  - **Rješenje:** Logika premještena u posebnu komponentu `ReprimePreviewContent` koja se mountuje/unmountuje sa `{reprimePreviewOpen && <ReprimePreviewContent />}`; kada je preview zatvoren, komponenta ne postoji i ne subscribeuje na store uopšte
+  - **Fajlovi:** `src/renderer/src/components/SidePanel.tsx`
+
+- **OPT-08 — LeftPanel ne re-renderuje na svaki stream token** (`LeftPanel.tsx`)
+  - **Problem:** LeftPanel subscribeovao na cijeli `messages` array ali ga koristio samo za `messages.length` u prikazu broja poruka
+  - **Rješenje:** Zamijenjen sa `messagesLength = useForgeKitStore((s) => s.messages.length)`; identičan efekt kao OPT-03 — re-render samo pri dodavanju/brisanju poruke
+  - **Fajlovi:** `src/renderer/src/components/LeftPanel.tsx`
+
+### Bonus fix
+- **COMP-09 (SidePanel)** — zaostali `gpt-5.4` u provider switcher defaultModels ispravljen na `gpt-4o`
+
+### Backup
+- Pre-prolaz3 backup: `v0.9.4-pre-prolaz3-stable`
+- Ovaj prolaz: `v0.9.5-stable`
+
+---
+
 ## [0.9.4] — 2026-05-19 — PROLAZ 2: Kompatibilnost + bugovi
 
 ### Kompatibilnost — 5 popravki
