@@ -34,12 +34,12 @@ function Assert-Command {
 function Invoke-Native {
     param(
         [string]$Exe,
-        [string[]]$Args
+        [string[]]$ArgumentList
     )
 
-    & $Exe @Args
+    & $Exe @ArgumentList
     if ($LASTEXITCODE -ne 0) {
-        throw "Komanda nije uspela: $Exe $($Args -join ' ')"
+        throw "Komanda nije uspela: $Exe $($ArgumentList -join ' ')"
     }
 }
 
