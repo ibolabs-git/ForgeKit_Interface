@@ -12,6 +12,8 @@ const PHASE_LABELS: Record<string, string> = {
 export function ChatWindow(): JSX.Element {
   const messages           = useForgeKitStore((s) => s.messages)
   const isStreaming        = useForgeKitStore((s) => s.isStreaming)
+  // OPT-02: prati streaming buffer za auto-scroll tokom streaminga
+  const streamingContent   = useForgeKitStore((s) => s.streamingContent)
   const projectName        = useForgeKitStore((s) => s.projectName)
   const currentPhase       = useForgeKitStore((s) => s.currentPhase)
   const activeRole         = useForgeKitStore((s) => s.activeRole)
@@ -92,10 +94,15 @@ export function ChatWindow(): JSX.Element {
     if (matchIds.length > 0) scrollToId(matchIds[0])
   }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-scroll na dno (samo kad search nije aktivan) ────────────────────
+  // ── Auto-scroll na dno pri novoj poruci ──────────────────────────────────
   useEffect(() => {
     if (!searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, searchOpen])
+
+  // OPT-02: Auto-scroll tokom aktivnog streaminga — prati streamingContent buffer
+  useEffect(() => {
+    if (isStreaming && !searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [streamingContent, isStreaming, searchOpen])
 
   // ── B3: Jump to message ───────────────────────────────────────────────────
   useEffect(() => {

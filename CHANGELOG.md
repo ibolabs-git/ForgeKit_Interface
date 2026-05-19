@@ -5,6 +5,37 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [1.0.0] — 2026-05-19 — PROLAZ 4: Arhitektura — streaming buffer, safeStorage, systemPrompt
+
+### Arhitekturalne promjene — 3 poboljšanja
+
+- **OPT-02 — Streaming O(n) → O(1): streaming buffer + React.memo** (`forgekit.store.ts`, `MessageBubble.tsx`, `ChatWindow.tsx`)
+  - **Problem:** `appendStreamToken` pozivao `.map()` nad cijelim `messages` array-om na svaki token (10–50x u sekundi tokom streaminga); svaka MessageBubble, LeftPanel, SidePanel re-renderovala na svaki token
+  - **Rješenje (3 dijela):**
+    1. **Store:** novi `streamingContent: string` field — `appendStreamToken` samo nadodaje na string (`O(1)`), `finalizeMessage` jednom upisuje kompletan sadržaj u `messages` array
+    2. **MessageBubble:** omotan s `React.memo` — re-renderuje samo ako se props promijene; streaming MessageBubble čita `streamingContent` direktno iz store-a, sve ostale ostaju "zamrznute"
+    3. **ChatWindow:** auto-scroll premješten na `streamingContent` effect umjesto `messages` effect
+  - **Efekt:** Tokom streaminga, jedino aktivna streaming MessageBubble re-renderuje; sve završene poruke su statične
+  - **Fajlovi:** `src/renderer/src/store/forgekit.store.ts`, `src/renderer/src/components/MessageBubble.tsx`, `src/renderer/src/components/ChatWindow.tsx`
+
+- **SEC-04 — safeStorage za API ključeve** (`store.ts`, `ipc-handlers.ts`)
+  - **Problem:** API ključevi čuvani u `electron-store` s hardkodovanim `encryptionKey: 'forgekit-secure-storage-2026'` — isti ključ na svim instalacijama, dostupan u source kodu i binarnoj datoteci
+  - **Rješenje:** Novi `forgekit-secure` store bez encryptionKey — vrijednosti API ključeva enkriptovane s `safeStorage.encryptString()` (Windows DPAPI / macOS Keychain) i snimljene kao base64; čitanje kroz `safeStorage.decryptString()`
+  - **Soft migracija:** Stari `forgekit-settings` store s encryptionKey zadržan samo za čitanje starih podataka (fallback); pri prvom snimanju Settings-a, ključevi se automatski premještaju u novi safeStorage format
+  - **Fallback:** Ako `safeStorage.isEncryptionAvailable()` nije dostupan (headless/CI okruženje), čuva se kao plaintext u zasebnom store-u
+  - **Fajlovi:** `src/main/store.ts`, `src/main/ipc-handlers.ts`
+
+- **SEC-05 — `systemPrompt` premješten u main process** (`system-prompt.ts`, `ipc-handlers.ts`, `InputBar.tsx`, `preload/index.ts`)
+  - **Problem:** Renderer (`InputBar.tsx`) importovao `FORGEKIT_SYSTEM_PROMPT` i slao ga kroz IPC `send-message` payload; zlonamjerni sadržaj koji se renderuje mogao je podmetnuti drugačiji system prompt kroz IPC
+  - **Rješenje:** `FORGEKIT_SYSTEM_PROMPT` premješten u `src/main/system-prompt.ts`; main process ga dodaje sam — renderer više ne šalje `systemPrompt` u payloadu; main pokušava učitati GitHub verziju (uvijek ima prednost), fallback na bundlovani prompt; `cachedSystemPrompt` se puni jednom po sesiji
+  - **Fajlovi:** `src/main/system-prompt.ts` (novo), `src/main/ipc-handlers.ts`, `src/renderer/src/components/InputBar.tsx`, `src/preload/index.ts`
+
+### Backup
+- Pre-prolaz4 backup: `v0.9.5-pre-prolaz4-stable`
+- Ovaj prolaz: `v1.0.0-stable`
+
+---
+
 ## [0.9.5] — 2026-05-19 — PROLAZ 3: Performance optimizacija
 
 ### Performanse — 6 promjena

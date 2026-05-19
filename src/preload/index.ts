@@ -1,10 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
-  // AI streaming
+  // AI streaming — SEC-05: systemPrompt uklonjen iz payloada, main ga dodaje sam
   sendMessage: (payload: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
-    provider: string; model: string; systemPrompt: string; messageId: string
+    provider: string; model: string; messageId: string
   }) => ipcRenderer.send('send-message', payload),
 
   onStreamToken: (cb: (token: string, messageId: string) => void) => {

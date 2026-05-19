@@ -178,6 +178,8 @@ interface ForgeKitStore {
   messages: ChatMessage[]
   streamingMessageId: string | null
   isStreaming: boolean
+  // OPT-02: streaming tokeni se akumuliraju ovdje — ne diraju messages array na svaki token
+  streamingContent: string
 
   // ── ForgeKit stanje (aktivni tab) ──
   activeRole: ForgeKitRole
@@ -382,6 +384,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   messages: [],
   streamingMessageId: null,
   isStreaming: false,
+  streamingContent: '',
   activeRole: 'ORCHESTRATOR',
   currentPhase: 'F1',
   tasks: [],
@@ -431,29 +434,36 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     }))
   },
 
-  appendStreamToken: (token, messageId) => {
-    set((s) => ({
-      messages: s.messages.map((m) => m.id === messageId ? { ...m, content: m.content + token } : m)
-    }))
+  // OPT-02: appendStreamToken više ne prolazi kroz cijeli messages array.
+  // Token se dodaje na streamingContent string — O(1) operacija.
+  // MessageBubble sa isStreaming=true čita streamingContent direktno iz store-a.
+  appendStreamToken: (token, _messageId) => {
+    set((s) => ({ streamingContent: s.streamingContent + token }))
   },
 
   finalizeMessage: (messageId) => {
-    const msg = get().messages.find((m) => m.id === messageId)
-    if (!msg) return
+    // OPT-02: finalni sadržaj dolazi iz streamingContent buffera, ne iz messages.
+    // Tek ovdje radimo jedan map() kako bismo upisali kompletan sadržaj u poruku.
+    const fullContent = get().streamingContent
+    if (!fullContent && !get().messages.find((m) => m.id === messageId)) return
 
-    const role = extractRole(msg.content)
-    const newTasks = extractTasks(msg.content, messageId)
-    const phase = extractPhase(msg.content)
+    const role = extractRole(fullContent)
+    const newTasks = extractTasks(fullContent, messageId)
+    const phase = extractPhase(fullContent)
 
     set((s) => ({
       isStreaming: false,
       streamingMessageId: null,
+      streamingContent: '',   // oslobodi buffer
       activeRole: role,
       currentPhase: phase ?? s.currentPhase,
       tasks: newTasks.length > 0 ? [...s.tasks, ...newTasks] : s.tasks,
-      // Isključi streaming indikator na tabu
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
-      messages: s.messages.map((m) => m.id === messageId ? { ...m, forgeRole: role, isStreaming: false } : m)
+      messages: s.messages.map((m) =>
+        m.id === messageId
+          ? { ...m, content: fullContent, forgeRole: role, isStreaming: false }
+          : m
+      )
     }))
 
     const memoryContent = extractMemoryContent(msg.content)
@@ -540,7 +550,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     currentPhase: 'F1',
     isStreaming: false,
     streamingMessageId: null,
-    // Zadrži ime i folder projekta
+    streamingContent: '',
     projectName: s.projectName,
     projectPath: s.projectPath
   })),

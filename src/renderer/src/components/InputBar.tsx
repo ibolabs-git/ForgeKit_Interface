@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
-import { FORGEKIT_SYSTEM_PROMPT } from '../prompts/system-prompt'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
 import './InputBar.css'
+// SEC-05: FORGEKIT_SYSTEM_PROMPT premješten u main process — ne importuje se ovdje
 
 export function InputBar(): JSX.Element {
   const [input, setInput] = useState('')
@@ -107,11 +107,11 @@ export function InputBar(): JSX.Element {
     // OPT-06: registruj u ref kako bi unmount cleanup mogao pozvati ako stream ne završi
     activeListenersRef.current = [removeToken, removeComplete, removeError]
 
+    // SEC-05: systemPrompt se ne šalje — main process ga dodaje sam
     window.api.sendMessage({
       messages: history,
       provider: selectedProvider,
       model: effectiveModel,
-      systemPrompt: FORGEKIT_SYSTEM_PROMPT,
       messageId
     })
   }

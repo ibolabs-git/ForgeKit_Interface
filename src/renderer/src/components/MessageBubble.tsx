@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -183,8 +183,19 @@ interface Props {
 
 // ── Komponenta ────────────────────────────────────────────────────────────────
 
-export function MessageBubble({ message, isSearchMatch, isCurrentMatch }: Props): JSX.Element {
+// OPT-02: React.memo sprječava re-render MessageBubble-a kada mu se props ne mijenjaju.
+// Tokom streaminga, jedino MessageBubble sa isStreaming=true će re-renderovati
+// (jer čita streamingContent iz store-a), svi ostali ostaju "zamrznuti".
+export const MessageBubble = React.memo(function MessageBubble(
+  { message, isSearchMatch, isCurrentMatch }: Props
+): JSX.Element {
   const { setShowSettings, setSettingsTab } = useForgeKitStore()
+  // OPT-02: streaming sadržaj čitamo direktno iz store-a, ne iz message.content
+  // koji se ažurira tek na finalizeMessage (kraj streama)
+  const streamingContent = useForgeKitStore((s) =>
+    message.isStreaming ? s.streamingContent : null
+  )
+  const displayContent = streamingContent !== null ? streamingContent : message.content
 
   const handleOpenSettings = (tab: 'global' | 'project') => {
     setSettingsTab(tab)
@@ -233,8 +244,8 @@ export function MessageBubble({ message, isSearchMatch, isCurrentMatch }: Props)
   const color  = ROLE_COLORS[message.forgeRole] ?? '#888'
   const isUser = message.role === 'user'
 
-  // Ukloni role tag s početka sadržaja
-  const cleanedContent = message.content.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
+  // Ukloni role tag s početka sadržaja (iz displayContent koji može biti streaming buffer)
+  const cleanedContent = displayContent.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
 
   const searchClasses = [
     isSearchMatch  ? 'search-match'   : '',
@@ -263,7 +274,7 @@ export function MessageBubble({ message, isSearchMatch, isCurrentMatch }: Props)
 
       {/* Content */}
       <div className={`message-content ${isUser ? 'user-content' : 'assistant-content'}`}>
-        {message.isStreaming && message.content === '' ? (
+        {message.isStreaming && displayContent === '' ? (
           <span className="typing-indicator">
             <span /><span /><span />
           </span>
@@ -295,4 +306,4 @@ export function MessageBubble({ message, isSearchMatch, isCurrentMatch }: Props)
 
     </div>
   )
-}
+})

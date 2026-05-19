@@ -1,12 +1,14 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
-import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig } from './store'
+import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig, setApiKeySecure } from './store'
 import {
   testGitHubConnection,
   uploadMemoryRecord,
   fetchSystemPromptFromGitHub
 } from './github'
+// SEC-05: system prompt živi u main procesu — renderer ga ne šalje kroz IPC
+import { FORGEKIT_SYSTEM_PROMPT } from './system-prompt'
 import {
   chooseProjectFolder,
   createProjectFolder,
@@ -29,14 +31,29 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
   // ── AI STREAMING ──────────────────────────────────────────────────────────
 
+  // SEC-05: payload više ne prima systemPrompt od renderer-a.
+  // Main process uvijek koristi vlastitu kopiju prompta (ili GitHub verziju ako dostupna).
+  // Renderer ne može podmetnuti drugačiji system prompt.
+  let cachedSystemPrompt: string | null = null
+
   ipcMain.on('send-message', async (event, payload: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
     provider: string
     model: string
-    systemPrompt: string
     messageId: string
   }) => {
-    const { messages, provider, model, systemPrompt, messageId } = payload
+    const { messages, provider, model, messageId } = payload
+
+    // Učitaj GitHub verziju prompta jednom po sesiji; fallback na bundlovani
+    if (!cachedSystemPrompt) {
+      const config = getGitHubConfig()
+      if (config.token && config.repo) {
+        const remote = await fetchSystemPromptFromGitHub(config).catch(() => null)
+        cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT
+      } else {
+        cachedSystemPrompt = FORGEKIT_SYSTEM_PROMPT
+      }
+    }
 
     try {
       const apiKey = getApiKey(provider as 'anthropic' | 'openai' | 'nvidia')
@@ -53,7 +70,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
 
       const options = provider === 'nvidia' ? { baseURL: getNvidiaBaseUrl() } : undefined
       const providerInstance = createProvider(provider, apiKey, options)
-      for await (const token of providerInstance.sendMessage(messages, systemPrompt, model)) {
+      for await (const token of providerInstance.sendMessage(messages, cachedSystemPrompt, model)) {
         if (win.isDestroyed()) break
         event.sender.send('stream-token', token, messageId)
       }
@@ -84,16 +101,18 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   }))
 
   ipcMain.handle('save-settings', (_e, settings: Record<string, unknown>) => {
+    // SEC-04: API ključevi se snimaju kroz setApiKeySecure (safeStorage DPAPI/Keychain)
+    // umjesto direktno u settingsStore sa hardkodovanim encryptionKey-om
     if (typeof settings.anthropicApiKey === 'string' && settings.anthropicApiKey !== '***')
-      settingsStore.set('anthropicApiKey', settings.anthropicApiKey)
+      setApiKeySecure('anthropicKey', settings.anthropicApiKey)
     if (typeof settings.openaiApiKey === 'string' && settings.openaiApiKey !== '***')
-      settingsStore.set('openaiApiKey', settings.openaiApiKey)
+      setApiKeySecure('openaiKey', settings.openaiApiKey)
     if (typeof settings.nvidiaApiKey === 'string' && settings.nvidiaApiKey !== '***')
-      settingsStore.set('nvidiaApiKey', settings.nvidiaApiKey)
+      setApiKeySecure('nvidiaKey', settings.nvidiaApiKey)
     if (typeof settings.nvidiaBaseUrl === 'string' && settings.nvidiaBaseUrl)
       settingsStore.set('nvidiaBaseUrl', settings.nvidiaBaseUrl)
     if (typeof settings.githubToken === 'string' && settings.githubToken !== '***')
-      settingsStore.set('githubToken', settings.githubToken)
+      setApiKeySecure('githubToken', settings.githubToken)
     if (typeof settings.githubRepo === 'string' && settings.githubRepo)
       settingsStore.set('githubRepo', settings.githubRepo)
     if (typeof settings.defaultProvider === 'string')
