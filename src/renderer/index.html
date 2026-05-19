@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <!-- SEC-07: Eksplicitna CSP politika.
+         connect-src 'none' blokira fetch/XHR iz renderer-a — svi API pozivi idu kroz IPC (main process).
+         Google Fonts su dozvoljeni kroz style-src i font-src jer se učitavaju putem CSS @import.
+         img-src data: dozvoljava base64 slike koje React može renderovati. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'none'; img-src 'self' data:;" />
     <title>ForgeKit Interface</title>
   </head>
   <body>

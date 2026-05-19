@@ -5,6 +5,48 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.9.3] — 2026-05-19 — PROLAZ 1: Security hardening (IPC validacija + CSP)
+
+### Bezbjednost — 5 popravki
+
+- **SEC-01 — Path traversal blokiran** (`project-manager.ts`)
+  - **Problem:** `writeProjectFile` i `readProjectFile` koristili su `path.join` bez validacije; napadač (ili zlonamjerni sadržaj koji se renderuje) mogao je poslati `filename = "../../AppData/Roaming/malware.exe"` i pisati/čitati van projektnog foldera
+  - **Rješenje:** Nova interna funkcija `assertSafePath(projectPath, filename)` rezolvira apsolutnu putanju i provjerava da li ona počinje s `projectPath + path.sep`; ako ne — baca grešku koja se hvata u IPC handleru
+  - **Fajlovi:** `src/main/project-manager.ts`
+
+- **SEC-02 — Validacija `projectPath` u `project:read-file-from-path`** (`ipc-handlers.ts`)
+  - **Problem:** Handler je primao proizvoljan `projectPath` string od renderer procesa i čitao fajl iz njega bez ikakve provjere; mogao se čitati bilo koji fajl na disku
+  - **Rješenje:** Handler sada čita listu poznatih putanja iz `electron-store` (`openTabs` + `currentProjectPath`), rezolvira obje putanje kroz `path.resolve` i dozvoljava čitanje samo ako postoji poklapanje; svaki odbijeni pokušaj loguje upozorenje
+  - **Fajlovi:** `src/main/ipc-handlers.ts`
+
+- **SEC-03 — `sandbox: true`** (`main/index.ts`)
+  - **Problem:** `sandbox: false` je eksplicitno postavljeno bez razloga, proširujući attack surface BrowserWindow-a
+  - **Rješenje:** Promijenjeno na `sandbox: true`; preload koristi samo `ipcRenderer` i `contextBridge` koji su dostupni u sandbox modu — nikakva funkcionalnost nije narušena
+  - **Fajlovi:** `src/main/index.ts`
+
+- **SEC-06 — Limit veličine payloada za GitHub upload** (`ipc-handlers.ts`)
+  - **Problem:** `github:upload-memory` handler nije provjeravao veličinu `content` polja; renderer je mogao poslati neograničeno veliki payload što bi moglo prouzrokovati OOM greške ili zloupotrebu GitHub API kvote
+  - **Rješenje:** Dodana provjera `payload.content.length > 50_000` (50KB); ako je sadržaj preveći, handler vraća `{ ok: false, message: '...' }` bez pozivanja GitHub API-ja
+  - **Fajlovi:** `src/main/ipc-handlers.ts`
+
+- **SEC-07 — Eksplicitna CSP politika** (`renderer/index.html`)
+  - **Problem:** CSP je definisao samo `default-src`, `script-src` i `style-src`; `connect-src` nije bio ograničen, što je teoretski dozvoljavalo renderer procesu da direktno poziva AI API-je (zaobilazeći main process i IPC)
+  - **Rješenje:** Dodano: `connect-src 'none'` (blokira sve fetch/XHR/WebSocket iz renderer-a — API pozivi smiju ići samo kroz IPC); `font-src 'self' data: https://fonts.gstatic.com` (Google Fonts fajlovi); `style-src` proširen s `https://fonts.googleapis.com` (Google Fonts CSS import); `img-src 'self' data:` (base64 slike)
+  - **Fajlovi:** `src/renderer/index.html`
+
+### Backup
+- Pre-audit backup: `v0.9.2-pre-audit-stable`
+- Ovaj prolaz: `v0.9.3-stable`
+
+---
+
+## [0.9.2] — 2026-05-19 — Light theme bg boja
+### Izmijenjeno
+- `--bg-primary` `#e8e8e8` → `#F5F2EB` (topla kremasta paleta)
+- `--bg-secondary` `#f0f0f0` → `#EDE9E0` (usklađena sa primarnom)
+
+---
+
 ## [0.9.1] — 2026-05-19 — Bugfix: task ekstrakcija po proximity
 ### Ispravka
 - **Task lista** — zamijenjen globalni regex sa proximity-based parserima: checkbox postaje task samo ako se u prethodnih 8 redova pojavljuje keyword (`taskovi`, `zadaci`, `akcije`, `todo`)

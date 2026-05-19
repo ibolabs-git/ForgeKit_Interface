@@ -1,4 +1,5 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
+import * as path from 'path'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
 import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig } from './store'
 import {
@@ -151,6 +152,11 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     projectName: string
     content: string
   }) => {
+    // SEC-06: ograničenje veličine payloada — sprječava OOM i zloupotrebu GitHub API kvote
+    const MAX_CONTENT_BYTES = 50_000
+    if (!payload?.content || payload.content.length > MAX_CONTENT_BYTES) {
+      return { ok: false, message: `Sadržaj preveći za upload (max ${MAX_CONTENT_BYTES / 1000}KB)` }
+    }
     const config = getGitHubConfig()
     if (!config.token || !config.repo)
       return { ok: false, message: 'GitHub nije podesen' }
@@ -187,11 +193,13 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('project:write-file', (_e, filename: string, content: string) => {
     const projectPath = settingsStore.get('currentProjectPath')
     if (!projectPath) return { ok: false, message: 'Nema aktivnog projekta' }
+    // SEC-01: assertSafePath se poziva unutar writeProjectFile — hvatamo grešku ovdje
     try {
       writeProjectFile(projectPath, filename, content)
       return { ok: true }
     } catch (err) {
-      return { ok: false, message: (err as Error).message }
+      const msg = err instanceof Error ? err.message : 'Greška pri pisanju fajla'
+      return { ok: false, message: msg }
     }
   })
 
@@ -204,7 +212,32 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // Čitanje fajla iz eksplicitnog foldera (bez oslanjanja na currentProjectPath)
   ipcMain.handle('project:read-file-from-path', (_e, projectPath: string, filename: string) => {
     if (!projectPath) return null
-    return readProjectFile(projectPath, filename)
+
+    // SEC-02: provjeri da je projectPath u listi poznatih (korisničkih) putanja.
+    // Renderer ne smije čitati proizvoljne putanje s diska — samo one koje su
+    // prethodno registrovane u electron-store kroz project:choose-folder ili
+    // project:create-folder (čuvaju se u openTabs i currentProjectPath).
+    const knownTabs = (settingsStore.get('openTabs') ?? []) as Array<{ projectPath: string }>
+    const currentPath = settingsStore.get('currentProjectPath') as string | undefined
+    const knownPaths = [
+      ...knownTabs.map((t) => t.projectPath),
+      currentPath
+    ].filter(Boolean) as string[]
+
+    const resolvedRequested = path.resolve(projectPath)
+    const isKnown = knownPaths.some((p) => path.resolve(p) === resolvedRequested)
+
+    if (!isKnown) {
+      console.warn('[SEC] Odbijen pristup neregistrovanom folderu:', projectPath)
+      return null
+    }
+
+    try {
+      return readProjectFile(projectPath, filename)
+    } catch (err) {
+      console.warn('[SEC] Greška pri čitanju fajla:', err instanceof Error ? err.message : err)
+      return null
+    }
   })
 
   // Postavljanje aktivnog projekta (sinhronizacija pri prelasku između tabova)

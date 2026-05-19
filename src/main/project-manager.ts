@@ -35,21 +35,37 @@ export async function createProjectFolder(
   return folderPath
 }
 
+/**
+ * SEC-01: Validacija path traversal napada.
+ * Osigurava da rezultujuća putanja ostaje unutar projektnog foldera.
+ * Primjer napada koji se blokira: filename = "../../AppData/malware.exe"
+ */
+function assertSafePath(projectPath: string, filename: string): string {
+  const resolvedProject = path.resolve(projectPath)
+  const resolvedFile = path.resolve(projectPath, filename)
+  // Putanja mora počinjati s projektnim folderom + separatorom
+  if (!resolvedFile.startsWith(resolvedProject + path.sep)) {
+    throw new Error(`[SEC] Odbijen pokušaj path traversal: "${filename}"`)
+  }
+  return resolvedFile
+}
+
 export function writeProjectFile(
   projectPath: string,
   filename: string,
   content: string
 ): void {
+  const safePath = assertSafePath(projectPath, filename)
   if (!fs.existsSync(projectPath)) {
     fs.mkdirSync(projectPath, { recursive: true })
   }
-  fs.writeFileSync(path.join(projectPath, filename), content, 'utf-8')
+  fs.writeFileSync(safePath, content, 'utf-8')
 }
 
 export function readProjectFile(projectPath: string, filename: string): string | null {
-  const filePath = path.join(projectPath, filename)
-  if (!fs.existsSync(filePath)) return null
-  return fs.readFileSync(filePath, 'utf-8')
+  const safePath = assertSafePath(projectPath, filename)
+  if (!fs.existsSync(safePath)) return null
+  return fs.readFileSync(safePath, 'utf-8')
 }
 
 export function initProjectFolder(projectPath: string, projectName: string): void {

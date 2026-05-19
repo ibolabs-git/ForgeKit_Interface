@@ -15,7 +15,7 @@ function createWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: true   // SEC-03: eksplicitni sandbox; preload koristi samo ipcRenderer+contextBridge koji rade u sandbox modu
     },
     title: 'ForgeKit Interface',
     show: false
