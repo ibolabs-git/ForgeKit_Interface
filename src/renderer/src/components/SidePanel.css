@@ -209,7 +209,7 @@
   transition: border-color 0.12s;
 }
 .model-switcher-select:focus { border-color: var(--accent); }
-.model-switcher-select:hover { border-color: rgba(255,107,0,0.5); }
+.model-switcher-select:hover { border-color: var(--accent-border); }
 
 .model-custom-row {
   display: flex;

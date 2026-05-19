@@ -34,7 +34,7 @@
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
-.btn-setup-action:hover { background: #ff8c33; }
+.btn-setup-action:hover { background: #4e8480; }
 .btn-setup-action:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .setup-hint {

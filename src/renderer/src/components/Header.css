@@ -42,9 +42,9 @@
   flex-shrink: 0;
 }
 
-/* Dark theme — logo mark postaje sivi */
+/* Dark theme — logo mark u teal nijansi */
 [data-theme="dark"] .header-logo-mark {
-  background: #5c6370;
+  background: #4e6b78;
 }
 
 .header-logo-text {
@@ -122,7 +122,7 @@
   white-space: nowrap;
   -webkit-app-region: no-drag;
 }
-.header-cta:hover { background: #ff8c33; }
+.header-cta:hover { background: #4e8480; }
 
 /* Project name edit — kept for potential inline use */
 .project-name {

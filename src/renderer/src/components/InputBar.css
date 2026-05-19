@@ -51,10 +51,22 @@
   transition: background 0.12s;
   white-space: nowrap;
 }
-.send-btn:hover:not(:disabled) { background: #ff8c33; }
+.send-btn:hover:not(:disabled) { background: #4e8480; }
 .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .send-btn.loading {
   background: var(--bg-secondary);
   color: var(--danger);
   border: 1px solid var(--danger);
+}
+
+/* Dark tema — silver tekst na tamnoj pozadini, hover invertuje */
+[data-theme="dark"] .send-btn {
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+[data-theme="dark"] .send-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-color: var(--accent);
 }

@@ -16,17 +16,17 @@
 
 /* ── Search highlight ── */
 .message-bubble.search-match {
-  background: rgba(255, 107, 0, 0.05);
+  background: rgba(103, 158, 136, 0.07);
 }
 .message-bubble.search-current {
-  background: rgba(255, 107, 0, 0.12);
+  background: rgba(103, 158, 136, 0.15);
   border-left-color: var(--accent) !important;
 }
 
 /* ── Jump-to highlight (B3) ── */
 @keyframes msg-flash {
-  0%   { background: rgba(255, 107, 0, 0.22); border-left-color: var(--accent); }
-  60%  { background: rgba(255, 107, 0, 0.12); border-left-color: var(--accent); }
+  0%   { background: rgba(103, 158, 136, 0.24); border-left-color: var(--accent); }
+  60%  { background: rgba(103, 158, 136, 0.12); border-left-color: var(--accent); }
   100% { background: transparent; border-left-color: transparent; }
 }
 .message-bubble.jump-highlight {

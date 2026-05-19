@@ -12,9 +12,9 @@
   --text-secondary:#444444;
   --text-muted:    #888888;
 
-  --accent:        #ff6b00;
-  --accent-bg:     rgba(255,107,0,0.07);
-  --accent-border: rgba(255,107,0,0.28);
+  --accent:        #679e88;
+  --accent-bg:     rgba(103,158,136,0.07);
+  --accent-border: rgba(103,158,136,0.28);
 
   --danger:        #cc2222;
   --success:       #1a8a3a;
@@ -25,25 +25,25 @@
   --radius:    2px;
 
   --font:      'Inter', -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
-  --font-tech: 'Share Tech', monospace;
+  --font-mono: 'Share Tech Mono', 'Courier New', 'Inter', monospace;
+  --font-tech: 'Share Tech', 'Inter', sans-serif;
 }
 
-/* ── Dark Theme — isti layout, tamne boje ── */
+/* ── Dark Theme — teal/slate paleta ── */
 [data-theme="dark"] {
-  --bg-primary:    #181818;
-  --bg-secondary:  #1e1e1e;
-  --bg-tertiary:   #252525;
-  --border:        #333333;
-  --border2:       #2a2a2a;
+  --bg-primary:    #2c3f47;
+  --bg-secondary:  #3e535c;
+  --bg-tertiary:   #334d57;
+  --border:        #4a6470;
+  --border2:       #3d5560;
 
-  --text-primary:  #e8e8e8;
-  --text-secondary:#aaaaaa;
-  --text-muted:    #606060;
+  --text-primary:  #dde6ea;
+  --text-secondary:#9db0b8;
+  --text-muted:    #607880;
 
-  --accent:        #ff6b00;
-  --accent-bg:     rgba(255,107,0,0.10);
-  --accent-border: rgba(255,107,0,0.32);
+  --accent:        #b7c0c4;
+  --accent-bg:     rgba(183,192,196,0.10);
+  --accent-border: rgba(183,192,196,0.30);
 
   --danger:        #e05555;
   --success:       #2ecc71;
@@ -113,10 +113,18 @@ ul { list-style: none; }
 /* Dark tema — override scrollbar boja */
 [data-theme="dark"] ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background-color: var(--border2);
+  background-color: var(--border);
   border-color: var(--bg-secondary);
 }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background-color: var(--accent); }
 
-/* Dark tema — ukloni senku na app-main (senke ne funkcionišu na tamnoj temi) */
+/* Dark tema — ukloni senku na app-main */
 [data-theme="dark"] .app-main { box-shadow: none; }
+
+/* Dark tema — chat oblast zasebna boja (panels su --bg-secondary, chat je zasičeniji) */
+[data-theme="dark"] .chat-window          { background: #4f6870; }
+[data-theme="dark"] .message-bubble       { background: #4f6870; }
+[data-theme="dark"] .message-bubble:hover { background: #566f79; }
+[data-theme="dark"] .session-divider      { background: #4f6870; }
+[data-theme="dark"] .msg-date-sep         { background: #4f6870; }
+[data-theme="dark"] .streaming-indicator  { background: #4f6870; }
