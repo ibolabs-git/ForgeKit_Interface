@@ -37,7 +37,7 @@ export function LeftPanel(): JSX.Element {
       {/* Aktivna uloga */}
       <section className="lp-section">
         <div className="lp-label">Aktivna uloga</div>
-        <div className="lp-role-chip">
+        <div className="lp-role-chip" data-role={activeRole.toLowerCase().replace(/\s+/g, '-')}>
           <span className="lp-role-icon">{roleIcon}</span>
           <span className="lp-role-name">{activeRole}</span>
           <span className="lp-live-dot" />

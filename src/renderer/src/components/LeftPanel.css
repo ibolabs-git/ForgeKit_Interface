@@ -164,3 +164,53 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* ── Role chip — per-uloga boje (svetla tema: tamni tonovi) ── */
+.lp-role-chip[data-role="orchestrator"] { border-left-color: #1e4d7a; }
+.lp-role-chip[data-role="orchestrator"] .lp-role-name { color: #1e4d7a; }
+.lp-role-chip[data-role="orchestrator"] .lp-live-dot  { background: #1e4d7a; }
+
+.lp-role-chip[data-role="thinker"] { border-left-color: #1a5c32; }
+.lp-role-chip[data-role="thinker"] .lp-role-name { color: #1a5c32; }
+.lp-role-chip[data-role="thinker"] .lp-live-dot  { background: #1a5c32; }
+
+.lp-role-chip[data-role="builder"] { border-left-color: #6b3a14; }
+.lp-role-chip[data-role="builder"] .lp-role-name { color: #6b3a14; }
+.lp-role-chip[data-role="builder"] .lp-live-dot  { background: #6b3a14; }
+
+.lp-role-chip[data-role="reviewer"] { border-left-color: #4a1e6e; }
+.lp-role-chip[data-role="reviewer"] .lp-role-name { color: #4a1e6e; }
+.lp-role-chip[data-role="reviewer"] .lp-live-dot  { background: #4a1e6e; }
+
+.lp-role-chip[data-role="memory-curator"] { border-left-color: #1e3d5e; }
+.lp-role-chip[data-role="memory-curator"] .lp-role-name { color: #1e3d5e; }
+.lp-role-chip[data-role="memory-curator"] .lp-live-dot  { background: #1e3d5e; }
+
+.lp-role-chip[data-role="observer"] { border-left-color: #3a4a5a; }
+.lp-role-chip[data-role="observer"] .lp-role-name { color: #3a4a5a; }
+.lp-role-chip[data-role="observer"] .lp-live-dot  { background: #3a4a5a; }
+
+/* ── Role chip — tamna tema: svetli pastelni tonovi ── */
+[data-theme="dark"] .lp-role-chip[data-role="orchestrator"] { border-left-color: #7eb5e8; }
+[data-theme="dark"] .lp-role-chip[data-role="orchestrator"] .lp-role-name { color: #7eb5e8; }
+[data-theme="dark"] .lp-role-chip[data-role="orchestrator"] .lp-live-dot  { background: #7eb5e8; }
+
+[data-theme="dark"] .lp-role-chip[data-role="thinker"] { border-left-color: #7ec49a; }
+[data-theme="dark"] .lp-role-chip[data-role="thinker"] .lp-role-name { color: #7ec49a; }
+[data-theme="dark"] .lp-role-chip[data-role="thinker"] .lp-live-dot  { background: #7ec49a; }
+
+[data-theme="dark"] .lp-role-chip[data-role="builder"] { border-left-color: #c4976a; }
+[data-theme="dark"] .lp-role-chip[data-role="builder"] .lp-role-name { color: #c4976a; }
+[data-theme="dark"] .lp-role-chip[data-role="builder"] .lp-live-dot  { background: #c4976a; }
+
+[data-theme="dark"] .lp-role-chip[data-role="reviewer"] { border-left-color: #b082cc; }
+[data-theme="dark"] .lp-role-chip[data-role="reviewer"] .lp-role-name { color: #b082cc; }
+[data-theme="dark"] .lp-role-chip[data-role="reviewer"] .lp-live-dot  { background: #b082cc; }
+
+[data-theme="dark"] .lp-role-chip[data-role="memory-curator"] { border-left-color: #82aec4; }
+[data-theme="dark"] .lp-role-chip[data-role="memory-curator"] .lp-role-name { color: #82aec4; }
+[data-theme="dark"] .lp-role-chip[data-role="memory-curator"] .lp-live-dot  { background: #82aec4; }
+
+[data-theme="dark"] .lp-role-chip[data-role="observer"] { border-left-color: #a0b4c4; }
+[data-theme="dark"] .lp-role-chip[data-role="observer"] .lp-role-name { color: #a0b4c4; }
+[data-theme="dark"] .lp-role-chip[data-role="observer"] .lp-live-dot  { background: #a0b4c4; }
