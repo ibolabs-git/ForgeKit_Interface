@@ -6,6 +6,32 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.11] — 2026-05-19 — READ_TEMPLATE mehanizam
+
+### Novo
+- **READ_TEMPLATE mehanizam**: AI može da zatraži dokument iz Master_ForgeKit_Tool pomoću taga
+  `[READ_TEMPLATE: 00_SYSTEM/rules.md]` u svom odgovoru
+- App automatski detektuje tag, fetchuje fajl sa GitHub-a i injektuje sadrzaj nazad u razgovor
+- Podrzano vise tagova u jednom odgovoru (AI moze zatraziti vise fajlova odjednom)
+- **Template inject bubble** u chat-u: kompaktni red sa imenom fajla, klikabilan za expand/collapse
+- `contentRef` u `useSendMessage` akumulira streaming sadrzaj lokalno za detekciju tagova
+- `sendRef` resava closure stale problem — uvek koristi najsveziju verziju send funkcije
+
+### Tok
+```
+AI odgovori sa [READ_TEMPLATE: 00_SYSTEM/rules.md]
+  → useSendMessage detektuje tag nakon stream-complete
+  → window.api.githubFetchTemplate('00_SYSTEM/rules.md')
+  → GitHub API → Master_ForgeKit_Tool/00_SYSTEM/rules.md
+  → sadrzaj auto-inject u razgovor kao [TEMPLATE_INJECT] poruka
+  → AI dobija sadrzaj i nastavlja rad po pravilima
+```
+
+### Fajlovi promenjeni
+`hooks/useSendMessage.ts`, `components/MessageBubble.tsx`, `components/MessageBubble.css`, `package.json`
+
+---
+
 ## [1.0.10] — 2026-05-19 — Prompt source indikator
 
 ### Novo

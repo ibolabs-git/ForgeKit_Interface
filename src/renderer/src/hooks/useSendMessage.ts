@@ -6,8 +6,13 @@ import { useRef, useCallback, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
 
+// Regex za detekciju READ_TEMPLATE taga u AI odgovorima
+const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
+
 export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
+  // Akumulira streaming sadrzaj lokalno — koristi se za READ_TEMPLATE detekciju
+  const contentRef = useRef('')
 
   const {
     messages, isStreaming,
@@ -20,6 +25,10 @@ export function useSendMessage() {
     addErrorMessage, markContextSynced
   } = useForgeKitStore()
 
+  // sendRef uvek drzi najsveziju verziju send funkcije — resava closure stale problem
+  const sendRef = useRef<(text: string) => Promise<void>>(() => Promise.resolve())
+
+
   // Cleanup listenera pri unmount (OPT-06)
   useEffect(() => {
     return () => {
@@ -31,6 +40,7 @@ export function useSendMessage() {
   const send = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return
 
+    contentRef.current = ''  // reset buffer za novu poruku
     addUserMessage(text)
 
     const messageId = `ai-${Date.now()}`
@@ -60,14 +70,46 @@ export function useSendMessage() {
     }
 
     const removeToken = window.api.onStreamToken((token, id) => {
-      if (id === messageId) appendStreamToken(token, messageId)
-    })
-    const removeComplete = window.api.onStreamComplete((id) => {
       if (id === messageId) {
-        finalizeMessage(messageId)
-        removeToken(); removeComplete(); removeError()
-        activeListenersRef.current = []
+        appendStreamToken(token, messageId)
+        contentRef.current += token  // lokalna akumulacija za READ_TEMPLATE detekciju
       }
+    })
+    const removeComplete = window.api.onStreamComplete(async (id) => {
+      if (id !== messageId) return
+
+      const fullContent = contentRef.current
+      contentRef.current = ''
+
+      finalizeMessage(messageId)
+      removeToken(); removeComplete(); removeError()
+      activeListenersRef.current = []
+
+      // ── READ_TEMPLATE detekcija ──
+      // Ako AI odgovor sadrzi [READ_TEMPLATE: putanja], fetchujemo fajl sa GitHub-a
+      // i auto-injektujemo sadrzaj nazad u razgovor
+      const matches = [...fullContent.matchAll(READ_TEMPLATE_REGEX)]
+      if (matches.length === 0) return
+
+      const fetched: { path: string; content: string }[] = []
+      for (const match of matches) {
+        const filePath = match[1].trim()
+        try {
+          const result = await window.api.githubFetchTemplate(filePath)
+          if (result.ok && result.content) {
+            fetched.push({ path: filePath, content: result.content })
+          }
+        } catch { /* ignorisi gresku pri fetchu */ }
+      }
+
+      if (fetched.length === 0) return
+
+      // Formatiramo sadrzaj — poseban prefiks prepoznaje MessageBubble za kompaktni prikaz
+      const injectText = '[TEMPLATE_INJECT]\n' +
+        fetched.map((f) => `=== ${f.path} ===\n\n${f.content}`).join('\n\n---\n\n')
+
+      // Kratak timeout da React obradi finalizeMessage pre nego sto krenemo novi send
+      setTimeout(() => { sendRef.current(injectText) }, 80)
     })
     const removeError = window.api.onStreamError((error, id) => {
       if (id === messageId) {
@@ -92,6 +134,9 @@ export function useSendMessage() {
     addUserMessage, startAssistantMessage, appendStreamToken,
     finalizeMessage, addErrorMessage, markContextSynced
   ])
+
+  // Osvezi sendRef na svaki render da onStreamComplete uvek ima svezu verziju
+  sendRef.current = send
 
   return { send, isStreaming }
 }

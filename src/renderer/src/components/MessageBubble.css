@@ -356,6 +356,43 @@
   color: #fff;
 }
 
+/* ── Template inject ── */
+.template-inject-row {
+  padding: 4px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.template-inject-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  text-align: left;
+  transition: border-color 0.1s, color 0.1s;
+}
+.template-inject-chip:hover { border-color: var(--accent); color: var(--text-primary); }
+.ti-icon { font-size: 12px; }
+.ti-label { flex: 1; }
+.ti-label strong { color: var(--accent); font-weight: 600; }
+.ti-toggle { font-size: 8px; color: var(--text-muted); }
+.template-inject-body {
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-top: none;
+  font-size: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 /* ── Session divider ── */
 .session-divider {
   display: flex;
