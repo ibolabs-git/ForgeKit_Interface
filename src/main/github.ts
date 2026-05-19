@@ -1,7 +1,4 @@
 import { net } from 'electron'
-import * as os from 'os'
-import * as fs from 'fs'
-import * as path from 'path'
 
 const GITHUB_API = 'https://api.github.com'
 
@@ -36,7 +33,9 @@ export async function testGitHubConnection(config: GitHubConfig): Promise<{ ok: 
     if (res.status === 404) return { ok: false, message: 'Repozitorijum nije pronadjen ili nije privatno dostupan' }
     return { ok: false, message: `HTTP ${res.status}` }
   } catch (err) {
-    return { ok: false, message: `Mreza nedostupna: ${(err as Error).message}` }
+    // COMP-06: instanceof provjera umjesto as Error — catch može primiti bilo koji thrown tip
+    const msg = err instanceof Error ? err.message : 'Nepoznata mrežna greška'
+    return { ok: false, message: `Mreža nedostupna: ${msg}` }
   }
 }
 
@@ -85,7 +84,9 @@ export async function uploadFileToGitHub(
     const errData = await res.json() as { message?: string }
     return { ok: false, message: errData.message ?? `HTTP ${res.status}` }
   } catch (err) {
-    return { ok: false, message: (err as Error).message }
+    // COMP-06: instanceof provjera umjesto as Error
+    const msg = err instanceof Error ? err.message : 'Nepoznata greška pri uploadu'
+    return { ok: false, message: msg }
   }
 }
 
@@ -94,20 +95,13 @@ export async function uploadMemoryRecord(
   projectName: string,
   content: string
 ): Promise<{ ok: boolean; message: string }> {
+  // OPT-09: uklonjen nepotreban temp file — content je već u memoriji kao string,
+  // nema razloga pisati ga na disk samo da bi se odmah pročitao i obrisao
   const date = new Date().toISOString().slice(0, 10)
   const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_')
   const timestamp = Date.now()
   const remotePath = `learning_data/${date}_${safeName}_${timestamp}.md`
-
-  // Pisi u temp, uploaduj, obrisi temp
-  const tempFile = path.join(os.tmpdir(), `forgekit_memory_${timestamp}.md`)
-  try {
-    fs.writeFileSync(tempFile, content, 'utf-8')
-    const result = await uploadFileToGitHub(config, remotePath, content, `Memory record: ${projectName} ${date}`)
-    return result
-  } finally {
-    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile)
-  }
+  return uploadFileToGitHub(config, remotePath, content, `Memory record: ${projectName} ${date}`)
 }
 
 export async function fetchSystemPromptFromGitHub(

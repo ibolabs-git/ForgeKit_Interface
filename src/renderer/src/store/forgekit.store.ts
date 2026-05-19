@@ -27,7 +27,7 @@ const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
 
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
-  openai:    'gpt-5.4',
+  openai:    'gpt-4o',  // COMP-09: gpt-5.4 ne postoji — fallback na provjereni model
   nvidia:    'nvidia/nemotron-3-nano-30b-a3b'
 }
 

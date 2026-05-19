@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
@@ -71,8 +72,8 @@ function CodeBlock({ language, code }: { language: string; code: string }): JSX.
 
 // ── Markdown components — A1 ─────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mdComponents: any = {
+// COMP-01: koristi typed Components umjesto any — TypeScript može provjeriti ispravnost svakog overridea
+const mdComponents: Components = {
   // Block code — override <pre> da izvučemo jezik i sadržaj
   pre({ children }: { children: React.ReactNode }) {
     const child = (Array.isArray(children) ? children[0] : children) as React.ReactElement | undefined

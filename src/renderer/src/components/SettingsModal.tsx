@@ -105,6 +105,11 @@ export function SettingsModal(): JSX.Element | null {
       setLocalModel(selectedModel)
       setProjectSaved(false)
     }
+  // COMP-03: selectedProvider/projectName/selectedModel namjerno izostavljeni iz dep arraya.
+  // Effect se pokreće SAMO pri otvaranju modala (showSettings true→false→true) i tada čita
+  // aktualne vrijednosti iz store-a. Dodavanje ostalih dep bi resetovalo korisnička polja
+  // (editName, localProvider...) dok je modal otvoren — to nije željeno ponašanje.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSettings])
 
   useEffect(() => {

@@ -225,7 +225,7 @@ export async function checkAndNotifyFallback(win: BrowserWindow): Promise<void> 
         dialog.showMessageBox(win, {
           type: 'error',
           title: 'Greska pri preuzimanju',
-          message: `Preuzimanje nije uspjelo: ${(err as Error).message}`,
+          message: `Preuzimanje nije uspjelo: ${err instanceof Error ? err.message : 'Nepoznata greška'}`,
           detail: 'Pokusaj rucno sa GitHub stranice.',
           buttons: ['OK']
         })

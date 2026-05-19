@@ -71,11 +71,11 @@ Svaki prolaz dobija backup tag i changelog entry.
 
 | ID | Problem | Fajl | Status |
 |----|---------|------|--------|
-| COMP-01 | `mdComponents: any` — react-markdown bez tipova | `MessageBubble.tsx` | ⏳ |
-| COMP-03 | `useEffect` missing deps u `SettingsModal` — stale closure | `SettingsModal.tsx` | ⏳ |
-| COMP-06 | `catch (err as Error)` bez `instanceof` — može pući na non-Error | više fajlova | ⏳ |
-| COMP-09 | Default OpenAI model `gpt-5.4` ne postoji | `forgekit.store.ts` | ⏳ |
-| OPT-09 | Nepotreban temp file write/read u `github.ts` | `github.ts` | ⏳ |
+| COMP-01 | `mdComponents: any` — react-markdown bez tipova | `MessageBubble.tsx` | ✅ v0.9.4 |
+| COMP-03 | `useEffect` missing deps u `SettingsModal` — stale closure | `SettingsModal.tsx` | ✅ v0.9.4 |
+| COMP-06 | `catch (err as Error)` bez `instanceof` — može pući na non-Error | više fajlova | ✅ v0.9.4 |
+| COMP-09 | Default OpenAI model `gpt-5.4` ne postoji | `forgekit.store.ts` | ✅ v0.9.4 |
+| OPT-09 | Nepotreban temp file write/read u `github.ts` | `github.ts` | ✅ v0.9.4 |
 
 ---
 

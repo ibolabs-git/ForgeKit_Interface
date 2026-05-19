@@ -5,6 +5,41 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [0.9.4] — 2026-05-19 — PROLAZ 2: Kompatibilnost + bugovi
+
+### Kompatibilnost — 5 popravki
+
+- **COMP-01 — `mdComponents` typed** (`MessageBubble.tsx`)
+  - **Problem:** `mdComponents` objekt je bio typed kao `any`, TypeScript nije mogao provjeriti ispravnost implementiranih react-markdown overridea; promjena API-ja ne bi bila uhvaćena u compile-time
+  - **Rješenje:** Importovana `Components` vrsta iz `react-markdown` i dodijeljena kao eksplicitan tip; uklonjen `// eslint-disable-next-line @typescript-eslint/no-explicit-any` komentar
+  - **Fajlovi:** `src/renderer/src/components/MessageBubble.tsx`
+
+- **COMP-03 — `useEffect` deps u SettingsModal dokumentovani** (`SettingsModal.tsx`)
+  - **Problem:** `selectedProvider`, `projectName`, `selectedModel` su korišćeni u effectu ali nisu bili navedeni u dependency arrayu — ESLint je prijavljivao warning; bez komentara nije bilo jasno da li je to bug ili namjera
+  - **Rješenje:** Dodan eksplicitan `// eslint-disable-next-line react-hooks/exhaustive-deps` komentar s obrazloženjem: effect se pokreće samo pri otvaranju modala i tada čita aktualne store vrijednosti; dodavanje ostalih depsova bi resetovalo korisnikove in-progress izmjene u otvorenom modalu
+  - **Fajlovi:** `src/renderer/src/components/SettingsModal.tsx`
+
+- **COMP-06 — `catch (err as Error)` → `instanceof` provjera** (3 mjesta)
+  - **Problem:** `(err as Error).message` je TypeScript type assertion koji može pući u runtime ako thrown vrijednost nije `Error` objekt (npr. string, null, broj) — u TypeScript 4+ `catch` varijabla je `unknown`
+  - **Rješenje:** Zamijenjeno sa `err instanceof Error ? err.message : 'Nepoznata greška'` na svim mjestima: `github.ts` (2x) i `updater.ts` (1x)
+  - **Fajlovi:** `src/main/github.ts`, `src/main/updater.ts`
+
+- **COMP-09 — Default OpenAI model ispravljen** (`forgekit.store.ts`)
+  - **Problem:** `DEFAULT_MODELS.openai` bio je postavljen na `'gpt-5.4'` koji ne postoji kao validni OpenAI model ID; svaki auto-fallback pri provider/model mismatch-u vodio bi na nepostojeći model i API grešku
+  - **Rješenje:** Promijenjeno na `'gpt-4o'` — validni, stabilni OpenAI model
+  - **Fajlovi:** `src/renderer/src/store/forgekit.store.ts`
+
+- **OPT-09 — Uklonjen nepotreban temp file u github.ts** (`github.ts`)
+  - **Problem:** `uploadMemoryRecord` pisao je `content` u temp fajl na disku (`os.tmpdir()`), zatim koristio originalnu `content` varijablu (ne temp fajl) za upload na GitHub, i na kraju brisao temp fajl — temp fajl nikad nije bio pročitan
+  - **Rješenje:** Uklonjena sva `fs.writeFileSync` / `fs.existsSync` / `fs.unlinkSync` logika; `content` se direktno prosljeđuje `uploadFileToGitHub`; uklonjen import `os`, `fs`, `path` koji više nisu potrebni
+  - **Fajlovi:** `src/main/github.ts`
+
+### Backup
+- Pre-prolaz2 backup: `v0.9.3-pre-prolaz2-stable`
+- Ovaj prolaz: `v0.9.4-stable`
+
+---
+
 ## [0.9.3] — 2026-05-19 — PROLAZ 1: Security hardening (IPC validacija + CSP)
 
 ### Bezbjednost — 5 popravki
