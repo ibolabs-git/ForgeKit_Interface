@@ -6,6 +6,25 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [Unreleased]
+
+### Napomena
+- Sledece izmene unositi ovde pre novog release-a.
+
+---
+
+## [1.0.15] — 2026-05-19 — ForgeKit runtime init patch
+
+### Stabilizacija
+- Prirodni pozivi kao `pokreni forgekit rezim`, `koristi ForgeKit rezim` i slicne varijante sada se interno mapiraju na `[FORGEKIT_INIT]`.
+- Korisniku se i dalje prikazuje originalna poruka, ali model dobija stabilan runtime okidac.
+- `PROJECT_WRITE_FILE` instrukcija prebacena je u app runtime instrukcije koje se uvek dodaju uz system prompt, bez obzira da li prompt dolazi iz GitHub-a ili bundled fallback-a.
+
+### Validacija
+- Cilj testa: ForgeKit init mora ucitati template dokumente, a predlog fajla mora ici kroz `Project file actions` potvrdu.
+
+---
+
 ## [1.0.14] — 2026-05-19 — Nexus stabilizacioni patch i release deploy
 
 ### Stabilizacija
@@ -21,13 +40,6 @@ Format: `[verzija] — datum — opis`
 ### Validacija
 - `npm.cmd run build` prolazi nakon izmena.
 - Release tok koristi `npm.cmd run package`, `gh release create`, installer `.exe`, `.blockmap` i `latest.yml`.
-
----
-
-## [Unreleased]
-
-### Napomena
-- Sledece izmene unositi ovde pre novog release-a.
 
 ---
 

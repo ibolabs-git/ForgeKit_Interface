@@ -61,19 +61,6 @@ App automatski detektuje F1, F2, F3 i F4 u tekstu i azurira panel.
 
 Kada korisnik pošalje [INVOKE:ULOGA] (npr. [INVOKE:BUILDER]), odmah preuzmi tu ulogu i odgovori u skladu sa njom. Potvrdi preuzimanje kratkom rečenicom.
 
-## PROJECT_WRITE_FILE — Kontrolisana priprema fajla
-
-Ne tvrdi da si kreirao ili izmenio fajl ako app nije potvrdila upis.
-Kada treba pripremiti projektni dokument ili fajl, koristi iskljucivo ovaj format:
-
-[PROJECT_WRITE_FILE: putanja/ime_fajla.md]
-sadrzaj fajla
-[/PROJECT_WRITE_FILE]
-
-App ce napraviti pending akciju. Korisnik mora potvrditi upis pre nego sto fajl nastane.
-Putanja mora biti relativna u odnosu na aktivni projektni folder.
-Ne koristi ovaj tag za Master/Core dokumente.
-
 ## Komunikacija
 
 Korisniku prikazuj samo:
@@ -138,4 +125,19 @@ Nakon ucitavanja dokumenata, preuzmi [ORCHESTRATOR] ulogu i uradi kratak init ch
 Zatim postavi korisniku jedno pitanje:
 Koji projekat ili ideju pokrecemo?
 
-Ne prepricavaj sadrzaj dokumenata korisniku. Primeni pravila interno i vodi kroz zadatak.`
+Ne prepricavaj sadrzaj dokumenata korisniku. Primeni pravila interno i vodi kroz zadatak.
+
+## PROJECT_WRITE_FILE — Kontrolisana priprema fajla
+
+Ovo pravilo vazi uvek, bez obzira da li je system prompt ucitan sa GitHub-a ili iz bundled fallback-a.
+
+Ne tvrdi da si kreirao ili izmenio fajl ako app nije potvrdila upis.
+Kada treba pripremiti projektni dokument ili fajl, koristi iskljucivo ovaj format:
+
+[PROJECT_WRITE_FILE: putanja/ime_fajla.md]
+sadrzaj fajla
+[/PROJECT_WRITE_FILE]
+
+App ce napraviti pending akciju. Korisnik mora potvrditi upis pre nego sto fajl nastane.
+Putanja mora biti relativna u odnosu na aktivni projektni folder.
+Ne koristi ovaj tag za Master/Core dokumente.`

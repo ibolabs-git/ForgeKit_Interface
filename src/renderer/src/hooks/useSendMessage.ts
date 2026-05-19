@@ -9,6 +9,14 @@ import { buildRePrimeMessages } from '../utils/forgekit-context'
 // Regex za detekciju READ_TEMPLATE taga u AI odgovorima
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
+const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uključi)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|režim|mode)\b)?/i
+
+function normalizeOutboundText(text: string): string {
+  const trimmed = text.trim()
+  if (trimmed === '[FORGEKIT_INIT]') return trimmed
+  if (FORGEKIT_INIT_TEXT_REGEX.test(trimmed)) return '[FORGEKIT_INIT]'
+  return text
+}
 
 export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
@@ -42,6 +50,7 @@ export function useSendMessage() {
   const send = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return
 
+    const outboundText = normalizeOutboundText(text)
     contentRef.current = ''  // reset buffer za novu poruku
     addUserMessage(text)
 
@@ -59,7 +68,7 @@ export function useSendMessage() {
           projectName, currentPhase, activeRole, tasks,
           messages, selectedModel: effectiveModel, previousEffectiveModel
         },
-        text
+        outboundText
       )
       markContextSynced()
     } else {
@@ -68,7 +77,7 @@ export function useSendMessage() {
           && !m.content.startsWith('[SESSION_DIVIDER]')
           && !m.content.startsWith('[MODEL_SWITCH:'))
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-      history.push({ role: 'user', content: text })
+      history.push({ role: 'user', content: outboundText })
     }
 
     const removeToken = window.api.onStreamToken((token, id) => {
