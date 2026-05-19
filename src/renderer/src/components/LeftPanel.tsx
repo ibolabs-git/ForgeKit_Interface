@@ -30,6 +30,11 @@ export function LeftPanel(): JSX.Element {
     send(`[INVOKE:${role}]`)
   }
 
+  const handleForgeKitInit = () => {
+    if (isStreaming) return
+    send('[FORGEKIT_INIT]')
+  }
+
   return (
     <aside className="left-panel">
 
@@ -56,6 +61,19 @@ export function LeftPanel(): JSX.Element {
             )
           })}
         </div>
+      </section>
+
+      {/* ForgeKit Init */}
+      <section className="lp-section lp-section-init">
+        <button
+          className={`lp-btn-init${isStreaming ? ' disabled' : ''}`}
+          onClick={handleForgeKitInit}
+          disabled={isStreaming}
+          title="Ucitaj ForgeKit dokumentaciju i pokreni Orchestrator"
+        >
+          <span className="lp-init-icon">▶</span>
+          <span className="lp-init-label">Pokreni ForgeKit</span>
+        </button>
       </section>
 
       {/* Faza rada */}

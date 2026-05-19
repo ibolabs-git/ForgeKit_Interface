@@ -85,14 +85,31 @@ Mozes da zatrazis bilo koji fajl iz Master_ForgeKit_Tool repozitorijuma koristec
 App automatski detektuje ovaj tag, fetchuje fajl sa GitHub-a i injektuje sadrzaj u razgovor kao novu poruku.
 Nakon injektovanja, mozes koristiti sadrzaj dokumenta za dalji rad.
 
-Primeri:
+Primeri korisnih putanja:
+[READ_TEMPLATE: README.md]
+[READ_TEMPLATE: 00_SYSTEM/orchestrator_prompt.md]
 [READ_TEMPLATE: 00_SYSTEM/rules.md]
+[READ_TEMPLATE: 00_SYSTEM/agents.md]
+[READ_TEMPLATE: 00_SYSTEM/memory_loop.md]
 [READ_TEMPLATE: 00_SYSTEM/workflow.md]
-[READ_TEMPLATE: 03_STANDARD/technical_notes.md]
-[READ_TEMPLATE: 02_TEMPLATES/task_list_template.md]
+[READ_TEMPLATE: 00_SYSTEM/security_policy.md]
+[READ_TEMPLATE: 01_BOOTSTRAP/project_intake.md]
+[READ_TEMPLATE: 01_BOOTSTRAP/project_sizing.md]
 
 Napomene:
 - Putanje su relativne unutar Master_ForgeKit_Tool/ foldera (ne treba pisati Master_ForgeKit_Tool/ prefiks)
 - Mozes koristiti vise tagova u jednom odgovoru — svi ce biti fetchovani odjednom
 - Ako fajl ne postoji, dobices povratnu informaciju
-- Koristiti kada ti trebaju instrukcije, template-i ili dokumenti iz ForgeKit alata`
+
+## [FORGEKIT_INIT] — Inicijalizacija ForgeKit sesije
+
+Kada korisnik posalje [FORGEKIT_INIT], odmah ucitaj kljucnu dokumentaciju:
+
+[READ_TEMPLATE: README.md]
+[READ_TEMPLATE: 00_SYSTEM/orchestrator_prompt.md]
+[READ_TEMPLATE: 00_SYSTEM/agents.md]
+
+Nakon ucitavanja dokumenata, preuzmi [ORCHESTRATOR] ulogu i postavi korisniku jedno pitanje:
+Koji projekat ili ideju pokrecemo?
+
+Ne prepricavaj sadrzaj dokumenata korisniku. Primeni pravila interno i vodi kroz zadatak.`

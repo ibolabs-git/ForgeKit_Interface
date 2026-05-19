@@ -213,6 +213,64 @@
   color: var(--accent);
 }
 
+/* ── ForgeKit Init ── */
+.lp-section-init {
+  padding: 10px 14px;
+}
+
+.lp-btn-init {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+.lp-btn-init::before {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 4px; height: 4px;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.lp-btn-init::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; right: 2px;
+  width: 4px; height: 4px;
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+}
+.lp-btn-init:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+.lp-btn-init:disabled,
+.lp-btn-init.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lp-init-icon {
+  font-size: 8px;
+  line-height: 1;
+}
+.lp-init-label {
+  flex: 1;
+  text-align: left;
+}
+
 /* ── Role tile — per-uloga boje (svetla tema: tamni tonovi) ── */
 .lp-role-tile[data-role="orchestrator"].active { border-left-color: #1e4d7a; }
 .lp-role-tile[data-role="orchestrator"].active .lrt-name { color: #1e4d7a; }
