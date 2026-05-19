@@ -185,14 +185,24 @@ Klik na tile → send('[INVOKE:BUILDER]')
 
 ## TN-011 — Dual-repo GitHub konfiguracija
 
-Master_ForgeKit_Tool je u zasebnom repo-u (`ibolabs-git/ForgeKit_tool`) — nije deo app repo-a (`ibolabs-git/ForgeKit_Interface`).
+Master_ForgeKit_Tool je u zasebnom repo-u — nije deo app repo-a.
 
-Resenje — dva polja u Settings:
+**Repozitorijumi:**
+- App repo: `ibolabs-git/ForgeKit_Interface` — za memoriju i upload
+- Master Tool repo: `ibolabs-git/ForgeKit_tool` — instrukcije i template-i
 
-| Polje | Namena | Primer |
+**Putanja u ForgeKit_tool repo-u:**
+```
+https://github.com/ibolabs-git/ForgeKit_tool/tree/main/Master_ForgeKit_Tool
+```
+Sve instrukcije i template-i su unutar `Master_ForgeKit_Tool/` podfolder-a u root-u repo-a.
+
+**Konfiguracija — dva polja u Settings:**
+
+| Store polje | UI label | Vrednost |
 |---|---|---|
-| `githubRepo` | Projekat i memorija upload | `ibolabs-git/ForgeKit_Interface` |
-| `masterToolRepo` | Instrukcije i template-i | `ibolabs-git/ForgeKit_tool` |
+| `githubRepo` | Repozitorijum | `ibolabs-git/ForgeKit_Interface` |
+| `masterToolRepo` | Master Tool Repozitorijum | `ibolabs-git/ForgeKit_tool` |
 
 `getMasterToolConfig()` u `store.ts` vraca config za Master Tool: koristi `masterToolRepo` ako je podesen, inace pada na `githubRepo`. Isti GitHub Token vazi za oba.
 
@@ -200,15 +210,20 @@ Resenje — dva polja u Settings:
 ```
 send-message handler → getMasterToolConfig()
   → fetchSystemPromptFromGitHub(masterToolConfig)
-  → tries: '00_SYSTEM/forgekit_mode_prompt.md'  ← root ForgeKit_tool repo
-           'Master_ForgeKit_Tool/00_SYSTEM/...'  ← legacy, ako je MT u app repo
-  → cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT
+  → tries: 'Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md'  ← puna putanja
+           'Master_ForgeKit_Tool/00_SYSTEM/orchestrator_prompt.md'
+           '00_SYSTEM/forgekit_mode_prompt.md'  ← fallback (root repo)
+           'system-prompt.md'
+  → cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT (bundlovani)
 ```
 
-**READ_TEMPLATE osnova**:
+**fetchTemplateFromGitHub — logika putanje:**
 ```typescript
-// Renderer moze pozvati:
+// Agent prosledjuje: '03_STANDARD/technical_notes.md'
+// Funkcija uvek pokusava sa Master_ForgeKit_Tool/ prefiksom prvo:
+//   1. 'Master_ForgeKit_Tool/03_STANDARD/technical_notes.md'  ← prava putanja
+//   2. '03_STANDARD/technical_notes.md'                       ← fallback
+
 const result = await window.api.githubFetchTemplate('03_STANDARD/technical_notes.md')
-// IPC → fetchTemplateFromGitHub(masterToolConfig, path)
-// → probava root putanju i Master_ForgeKit_Tool/ prefiks
+// → { ok: true, content: '...' }
 ```

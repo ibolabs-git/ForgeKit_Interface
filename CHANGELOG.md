@@ -1,22 +1,33 @@
 # Changelog — ForgeKit Interface App
 
+Sve verzije su dostupne na [GitHub Releases](https://github.com/ibolabs-git/ForgeKit_Interface/releases).
+
+Format: `[verzija] — datum — opis`
+
+---
+
 ## [1.0.8] — 2026-05-19 — Master Tool repo konfiguracija
 
 ### Problem
-Agenti nisu mogli pristupiti instrukcijama i template-ima iz `Master_ForgeKit_Tool` jer je alat smesten u zasebnom GitHub repo-u (`ibolabs-git/ForgeKit_tool`), a app je koristio samo jedan `githubRepo` koji pokazuje na projektni repo (`ibolabs-git/ForgeKit_Interface`). Fetch system prompta uvek padao na bundlovani fallback.
+Agenti nisu mogli pristupiti instrukcijama i template-ima iz `Master_ForgeKit_Tool`. Alat je u zasebnom GitHub repo-u (`ibolabs-git/ForgeKit_tool`, putanja `Master_ForgeKit_Tool/`), a app je koristio samo jedan `githubRepo` koji pokazuje na projektni repo (`ibolabs-git/ForgeKit_Interface`). Fetch system prompta uvek padao na bundlovani fallback.
 
 ### Resenje
 - **Novo polje u Settings → GitHub**: `Master Tool Repozitorijum` — zasebni repo za ForgeKit_tool
-- `getMasterToolConfig()` — koristi `masterToolRepo` ako je podesen, inace `githubRepo` kao fallback
-- `fetchSystemPromptFromGitHub` redosled kandidata: root putanje first (`00_SYSTEM/forgekit_mode_prompt.md`) pre nego putanje sa `Master_ForgeKit_Tool/` prefiksom — prilagodjeno za direktni repo
+- `getMasterToolConfig()` u `store.ts` — koristi `masterToolRepo` ako je podesen, inace `githubRepo` kao fallback
+- `fetchSystemPromptFromGitHub` kandidati: `Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md` first, zatim root putanje kao fallback
+- `fetchTemplateFromGitHub(config, filePath)` — nova funkcija; uvek pokusava sa `Master_ForgeKit_Tool/` prefiksom
 - **Novo IPC**: `github:fetch-template` — cita proizvoljni fajl iz Master Tool repo-a
-- **Novo API**: `window.api.githubFetchTemplate(filePath)` — osnova za READ_TEMPLATE mehanizam
-- `settings-hint` CSS klasa za prikaz napomena ispod polja
+- **Novo API**: `window.api.githubFetchTemplate(filePath)` — osnova za buduci READ_TEMPLATE mehanizam
+- `settings-hint` CSS klasa za opisne napomene ispod input polja
 
-### Konfiguracija
-U Settings → GitHub Integracija:
-- **Repozitorijum**: `ibolabs-git/ForgeKit_Interface` (za memoriju / upload)
-- **Master Tool Repozitorijum**: `ibolabs-git/ForgeKit_tool` (za instrukcije i template-e)
+### Konfiguracija (Settings → GitHub Integracija)
+| Polje | Vrednost | Namena |
+|---|---|---|
+| Repozitorijum | `ibolabs-git/ForgeKit_Interface` | Memorija i upload |
+| Master Tool Repozitorijum | `ibolabs-git/ForgeKit_tool` | Instrukcije i template-i |
+
+Master_ForgeKit_Tool dokumentacija se nalazi na:
+`https://github.com/ibolabs-git/ForgeKit_tool/tree/main/Master_ForgeKit_Tool`
 
 ### Fajlovi promenjeni
 `store.ts`, `ipc-handlers.ts`, `github.ts`, `preload/index.ts`, `types/index.ts`,
@@ -24,9 +35,16 @@ U Settings → GitHub Integracija:
 
 ---
 
-Sve verzije su dostupne na [GitHub Releases](https://github.com/ibolabs-git/ForgeKit_Interface/releases).
+## [1.0.7] — 2026-05-19 — Ciscenje agent tile-ova
 
-Format: `[verzija] — datum — opis`
+### Promene
+- Uklonjene sve ikone iz agent role tile-ova u levom panelu
+- Aktivni agent oznacen iskljucivo zvezdicom `★` (animirana, bottom-right)
+- `ROLE_ICONS` mapa uklonjena iz `LeftPanel.tsx`
+- `.lrt-icon` CSS klasa uklonjena iz `LeftPanel.css`
+
+### Fajlovi promenjeni
+`LeftPanel.tsx`, `LeftPanel.css`, `package.json`
 
 ---
 
