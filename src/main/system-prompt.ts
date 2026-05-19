@@ -69,3 +69,30 @@ Korisniku prikazuj samo:
 - Sledeci konkretan output
 
 Ne prepricavaj metodologiju. Ne objasnjvaj sistem. Vodi kroz zadatak.`
+
+/**
+ * READ_TEMPLATE_INSTRUCTIONS se uvek dodaje na kraj system prompta (bez obzira na izvor).
+ * AI mora znati za ovaj mehanizam jer ga app implementira, a ne forgekit_mode_prompt.
+ */
+export const READ_TEMPLATE_INSTRUCTIONS = `
+
+## READ_TEMPLATE — Pristup dokumentima iz Master_ForgeKit_Tool
+
+Mozes da zatrazis bilo koji fajl iz Master_ForgeKit_Tool repozitorijuma koristeci sledeci tag u svom odgovoru:
+
+[READ_TEMPLATE: putanja/do/fajla.md]
+
+App automatski detektuje ovaj tag, fetchuje fajl sa GitHub-a i injektuje sadrzaj u razgovor kao novu poruku.
+Nakon injektovanja, mozes koristiti sadrzaj dokumenta za dalji rad.
+
+Primeri:
+[READ_TEMPLATE: 00_SYSTEM/rules.md]
+[READ_TEMPLATE: 00_SYSTEM/workflow.md]
+[READ_TEMPLATE: 03_STANDARD/technical_notes.md]
+[READ_TEMPLATE: 02_TEMPLATES/task_list_template.md]
+
+Napomene:
+- Putanje su relativne unutar Master_ForgeKit_Tool/ foldera (ne treba pisati Master_ForgeKit_Tool/ prefiks)
+- Mozes koristiti vise tagova u jednom odgovoru — svi ce biti fetchovani odjednom
+- Ako fajl ne postoji, dobices povratnu informaciju
+- Koristiti kada ti trebaju instrukcije, template-i ili dokumenti iz ForgeKit alata`

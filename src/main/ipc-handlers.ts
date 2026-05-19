@@ -9,7 +9,7 @@ import {
   fetchTemplateFromGitHub
 } from './github'
 // SEC-05: system prompt živi u main procesu — renderer ga ne šalje kroz IPC
-import { FORGEKIT_SYSTEM_PROMPT } from './system-prompt'
+import { FORGEKIT_SYSTEM_PROMPT, READ_TEMPLATE_INSTRUCTIONS } from './system-prompt'
 import {
   chooseProjectFolder,
   createProjectFolder,
@@ -62,6 +62,10 @@ export function registerIpcHandlers(win: BrowserWindow): void {
         cachedSystemPrompt = FORGEKIT_SYSTEM_PROMPT
         promptSource = 'bundled'
       }
+
+      // App uvek dodaje READ_TEMPLATE sekciju na kraj prompta — bez obzira na izvor.
+      // AI mora znati za ovaj mehanizam jer ga app implementira, ne forgekit_mode_prompt.
+      cachedSystemPrompt += READ_TEMPLATE_INSTRUCTIONS
     }
 
     try {
