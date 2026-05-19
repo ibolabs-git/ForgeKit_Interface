@@ -13,6 +13,19 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.18] — 2026-05-19 — ForgeKit init loop fix
+
+### Stabilizacija
+- ForgeKit init vise ne prepusta modelu da prvi trazi osnovne template fajlove; app ih ucitava direktno i salje modelu `[FORGEKIT_INIT_CONTEXT]`.
+- Dodat guard koji sprecava ponovni `READ_TEMPLATE` loop posle interne template injekcije.
+- `READ_TEMPLATE` zahtev se skriva i dok je poruka jos u streaming toku, ne samo posle zavrsetka odgovora.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+- Cilj testa: `pokreni forgekit rezim` mora dati jedan Orchestrator odgovor bez petlje i bez vidljivih template tagova.
+
+---
+
 ## [1.0.17] — 2026-05-19 — Tihi ForgeKit init tok
 
 ### Stabilizacija

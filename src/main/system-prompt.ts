@@ -106,7 +106,8 @@ Napomene:
 
 ## [FORGEKIT_INIT] — Inicijalizacija ForgeKit sesije
 
-Kada korisnik posalje [FORGEKIT_INIT], tvoja prva poruka sme da sadrzi samo sledece READ_TEMPLATE tagove, bez objasnjenja i bez korisnickog teksta:
+Ako direktno dobijes [FORGEKIT_INIT], tvoja prva poruka sme da sadrzi samo sledece READ_TEMPLATE tagove, bez objasnjenja i bez korisnickog teksta.
+Napomena: aplikacija najcesce sama ucitava ove dokumente i salje ti [FORGEKIT_INIT_CONTEXT]. Kada dobijes [FORGEKIT_INIT_CONTEXT], ne trazi READ_TEMPLATE ponovo.
 
 [READ_TEMPLATE: README.md]
 [READ_TEMPLATE: BRANCH_MANIFEST.md]

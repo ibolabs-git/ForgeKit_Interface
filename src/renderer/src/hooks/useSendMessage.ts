@@ -10,9 +10,20 @@ const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[[A-Z][A-Z\s]+\]\s*)?(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
 const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uklju\u010di)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|re\u017eim|mode)\b)?/i
+const INIT_TEMPLATE_PATHS = [
+  'README.md',
+  'BRANCH_MANIFEST.md',
+  '00_SYSTEM/orchestrator_prompt.md',
+  '00_SYSTEM/rules.md',
+  '00_SYSTEM/workflow.md',
+  '00_SYSTEM/agents.md',
+  '00_SYSTEM/security_policy.md',
+  '00_SYSTEM/document_activation_guide.md'
+]
 
 interface SendOptions {
   hiddenUser?: boolean
+  allowTemplateFollowup?: boolean
 }
 
 function normalizeOutboundText(text: string): string {
@@ -40,6 +51,17 @@ Dokumentacija je ucitana interno. Ne prikazuj korisniku READ_TEMPLATE, TEMPLATE_
 Nastavi vidljivi tok kao [ORCHESTRATOR].
 Ako je ovo pocetak ForgeKit rezima, javi se kratko i prijatno, objasni da pre izvrsenja ide pocetni razgovorni ulaz, pa postavi samo jedno pitanje za Intake Handshake.
 Ako ovo nije pocetak rezima, nastavi prethodni korisnicki tok kratko i operativno.`
+}
+
+function buildForgeKitInitContext(fetched: { path: string; content: string }[]): string {
+  return `[FORGEKIT_INIT_CONTEXT]
+${fetched.map((f) => `=== ${f.path} ===\n\n${f.content}`).join('\n\n---\n\n')}
+
+[APP_RUNTIME]
+Ovo je interni ForgeKit init kontekst. Korisniku ne prikazuj listu dokumenata, template tagove niti detalje ucitavanja.
+Nemoj ponovo traziti READ_TEMPLATE dokumente za ovaj init.
+Sada se javi korisniku kao [ORCHESTRATOR].
+Kratko i prijatno potvrdi da si tu, objasni da pre izvrsenja sledi pocetni razgovorni ulaz, i postavi samo jedno pitanje za Intake Handshake: koji projekat ili ideju pokrecemo?`
 }
 
 export function useSendMessage() {
@@ -70,10 +92,38 @@ export function useSendMessage() {
     }
   }, [])
 
+  const loadTemplates = useCallback(async (paths: string[]) => {
+    const fetched: { path: string; content: string }[] = []
+
+    for (const filePath of paths) {
+      const cachedContent = templateCacheRef.current.get(filePath)
+      if (cachedContent) {
+        fetched.push({ path: filePath, content: cachedContent })
+        continue
+      }
+      try {
+        const result = await window.api.githubFetchTemplate(filePath)
+        if (result.ok && result.content) {
+          fetched.push({ path: filePath, content: result.content })
+          templateCacheRef.current.set(filePath, result.content)
+        }
+      } catch {
+        // Template ucitavanje je interni tok; greska se ne prikazuje kao chat buka.
+      }
+    }
+
+    return fetched
+  }, [])
+
   const send = useCallback(async (text: string, options: SendOptions = {}) => {
     if (!text.trim() || isStreaming) return
 
     const outboundText = normalizeOutboundText(text)
+    const isForgeKitInit = outboundText === '[FORGEKIT_INIT]' && !options.hiddenUser
+    const modelInput = isForgeKitInit
+      ? buildForgeKitInitContext(await loadTemplates(INIT_TEMPLATE_PATHS))
+      : outboundText
+
     contentRef.current = ''
     if (!options.hiddenUser) addUserMessage(text)
 
@@ -91,7 +141,7 @@ export function useSendMessage() {
           projectName, currentPhase, activeRole, tasks,
           messages, selectedModel: effectiveModel, previousEffectiveModel
         },
-        outboundText
+        modelInput
       )
       markContextSynced()
     } else {
@@ -101,7 +151,7 @@ export function useSendMessage() {
           && !m.content.startsWith('[MODEL_SWITCH:')
           && !isInternalTemplateMessage(m.content))
         .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
-      history.push({ role: 'user', content: outboundText })
+      history.push({ role: 'user', content: modelInput })
     }
 
     const removeToken = window.api.onStreamToken((token, id) => {
@@ -130,32 +180,17 @@ export function useSendMessage() {
 
       const matches = [...fullContent.matchAll(READ_TEMPLATE_REGEX)]
       if (matches.length === 0) return
+      if (options.allowTemplateFollowup === false) return
 
       const isTemplateOnlyRequest = READ_TEMPLATE_ONLY_REGEX.test(fullContent.trim())
-      const fetched: { path: string; content: string }[] = []
-
-      for (const match of matches) {
-        const filePath = match[1].trim()
-        const cachedContent = templateCacheRef.current.get(filePath)
-        if (cachedContent) {
-          fetched.push({ path: filePath, content: cachedContent })
-          continue
-        }
-        try {
-          const result = await window.api.githubFetchTemplate(filePath)
-          if (result.ok && result.content) {
-            fetched.push({ path: filePath, content: result.content })
-            templateCacheRef.current.set(filePath, result.content)
-          }
-        } catch {
-          // Ucitavanje template-a je interni mehanizam; greska ne sme prekinuti chat.
-        }
-      }
+      const fetched = await loadTemplates(matches.map((match) => match[1].trim()))
 
       if (fetched.length === 0 && !isTemplateOnlyRequest) return
 
       const injectText = buildTemplateContinuation(fetched)
-      setTimeout(() => { sendRef.current(injectText, { hiddenUser: true }) }, 80)
+      setTimeout(() => {
+        sendRef.current(injectText, { hiddenUser: true, allowTemplateFollowup: false })
+      }, 80)
     })
 
     const removeError = window.api.onStreamError((error, id) => {
@@ -180,7 +215,7 @@ export function useSendMessage() {
     projectName, previousEffectiveModel,
     addUserMessage, startAssistantMessage, appendStreamToken,
     finalizeMessage, addErrorMessage, markContextSynced,
-    addProjectFileAction
+    addProjectFileAction, loadTemplates
   ])
 
   sendRef.current = send

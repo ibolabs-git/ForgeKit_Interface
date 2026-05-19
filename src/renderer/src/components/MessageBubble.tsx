@@ -222,7 +222,7 @@ export const MessageBubble = React.memo(function MessageBubble(
   }
 
   // ── READ_TEMPLATE request — sakrij interne tagove od korisnika ──
-  if (!message.isStreaming && templateOnlyPaths && templateOnlyPaths.length > 0) {
+  if (templateOnlyPaths && templateOnlyPaths.length > 0) {
     return <></>
   }
 
