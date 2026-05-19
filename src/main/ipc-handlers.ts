@@ -165,7 +165,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // ── GITHUB ────────────────────────────────────────────────────────────────
 
   ipcMain.handle('github:test', async () => {
-    const config = getGitHubConfig()
+    const config = getMasterToolConfig()  // testiramo konekciju ka Master Tool repo-u
     if (!config.token || !config.repo)
       return { ok: false, message: 'GitHub nije podesen u Settings' }
     return testGitHubConnection(config)
@@ -180,7 +180,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     if (!payload?.content || payload.content.length > MAX_CONTENT_BYTES) {
       return { ok: false, message: `Sadržaj preveći za upload (max ${MAX_CONTENT_BYTES / 1000}KB)` }
     }
-    const config = getGitHubConfig()
+    const config = getMasterToolConfig()  // memorija ide u Master Tool repo
     if (!config.token || !config.repo)
       return { ok: false, message: 'GitHub nije podesen' }
     return uploadMemoryRecord(config, payload.projectName, payload.content)

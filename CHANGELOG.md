@@ -6,6 +6,25 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.9] — 2026-05-19 — Memorija u Master Tool repo
+
+### Arhitekturalna ispravka
+Memorija sesija se sada upisuje u `ibolabs-git/ForgeKit_tool` repo pod
+`Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/` — sastavni deo Master alata,
+ne app repo-a.
+
+### Promene
+- `uploadMemoryRecord` koristi `getMasterToolConfig()` umesto `getGitHubConfig()`
+- `github:test` IPC testira konekciju ka Master Tool repo-u
+- Memory path: `Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/{datum}_{projekat}_{ts}.md`
+- Settings UI: uklonjen "Repozitorijum (projekat / memorija)" field — ostaje samo
+  **Master Tool Repozitorijum** koji pokriva sve (instrukcije, template-i, memorija)
+
+### Fajlovi promenjeni
+`github.ts`, `ipc-handlers.ts`, `SettingsModal.tsx`, `package.json`
+
+---
+
 ## [1.0.8] — 2026-05-19 — Master Tool repo konfiguracija
 
 ### Problem

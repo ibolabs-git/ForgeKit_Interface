@@ -1,6 +1,6 @@
 {
   "name": "forgekit-interface",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "ForgeKit Interface App — namenska Windows aplikacija za rad sa ForgeKit Tool-om",
   "main": "out/main/index.js",
   "author": "ForgeKit",

@@ -100,7 +100,8 @@ export async function uploadMemoryRecord(
   const date = new Date().toISOString().slice(0, 10)
   const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_')
   const timestamp = Date.now()
-  const remotePath = `learning_data/${date}_${safeName}_${timestamp}.md`
+  // Memorija ide u Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/ — deo Master alata
+  const remotePath = `Master_ForgeKit_Tool/05_GLOBAL_MEMORY/learning_data/${date}_${safeName}_${timestamp}.md`
   return uploadFileToGitHub(config, remotePath, content, `Memory record: ${projectName} ${date}`)
 }
 

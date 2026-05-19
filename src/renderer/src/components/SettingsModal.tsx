@@ -321,15 +321,6 @@ export function SettingsModal(): JSX.Element | null {
                   />
                 </div>
                 <div className="settings-group">
-                  <label className="settings-label">Repozitorijum (projekat / memorija)</label>
-                  <input
-                    type="text" className="settings-input"
-                    value={githubRepo}
-                    onChange={(e) => { setGithubRepo(e.target.value); setGithubTestStatus('idle') }}
-                    placeholder="korisnik/naziv-repoa"
-                  />
-                </div>
-                <div className="settings-group">
                   <label className="settings-label">Master Tool Repozitorijum</label>
                   <input
                     type="text" className="settings-input"
@@ -338,8 +329,7 @@ export function SettingsModal(): JSX.Element | null {
                     placeholder="korisnik/ForgeKit_tool"
                   />
                   <div className="settings-hint">
-                    Repo koji sadrzi Master_ForgeKit_Tool instrukcije i template-e.
-                    Ako nije podesen, koristi se gornji repo.
+                    Repo koji sadrzi Master_ForgeKit_Tool (instrukcije, template-i, memorija).
                   </div>
                 </div>
                 <div className="github-test-row">
