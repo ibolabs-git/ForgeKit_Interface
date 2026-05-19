@@ -202,7 +202,9 @@ git commit -m "Update ForgeKit Interface docs"
 git push origin main
 ```
 
-Ako se pravi nova aplikaciona verzija:
+`git push` salje source code. Auto-update ne koristi obican commit, nego GitHub Release.
+
+Ako se pravi nova aplikaciona verzija koju instalirana app moze sama da povuce:
 
 1. azurirati `package.json` verziju
 2. azurirati `CHANGELOG.md`
@@ -210,6 +212,24 @@ Ako se pravi nova aplikaciona verzija:
 4. napraviti GitHub Release sa installer fajlom iz `dist/`
 
 Release repo je definisan u `package.json` kroz `electron-builder` konfiguraciju.
+
+Automatizovan release tok:
+
+```powershell
+cd D:\Project\Forgste_Interface_app\ForgeKit_Interface_App\app
+.\deploy-release.cmd 1.0.14
+```
+
+Skripta:
+
+- proverava GitHub CLI autentifikaciju
+- proverava da tag jos ne postoji
+- pokrece `npm.cmd run package`
+- proverava da postoje `.exe`, `.blockmap` i `latest.yml`
+- kreira GitHub Release `vX.Y.Z`
+- uploaduje assete potrebne za auto-update
+
+Napomena: pre `deploy-release.cmd` source promene treba commitovati i pushovati na `main`, a verzija u `package.json` mora odgovarati release verziji.
 
 ---
 

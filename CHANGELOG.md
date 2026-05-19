@@ -6,7 +6,7 @@ Format: `[verzija] — datum — opis`
 
 ---
 
-## [Unreleased] — 2026-05-19 — Nexus stabilizacioni patch
+## [1.0.14] — 2026-05-19 — Nexus stabilizacioni patch i release deploy
 
 ### Stabilizacija
 - Ispravljen runtime bug u `finalizeMessage()` koji je mogao prekinuti zavrsetak AI poruke i Memory Curator detekciju.
@@ -16,9 +16,18 @@ Format: `[verzija] — datum — opis`
 - Prosiren `[FORGEKIT_INIT]` minimalni set dokumenata i dodat kratak init check: rezim aktivan, Master/Core read-only, pre izvrsenja ide Intake Handshake.
 - Dodat kontrolisani `PROJECT_WRITE_FILE` tok: AI priprema fajl kao pending akciju, a korisnik potvrdjuje upis u SidePanel-u.
 - Git remote URL ociscen od embedded tokena.
+- Dodat `deploy-release.cmd` / `deploy-release.ps1` za kreiranje GitHub Release-a sa installer assetima koje auto-updater moze da pronadje.
 
 ### Validacija
 - `npm.cmd run build` prolazi nakon izmena.
+- Release tok koristi `npm.cmd run package`, `gh release create`, installer `.exe`, `.blockmap` i `latest.yml`.
+
+---
+
+## [Unreleased]
+
+### Napomena
+- Sledece izmene unositi ovde pre novog release-a.
 
 ---
 
