@@ -7,15 +7,6 @@ const ALL_ROLES: ForgeKitRole[] = [
   'ORCHESTRATOR', 'THINKER', 'BUILDER', 'REVIEWER', 'MEMORY CURATOR', 'OBSERVER'
 ]
 
-const ROLE_ICONS: Record<string, string> = {
-  ORCHESTRATOR: '🎯',
-  THINKER: '🧠',
-  BUILDER: '🔨',
-  REVIEWER: '🔍',
-  'MEMORY CURATOR': '📚',
-  OBSERVER: '👁'
-}
-
 const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
   { id: 'F1', label: 'F1 — Fundament',       short: 'F1' },
   { id: 'F2', label: 'F2 — ForgeKit Logika', short: 'F2' },
@@ -59,7 +50,6 @@ export function LeftPanel(): JSX.Element {
                 title={isActive ? `Aktivna uloga: ${role}` : `Pozovi ${role}`}
               >
                 <span className="lrt-num">{String(i + 1).padStart(2, '0')}</span>
-                <div className="lrt-icon">{ROLE_ICONS[role]}</div>
                 <div className="lrt-name">{role}</div>
                 {isActive && <span className="lrt-star">★</span>}
               </button>
