@@ -1,7 +1,16 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
-import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig, getMasterToolConfig, setApiKeySecure } from './store'
+import {
+  settingsStore,
+  getApiKey,
+  getApiKeySecure,
+  hasApiKeySecure,
+  getNvidiaBaseUrl,
+  getGitHubConfig,
+  getMasterToolConfig,
+  setApiKeySecure
+} from './store'
 import {
   testGitHubConnection,
   uploadMemoryRecord,
@@ -99,7 +108,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('get-settings', () => ({
     anthropicApiKey: settingsStore.get('anthropicApiKey') ? '***' : '',
     openaiApiKey: settingsStore.get('openaiApiKey') ? '***' : '',
-    nvidiaApiKey: settingsStore.get('nvidiaApiKey') ? '***' : '',
+    nvidiaApiKey: hasApiKeySecure('nvidiaKey') ? '***' : '',
     nvidiaBaseUrl: settingsStore.get('nvidiaBaseUrl') || 'https://integrate.api.nvidia.com/v1',
     defaultProvider: settingsStore.get('defaultProvider'),
     defaultAnthropicModel: settingsStore.get('defaultAnthropicModel'),
@@ -107,7 +116,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     theme: settingsStore.get('theme'),
     hasAnthropicKey: !!settingsStore.get('anthropicApiKey'),
     hasOpenAIKey: !!settingsStore.get('openaiApiKey'),
-    hasNvidiaKey: !!settingsStore.get('nvidiaApiKey'),
+    hasNvidiaKey: hasApiKeySecure('nvidiaKey'),
     githubRepo: settingsStore.get('githubRepo'),
     masterToolRepo: settingsStore.get('masterToolRepo'),
     hasGithubToken: !!settingsStore.get('githubToken'),
@@ -132,7 +141,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     if (typeof settings.masterToolRepo === 'string')
       settingsStore.set('masterToolRepo', settings.masterToolRepo)
     if (typeof settings.defaultProvider === 'string')
-      settingsStore.set('defaultProvider', settings.defaultProvider as 'anthropic' | 'openai')
+      settingsStore.set('defaultProvider', settings.defaultProvider as 'anthropic' | 'openai' | 'nvidia')
     if (typeof settings.defaultAnthropicModel === 'string')
       settingsStore.set('defaultAnthropicModel', settings.defaultAnthropicModel)
     if (typeof settings.defaultOpenAIModel === 'string')
@@ -155,7 +164,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // ── NVIDIA TEST ───────────────────────────────────────────────────────────
 
   ipcMain.handle('nvidia:test', async (_e, apiKey: string, baseUrl: string) => {
-    const key = apiKey && apiKey !== '***' ? apiKey : settingsStore.get('nvidiaApiKey')
+    const key = apiKey && apiKey !== '***' ? apiKey : getApiKeySecure('nvidiaKey')
     const url = baseUrl || settingsStore.get('nvidiaBaseUrl') || 'https://integrate.api.nvidia.com/v1'
     if (!key) return { ok: false, message: 'API ključ nije podešen' }
     try {

@@ -96,7 +96,6 @@ export function SessionSummaryModal(): JSX.Element | null {
       messages: history,
       provider: selectedProvider,
       model: effectiveModel,
-      systemPrompt: '',
       messageId
     })
 

@@ -61,6 +61,10 @@ export function getApiKeySecure(key: SecureKey): string {
   return getApiKeyLegacy(key)
 }
 
+export function hasApiKeySecure(key: SecureKey): boolean {
+  return Boolean(getApiKeySecure(key))
+}
+
 // ── Legacy store (backward compat za postojeće instalacije) ───────────────────
 // Zadržan encryptionKey kako bi se mogli čitati stari podaci.
 // Ne pisati više u legacy store — samo čitati za migraciju.
@@ -70,7 +74,7 @@ interface AppSettings {
   openaiApiKey: string
   nvidiaApiKey: string
   nvidiaBaseUrl: string
-  defaultProvider: 'anthropic' | 'openai'
+  defaultProvider: 'anthropic' | 'openai' | 'nvidia'
   defaultAnthropicModel: string
   defaultOpenAIModel: string
   theme: 'dark' | 'light'

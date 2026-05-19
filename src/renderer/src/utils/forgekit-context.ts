@@ -27,7 +27,8 @@ export function buildHandoffDoc(
   const phaseNames: Record<ForgeKitPhase, string> = {
     F1: 'F1 — Fundament',
     F2: 'F2 — ForgeKit Logika',
-    F3: 'F3 — Multi-model'
+    F3: 'F3 — Multi-model',
+    F4: 'F4 — Nexus implementacija'
   }
 
   let doc = `# Handoff dokument — ${projectName}
@@ -104,6 +105,7 @@ function phaseLabel(phase: ForgeKitPhase): string {
     case 'F1': return 'F1 — Fundament (definisanje projekta)'
     case 'F2': return 'F2 — ForgeKit Logika (struktura, pravila, tokovi)'
     case 'F3': return 'F3 — Multi-model (izvršenje, review, isporuka)'
+    case 'F4': return 'F4 — Nexus implementacija (runtime, dokumenti, sigurnost)'
   }
 }
 
@@ -167,7 +169,7 @@ export const FORGEKIT_SYSTEM_PREAMBLE = `Radiš u ForgeKit režimu.
 
 ForgeKit je strukturiran radni protokol koji definiše:
 - Jasne uloge: ORCHESTRATOR (vodi tok), THINKER (analiza), BUILDER (implementacija), REVIEWER (provera), MEMORY CURATOR (pamćenje), OBSERVER (praćenje)
-- Faze projekta: F1 Fundament → F2 ForgeKit Logika → F3 Multi-model
+- Faze projekta: F1 Fundament → F2 ForgeKit Logika → F3 Multi-model → F4 Nexus implementacija
 - Pravilo potvrde: svaki korak zahteva potvrdu pre nastavka
 - Format odgovora: počni sa [ULOGA] tagom
 

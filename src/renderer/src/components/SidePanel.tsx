@@ -44,6 +44,21 @@ async function uploadRecord(
   }
 }
 
+async function confirmProjectFileAction(
+  id: string,
+  filename: string,
+  content: string,
+  updateStatus: (id: string, status: 'pending' | 'writing' | 'written' | 'error', msg?: string) => void
+) {
+  updateStatus(id, 'writing')
+  const result = await window.api.projectWriteFile(filename, content)
+  if (result.ok) {
+    updateStatus(id, 'written')
+  } else {
+    updateStatus(id, 'error', result.message ?? 'Greska pri upisu fajla')
+  }
+}
+
 export function SidePanel(): JSX.Element {
   // OPT-03: messages zamenjen sa messagesLength — SidePanel ne re-renderuje na svaki
   // stream token, samo kad se promeni broj poruka (nova poruka dodata/sesija resetovana)
@@ -52,9 +67,10 @@ export function SidePanel(): JSX.Element {
     activeRole, currentPhase, tasks,
     selectedProvider, selectedModel, customModelId, contextStatus,
     setProvider, setModel, setCustomModelId, refreshContext,
-    memoryRecords, projectName,
+    memoryRecords, projectFileActions, projectName,
     toggleTask, addManualTask, removeTask, clearTasks,
     updateMemoryStatus, removeMemoryRecord,
+    updateProjectFileActionStatus, removeProjectFileAction,
     setHighlightMessageId
   } = useForgeKitStore()
 
@@ -307,6 +323,50 @@ export function SidePanel(): JSX.Element {
       </section>
 
       {/* ── Memory Curator ── */}
+      {/* Project file actions */}
+      <section className="panel-section panel-file-actions">
+        <div className="panel-label">PROJECT FILE ACTIONS</div>
+
+        {projectFileActions.length === 0 ? (
+          <div className="file-actions-empty">
+            Predlozi za fajlove ce se pojaviti ovde pre upisa.
+          </div>
+        ) : (
+          <ul className="file-action-list">
+            {projectFileActions.map((action) => (
+              <li key={action.id} className={`file-action-item file-action-${action.status}`}>
+                <div className="file-action-path" title={action.filename}>{action.filename}</div>
+                <div className="file-action-meta">
+                  {action.status === 'pending' && 'ceka potvrdu'}
+                  {action.status === 'writing' && 'upis...'}
+                  {action.status === 'written' && 'upisano'}
+                  {action.status === 'error' && (action.errorMessage ?? 'greska')}
+                </div>
+                <div className="file-action-buttons">
+                  {action.status === 'pending' && (
+                    <button
+                      className="file-action-confirm"
+                      onClick={() => confirmProjectFileAction(
+                        action.id,
+                        action.filename,
+                        action.content,
+                        updateProjectFileActionStatus
+                      )}
+                    >Upisi</button>
+                  )}
+                  {(action.status === 'pending' || action.status === 'written' || action.status === 'error') && (
+                    <button
+                      className="file-action-remove"
+                      onClick={() => removeProjectFileAction(action.id)}
+                    >Ukloni</button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section className="panel-section panel-memory">
         <div className="panel-label">MEMORY CURATOR</div>
 

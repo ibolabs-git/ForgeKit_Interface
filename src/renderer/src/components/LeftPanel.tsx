@@ -10,7 +10,8 @@ const ALL_ROLES: ForgeKitRole[] = [
 const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
   { id: 'F1', label: 'F1 — Fundament',       short: 'F1' },
   { id: 'F2', label: 'F2 — ForgeKit Logika', short: 'F2' },
-  { id: 'F3', label: 'F3 — Multi-model',     short: 'F3' }
+  { id: 'F3', label: 'F3 — Multi-model',     short: 'F3' },
+  { id: 'F4', label: 'F4 — Nexus',           short: 'F4' }
 ]
 
 export function LeftPanel(): JSX.Element {

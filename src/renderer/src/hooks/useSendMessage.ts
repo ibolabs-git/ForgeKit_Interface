@@ -8,6 +8,7 @@ import { buildRePrimeMessages } from '../utils/forgekit-context'
 
 // Regex za detekciju READ_TEMPLATE taga u AI odgovorima
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
+const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
 
 export function useSendMessage() {
   const activeListenersRef = useRef<Array<() => void>>([])
@@ -22,7 +23,8 @@ export function useSendMessage() {
     projectName, previousEffectiveModel,
     addUserMessage, startAssistantMessage,
     appendStreamToken, finalizeMessage,
-    addErrorMessage, markContextSynced
+    addErrorMessage, markContextSynced,
+    addProjectFileAction
   } = useForgeKitStore()
 
   // sendRef uvek drzi najsveziju verziju send funkcije — resava closure stale problem
@@ -88,6 +90,15 @@ export function useSendMessage() {
       // ── READ_TEMPLATE detekcija ──
       // Ako AI odgovor sadrzi [READ_TEMPLATE: putanja], fetchujemo fajl sa GitHub-a
       // i auto-injektujemo sadrzaj nazad u razgovor
+      // PROJECT_WRITE_FILE detekcija: AI ne pise direktno u fajl.
+      // App kreira pending akciju koju korisnik potvrdjuje u SidePanel-u.
+      const fileMatches = [...fullContent.matchAll(PROJECT_WRITE_REGEX)]
+      for (const match of fileMatches) {
+        const filename = match[1].trim()
+        const content = match[2].trim()
+        if (filename && content) addProjectFileAction(filename, content, messageId)
+      }
+
       const matches = [...fullContent.matchAll(READ_TEMPLATE_REGEX)]
       if (matches.length === 0) return
 
@@ -132,7 +143,8 @@ export function useSendMessage() {
     modelJustChanged, contextStatus, currentPhase, activeRole, tasks,
     projectName, previousEffectiveModel,
     addUserMessage, startAssistantMessage, appendStreamToken,
-    finalizeMessage, addErrorMessage, markContextSynced
+    finalizeMessage, addErrorMessage, markContextSynced,
+    addProjectFileAction
   ])
 
   // Osvezi sendRef na svaki render da onStreamComplete uvek ima svezu verziju

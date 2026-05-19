@@ -6,6 +6,22 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [Unreleased] — 2026-05-19 — Nexus stabilizacioni patch
+
+### Stabilizacija
+- Ispravljen runtime bug u `finalizeMessage()` koji je mogao prekinuti zavrsetak AI poruke i Memory Curator detekciju.
+- Uskladjen `sendMessage` tip sa SEC-05 pravilom: renderer vise ne salje `systemPrompt`, main proces ga dodaje sam.
+- NVIDIA je uskladjena kao punopravan provider u settings/tipovima i test konekcije sada cita secure key store.
+- Uvedena F4 faza u runtime fazni parser, LeftPanel i Re-Prime/handoff kontekst, jer dokumentacija vec tretira F4 kao Nexus implementacionu fazu.
+- Prosiren `[FORGEKIT_INIT]` minimalni set dokumenata i dodat kratak init check: rezim aktivan, Master/Core read-only, pre izvrsenja ide Intake Handshake.
+- Dodat kontrolisani `PROJECT_WRITE_FILE` tok: AI priprema fajl kao pending akciju, a korisnik potvrdjuje upis u SidePanel-u.
+- Git remote URL ociscen od embedded tokena.
+
+### Validacija
+- `npm.cmd run build` prolazi nakon izmena.
+
+---
+
 ## [1.0.11] — 2026-05-19 — READ_TEMPLATE mehanizam
 
 ### Novo

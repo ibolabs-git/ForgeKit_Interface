@@ -1,10 +1,10 @@
 import { create } from 'zustand'
-import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord } from '../types'
+import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, ProjectFileAction } from '../types'
 
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
-const PHASE_REGEX = /\b(F1|F2|F3)\b/
+const PHASE_REGEX = /\b(F1|F2|F3|F4)\b/
 
 // Ključne riječi koje signaliziraju task sekciju (case-insensitive)
 const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
@@ -118,6 +118,7 @@ interface TabSnapshot {
   modelHistory: Array<{ from: string; to: string; time: number }>
   previousEffectiveModel: string
   memoryRecords: MemoryRecord[]
+  projectFileActions: ProjectFileAction[]
 }
 
 function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
@@ -137,6 +138,7 @@ function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
     modelHistory: [],
     previousEffectiveModel: 'claude-sonnet-4-6',
     memoryRecords: [],
+    projectFileActions: [],
     ...overrides
   }
 }
@@ -157,7 +159,8 @@ function captureSnapshot(s: ForgeKitStore): TabSnapshot {
     customModelId: s.customModelId,
     modelHistory: s.modelHistory,
     previousEffectiveModel: s.previousEffectiveModel,
-    memoryRecords: s.memoryRecords
+    memoryRecords: s.memoryRecords,
+    projectFileActions: s.projectFileActions
   }
 }
 
@@ -208,6 +211,7 @@ interface ForgeKitStore {
 
   // ── Memory (aktivni tab) ──
   memoryRecords: MemoryRecord[]
+  projectFileActions: ProjectFileAction[]
 
   // ── Projekat (aktivni tab) ──
   projectPath: string | null
@@ -260,6 +264,11 @@ interface ForgeKitStore {
   addMemoryRecord: (content: string) => void
   updateMemoryStatus: (id: string, status: MemoryRecord['status'], errorMessage?: string) => void
   removeMemoryRecord: (id: string) => void
+
+  // ── Project file actions ──
+  addProjectFileAction: (filename: string, content: string, sourceMessageId?: string) => void
+  updateProjectFileActionStatus: (id: string, status: ProjectFileAction['status'], errorMessage?: string) => void
+  removeProjectFileAction: (id: string) => void
 
   // ── Project ──
   setProjectPath: (path: string | null) => void
@@ -398,6 +407,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     try { return (localStorage.getItem('fk-theme') as 'light' | 'dark') ?? 'light' } catch { return 'light' }
   })(),
   memoryRecords: [],
+  projectFileActions: [],
   projectPath: null,
   showProjectSetup: false,
 
@@ -466,7 +476,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       )
     }))
 
-    const memoryContent = extractMemoryContent(msg.content)
+    const memoryContent = extractMemoryContent(fullContent)
     if (memoryContent) {
       const record: MemoryRecord = {
         id: `mem-${Date.now()}-${Math.random()}`,
@@ -690,6 +700,32 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     set((s) => ({ memoryRecords: s.memoryRecords.filter((r) => r.id !== id) }))
   },
 
+  // ── Project file actions ──
+
+  addProjectFileAction: (filename, content, sourceMessageId) => {
+    const action: ProjectFileAction = {
+      id: `file-action-${Date.now()}-${Math.random()}`,
+      filename,
+      content,
+      sourceMessageId,
+      createdAt: Date.now(),
+      status: 'pending'
+    }
+    set((s) => ({ projectFileActions: [...s.projectFileActions, action] }))
+  },
+
+  updateProjectFileActionStatus: (id, status, errorMessage) => {
+    set((s) => ({
+      projectFileActions: s.projectFileActions.map((a) =>
+        a.id === id ? { ...a, status, errorMessage } : a
+      )
+    }))
+  },
+
+  removeProjectFileAction: (id) => {
+    set((s) => ({ projectFileActions: s.projectFileActions.filter((a) => a.id !== id) }))
+  },
+
   // ── Projekat ──
 
   setProjectPath: (path) => {
@@ -715,6 +751,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       currentPhase: s.currentPhase,
       selectedProvider: s.selectedProvider,
       selectedModel: s.selectedModel,
+      customModelId: s.customModelId,
+      modelHistory: s.modelHistory,
+      projectFileActions: s.projectFileActions,
       savedAt: Date.now()
     }
     await window.api.projectWriteFile('session.json', JSON.stringify(data, null, 2))
@@ -734,6 +773,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         currentPhase?: ForgeKitPhase
         selectedProvider?: string
         selectedModel?: string
+        customModelId?: string
+        modelHistory?: Array<{ from: string; to: string; time: number }>
+        projectFileActions?: ProjectFileAction[]
       }
       // Validacija provider/model — sprječava mismatch iz starih session.json
       const { provider: safeProvider, model: safeModel } = sanitizeProviderModel(
@@ -747,6 +789,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         currentPhase: data.currentPhase ?? s.currentPhase,
         selectedProvider: safeProvider,
         selectedModel: safeModel,
+        customModelId: data.customModelId ?? '',
+        modelHistory: data.modelHistory ?? [],
+        projectFileActions: data.projectFileActions ?? [],
         tabs: s.tabs.map((t) => t.id === s.activeTabId
           ? { ...t, projectName: data.projectName ?? t.projectName }
           : t

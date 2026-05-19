@@ -8,7 +8,7 @@ export type ForgeKitRole =
   | 'USER'
   | 'SYSTEM'
 
-export type ForgeKitPhase = 'F1' | 'F2' | 'F3'
+export type ForgeKitPhase = 'F1' | 'F2' | 'F3' | 'F4'
 
 export interface Task {
   id: string
@@ -43,7 +43,7 @@ export interface AppSettings {
   hasOpenAIKey: boolean
   hasNvidiaKey: boolean
   nvidiaBaseUrl: string
-  defaultProvider: 'anthropic' | 'openai'
+  defaultProvider: 'anthropic' | 'openai' | 'nvidia'
   defaultAnthropicModel: string
   defaultOpenAIModel: string
   theme: 'dark' | 'light'
@@ -62,11 +62,21 @@ export interface MemoryRecord {
   errorMessage?: string
 }
 
+export interface ProjectFileAction {
+  id: string
+  filename: string
+  content: string
+  createdAt: number
+  sourceMessageId?: string
+  status: 'pending' | 'writing' | 'written' | 'error'
+  errorMessage?: string
+}
+
 // Globalni window.api tip
 export interface ElectronAPI {
   sendMessage: (payload: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
-    provider: string; model: string; systemPrompt: string; messageId: string
+    provider: string; model: string; messageId: string
   }) => void
   onStreamToken: (cb: (token: string, messageId: string) => void) => () => void
   onStreamComplete: (cb: (messageId: string) => void) => () => void

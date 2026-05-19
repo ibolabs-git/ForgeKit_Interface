@@ -59,6 +59,10 @@ export function writeProjectFile(
   if (!fs.existsSync(projectPath)) {
     fs.mkdirSync(projectPath, { recursive: true })
   }
+  const safeDir = path.dirname(safePath)
+  if (!fs.existsSync(safeDir)) {
+    fs.mkdirSync(safeDir, { recursive: true })
+  }
   fs.writeFileSync(safePath, content, 'utf-8')
 }
 
