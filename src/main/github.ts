@@ -107,12 +107,32 @@ export async function uploadMemoryRecord(
 export async function fetchSystemPromptFromGitHub(
   config: GitHubConfig
 ): Promise<string | null> {
-  // Pokusaj da ucita system prompt iz GitHub repo-a
+  // Redosled: najpre root (kada je masterToolRepo = ibolabs-git/ForgeKit_tool),
+  // zatim podfoldera (kada je Master_ForgeKit_Tool ugradjen u app repo)
   const candidates = [
-    'Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md',
-    'Master_ForgeKit_Tool/00_SYSTEM/orchestrator_prompt.md',
     '00_SYSTEM/forgekit_mode_prompt.md',
+    'Master_ForgeKit_Tool/00_SYSTEM/forgekit_mode_prompt.md',
+    '00_SYSTEM/orchestrator_prompt.md',
     'system-prompt.md'
+  ]
+  for (const candidate of candidates) {
+    const content = await fetchFileFromGitHub(config, candidate)
+    if (content) return content
+  }
+  return null
+}
+
+// Ucitava proizvoljan fajl iz Master Tool repo-a po putanji
+export async function fetchTemplateFromGitHub(
+  config: GitHubConfig,
+  filePath: string
+): Promise<string | null> {
+  // Pokusaj direktnom putanjom, i sa/bez Master_ForgeKit_Tool/ prefiksa
+  const candidates = [
+    filePath,
+    filePath.startsWith('Master_ForgeKit_Tool/')
+      ? filePath.replace('Master_ForgeKit_Tool/', '')
+      : `Master_ForgeKit_Tool/${filePath}`
   ]
   for (const candidate of candidates) {
     const content = await fetchFileFromGitHub(config, candidate)

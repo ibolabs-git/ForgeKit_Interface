@@ -53,6 +53,7 @@ export function SettingsModal(): JSX.Element | null {
   const [hasNvidiaKey, setHasNvidiaKey] = useState(false)
   const [githubToken, setGithubToken] = useState('')
   const [githubRepo, setGithubRepo] = useState('')
+  const [masterToolRepo, setMasterToolRepo] = useState('')
   const [hasGithubToken, setHasGithubToken] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -85,6 +86,7 @@ export function SettingsModal(): JSX.Element | null {
         setNvidiaBaseUrl(s.nvidiaBaseUrl || 'https://integrate.api.nvidia.com/v1')
         setHasGithubToken(s.hasGithubToken)
         setGithubRepo(s.githubRepo || '')
+        setMasterToolRepo(s.masterToolRepo || '')
         setAnthropicKey('')
         setOpenaiKey('')
         setNvidiaKey('')
@@ -132,7 +134,8 @@ export function SettingsModal(): JSX.Element | null {
       nvidiaApiKey: nvidiaKey || undefined,
       nvidiaBaseUrl: nvidiaBaseUrl || undefined,
       githubToken: githubToken || undefined,
-      githubRepo: githubRepo || undefined
+      githubRepo: githubRepo || undefined,
+      masterToolRepo: masterToolRepo
     })
     setSaved(true)
     setTimeout(() => setShowSettings(false), 800)
@@ -163,10 +166,11 @@ export function SettingsModal(): JSX.Element | null {
   const handleGithubTest = async () => {
     setGithubTestStatus('testing')
     setGithubTestMsg('')
-    if (githubToken || githubRepo) {
+    if (githubToken || githubRepo || masterToolRepo) {
       await window.api.saveSettings({
         githubToken: githubToken || undefined,
-        githubRepo: githubRepo || undefined
+        githubRepo: githubRepo || undefined,
+        masterToolRepo: masterToolRepo
       })
     }
     const result = await window.api.githubTest()
@@ -317,13 +321,26 @@ export function SettingsModal(): JSX.Element | null {
                   />
                 </div>
                 <div className="settings-group">
-                  <label className="settings-label">Repozitorijum</label>
+                  <label className="settings-label">Repozitorijum (projekat / memorija)</label>
                   <input
                     type="text" className="settings-input"
                     value={githubRepo}
                     onChange={(e) => { setGithubRepo(e.target.value); setGithubTestStatus('idle') }}
                     placeholder="korisnik/naziv-repoa"
                   />
+                </div>
+                <div className="settings-group">
+                  <label className="settings-label">Master Tool Repozitorijum</label>
+                  <input
+                    type="text" className="settings-input"
+                    value={masterToolRepo}
+                    onChange={(e) => { setMasterToolRepo(e.target.value); setGithubTestStatus('idle') }}
+                    placeholder="korisnik/ForgeKit_tool"
+                  />
+                  <div className="settings-hint">
+                    Repo koji sadrzi Master_ForgeKit_Tool instrukcije i template-e.
+                    Ako nije podesen, koristi se gornji repo.
+                  </div>
                 </div>
                 <div className="github-test-row">
                   <button

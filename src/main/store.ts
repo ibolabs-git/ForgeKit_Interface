@@ -76,6 +76,7 @@ interface AppSettings {
   theme: 'dark' | 'light'
   githubToken: string
   githubRepo: string
+  masterToolRepo: string  // zasebni repo za Master_ForgeKit_Tool (npr. ibolabs-git/ForgeKit_tool)
   currentProjectPath: string
   openTabs: SavedTab[]
   activeTabId: string
@@ -92,6 +93,7 @@ const defaults: AppSettings = {
   theme: 'dark',
   githubToken: '',
   githubRepo: '',
+  masterToolRepo: '',
   currentProjectPath: '',
   openTabs: [],
   activeTabId: ''
@@ -137,5 +139,16 @@ export function getGitHubConfig() {
   return {
     token: getGitHubToken(),
     repo: settingsStore.get('githubRepo')
+  }
+}
+
+// Konfiguracija za Master_ForgeKit_Tool repo (može biti isti ili zasebni repo)
+export function getMasterToolConfig() {
+  const token = getGitHubToken()
+  const masterRepo = settingsStore.get('masterToolRepo')
+  const fallbackRepo = settingsStore.get('githubRepo')
+  return {
+    token,
+    repo: masterRepo || fallbackRepo  // ako masterToolRepo nije podesen, koristi githubRepo
   }
 }

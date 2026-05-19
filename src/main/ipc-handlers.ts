@@ -1,11 +1,12 @@
 import { app, ipcMain, BrowserWindow } from 'electron'
 import * as path from 'path'
 import { createProvider, AVAILABLE_PROVIDERS } from './providers/factory'
-import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig, setApiKeySecure } from './store'
+import { settingsStore, getApiKey, getNvidiaBaseUrl, getGitHubConfig, getMasterToolConfig, setApiKeySecure } from './store'
 import {
   testGitHubConnection,
   uploadMemoryRecord,
-  fetchSystemPromptFromGitHub
+  fetchSystemPromptFromGitHub,
+  fetchTemplateFromGitHub
 } from './github'
 // SEC-05: system prompt živi u main procesu — renderer ga ne šalje kroz IPC
 import { FORGEKIT_SYSTEM_PROMPT } from './system-prompt'
@@ -44,9 +45,9 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   }) => {
     const { messages, provider, model, messageId } = payload
 
-    // Učitaj GitHub verziju prompta jednom po sesiji; fallback na bundlovani
+    // Učitaj GitHub verziju prompta jednom po sesiji; koristi masterToolRepo ako je podesen
     if (!cachedSystemPrompt) {
-      const config = getGitHubConfig()
+      const config = getMasterToolConfig()  // masterToolRepo > githubRepo kao fallback
       if (config.token && config.repo) {
         const remote = await fetchSystemPromptFromGitHub(config).catch(() => null)
         cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT
@@ -96,6 +97,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     hasOpenAIKey: !!settingsStore.get('openaiApiKey'),
     hasNvidiaKey: !!settingsStore.get('nvidiaApiKey'),
     githubRepo: settingsStore.get('githubRepo'),
+    masterToolRepo: settingsStore.get('masterToolRepo'),
     hasGithubToken: !!settingsStore.get('githubToken'),
     currentProjectPath: settingsStore.get('currentProjectPath')
   }))
@@ -115,6 +117,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       setApiKeySecure('githubToken', settings.githubToken)
     if (typeof settings.githubRepo === 'string' && settings.githubRepo)
       settingsStore.set('githubRepo', settings.githubRepo)
+    if (typeof settings.masterToolRepo === 'string')
+      settingsStore.set('masterToolRepo', settings.masterToolRepo)
     if (typeof settings.defaultProvider === 'string')
       settingsStore.set('defaultProvider', settings.defaultProvider as 'anthropic' | 'openai')
     if (typeof settings.defaultAnthropicModel === 'string')
@@ -183,9 +187,22 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   })
 
   ipcMain.handle('github:fetch-system-prompt', async () => {
-    const config = getGitHubConfig()
+    const config = getMasterToolConfig()
     if (!config.token || !config.repo) return null
     return fetchSystemPromptFromGitHub(config)
+  })
+
+  // Ucitava template fajl iz Master Tool repo-a (za READ_TEMPLATE mehanizam)
+  ipcMain.handle('github:fetch-template', async (_e, filePath: string) => {
+    if (!filePath || typeof filePath !== 'string') return null
+    // SEC-07: ogranicavamo putanje na Master_ForgeKit_Tool/ prefix ili relativne putanje
+    const safe = filePath.replace(/\.\.\//g, '').replace(/\\/g, '/')
+    const config = getMasterToolConfig()
+    if (!config.token || !config.repo)
+      return { ok: false, content: null, message: 'Master Tool repo nije podesen u Settings' }
+    const content = await fetchTemplateFromGitHub(config, safe).catch(() => null)
+    if (content) return { ok: true, content }
+    return { ok: false, content: null, message: `Fajl nije pronadjen: ${safe}` }
   })
 
   // ── PROJECT FOLDER ────────────────────────────────────────────────────────

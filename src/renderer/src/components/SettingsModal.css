@@ -84,6 +84,14 @@
 }
 .settings-input:focus { border-color: var(--accent); }
 
+.settings-hint {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-family: var(--font-mono);
+  padding-top: 2px;
+}
+
 .settings-note {
   font-size: 11px;
   color: var(--text-muted);

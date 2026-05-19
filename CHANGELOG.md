@@ -1,5 +1,29 @@
 # Changelog — ForgeKit Interface App
 
+## [1.0.8] — 2026-05-19 — Master Tool repo konfiguracija
+
+### Problem
+Agenti nisu mogli pristupiti instrukcijama i template-ima iz `Master_ForgeKit_Tool` jer je alat smesten u zasebnom GitHub repo-u (`ibolabs-git/ForgeKit_tool`), a app je koristio samo jedan `githubRepo` koji pokazuje na projektni repo (`ibolabs-git/ForgeKit_Interface`). Fetch system prompta uvek padao na bundlovani fallback.
+
+### Resenje
+- **Novo polje u Settings → GitHub**: `Master Tool Repozitorijum` — zasebni repo za ForgeKit_tool
+- `getMasterToolConfig()` — koristi `masterToolRepo` ako je podesen, inace `githubRepo` kao fallback
+- `fetchSystemPromptFromGitHub` redosled kandidata: root putanje first (`00_SYSTEM/forgekit_mode_prompt.md`) pre nego putanje sa `Master_ForgeKit_Tool/` prefiksom — prilagodjeno za direktni repo
+- **Novo IPC**: `github:fetch-template` — cita proizvoljni fajl iz Master Tool repo-a
+- **Novo API**: `window.api.githubFetchTemplate(filePath)` — osnova za READ_TEMPLATE mehanizam
+- `settings-hint` CSS klasa za prikaz napomena ispod polja
+
+### Konfiguracija
+U Settings → GitHub Integracija:
+- **Repozitorijum**: `ibolabs-git/ForgeKit_Interface` (za memoriju / upload)
+- **Master Tool Repozitorijum**: `ibolabs-git/ForgeKit_tool` (za instrukcije i template-e)
+
+### Fajlovi promenjeni
+`store.ts`, `ipc-handlers.ts`, `github.ts`, `preload/index.ts`, `types/index.ts`,
+`SettingsModal.tsx`, `SettingsModal.css`, `package.json`
+
+---
+
 Sve verzije su dostupne na [GitHub Releases](https://github.com/ibolabs-git/ForgeKit_Interface/releases).
 
 Format: `[verzija] — datum — opis`

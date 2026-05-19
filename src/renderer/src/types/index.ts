@@ -48,6 +48,7 @@ export interface AppSettings {
   defaultOpenAIModel: string
   theme: 'dark' | 'light'
   githubRepo: string
+  masterToolRepo: string
   hasGithubToken: boolean
   currentProjectPath: string
 }
@@ -78,6 +79,7 @@ export interface ElectronAPI {
   githubTest: () => Promise<{ ok: boolean; message: string }>
   githubUploadMemory: (p: { projectName: string; content: string }) => Promise<{ ok: boolean; message: string }>
   githubFetchSystemPrompt: () => Promise<string | null>
+  githubFetchTemplate: (filePath: string) => Promise<{ ok: boolean; content: string | null; message?: string }>
   projectChooseFolder: () => Promise<string | null>
   projectCreateFolder: (name: string) => Promise<string | null>
   projectGetPath: () => Promise<string | null>

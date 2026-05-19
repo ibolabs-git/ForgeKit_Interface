@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld('api', {
   githubUploadMemory: (payload: { projectName: string; content: string }) =>
     ipcRenderer.invoke('github:upload-memory', payload),
   githubFetchSystemPrompt: () => ipcRenderer.invoke('github:fetch-system-prompt'),
+  githubFetchTemplate: (filePath: string) =>
+    ipcRenderer.invoke('github:fetch-template', filePath),
 
   // Project folder
   projectChooseFolder: () => ipcRenderer.invoke('project:choose-folder'),
