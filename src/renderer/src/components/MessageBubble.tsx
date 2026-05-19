@@ -96,7 +96,7 @@ function CodeBlock({ language, code }: { language: string; code: string }): JSX.
 
 // ── Markdown components — A1 ─────────────────────────────────────────────────
 
-// COMP-01: koristi typed Components umjesto any — TypeScript može provjeriti ispravnost svakog overridea
+// COMP-01: koristi typed Components umesto any — TypeScript može proveriti ispravnost svakog overridea
 const mdComponents: Components = {
   // Block code — override <pre> da izvučemo jezik i sadržaj
   pre({ children }: { children: React.ReactNode }) {
@@ -230,7 +230,7 @@ export const MessageBubble = React.memo(function MessageBubble(
       <div className="model-switch-divider">
         <div className="session-divider-line" />
         <span className="model-switch-label">
-          ⇄ Model promijenjen — <span className="model-switch-from">{fromShort}</span>
+          ⇄ Model promenjen — <span className="model-switch-from">{fromShort}</span>
           {' → '}
           <span className="model-switch-to">{toShort}</span>
           {' · '}{timeLabel}

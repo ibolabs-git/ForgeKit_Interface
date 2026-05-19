@@ -22,7 +22,7 @@ export function App(): JSX.Element {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tabsSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Primijeni temu pri startu i svaki put kada se promijeni
+  // Primeni temu pri startu i svaki put kada se promeni
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
@@ -36,7 +36,7 @@ export function App(): JSX.Element {
         setShowSettings(true)
         return
       }
-      // Ctrl+Tab = sljedeći tab (ciklično)
+      // Ctrl+Tab = sledeći tab (ciklično)
       if (e.ctrlKey && e.key === 'Tab') {
         e.preventDefault()
         if (tabs.length <= 1) return

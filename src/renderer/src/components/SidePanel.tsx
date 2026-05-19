@@ -45,8 +45,8 @@ async function uploadRecord(
 }
 
 export function SidePanel(): JSX.Element {
-  // OPT-03: messages zamijenjen sa messagesLength — SidePanel ne re-renderuje na svaki
-  // stream token, samo kad se promijeni broj poruka (nova poruka dodata/sesija resetovana)
+  // OPT-03: messages zamenjen sa messagesLength — SidePanel ne re-renderuje na svaki
+  // stream token, samo kad se promeni broj poruka (nova poruka dodata/sesija resetovana)
   const messagesLength    = useForgeKitStore((s) => s.messages.length)
   const {
     activeRole, currentPhase, tasks,
@@ -93,7 +93,7 @@ export function SidePanel(): JSX.Element {
       }
     } catch {
       setUpdateStatus('error')
-      setUpdateMsg('Greska pri provjeri')
+      setUpdateMsg('Greška pri proveri')
     }
   }
 
@@ -353,10 +353,10 @@ export function SidePanel(): JSX.Element {
             className={`btn-check-update ${updateStatus}`}
             onClick={updateStatus === 'available' ? handleTriggerUpdate : handleCheckUpdate}
             disabled={updateStatus === 'checking'}
-            title={updateStatus === 'available' ? 'Klikni za instalaciju' : 'Provjeri azuriranje'}
+            title={updateStatus === 'available' ? 'Klikni za instalaciju' : 'Proveri ažuriranje'}
           >
-            {updateStatus === 'checking'   && '⟳ Provjera...'}
-            {updateStatus === 'idle'       && '↑ Provjeri update'}
+            {updateStatus === 'checking'   && '⟳ Provera...'}
+            {updateStatus === 'idle'       && '↑ Proveri update'}
             {updateStatus === 'up-to-date' && '✓ Azurno'}
             {updateStatus === 'available'  && '↓ Instaliraj update'}
             {updateStatus === 'error'      && '↑ Pokusaj ponovo'}

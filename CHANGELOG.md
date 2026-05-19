@@ -5,6 +5,36 @@ Stable backup tagovi: `vX.Y.Z-stable` na GitHubu.
 
 ---
 
+## [1.0.1] — 2026-05-19 — Bugfix: dijakritika u SessionSummary + ijekavica → ekavica
+
+### ISS-001 — Font fix: dijakritička slova u SessionSummaryModal
+
+- **Problem:** Slova `š`, `đ`, `č`, `ć`, `ž` prikazivala se kao □ u Session Summary modalu tokom i nakon AI streaminga.
+- **Uzrok:** `Share Tech` i `Share Tech Mono` (Google Fonts) nemaju Latin Extended-A glifove (Unicode 0100–017F). `.summary-content` nije imao eksplicitnu `font-family` deklaraciju, pa su headings (`h1-h3`) nasljeđivali `var(--font-tech)` = Share Tech bez fallbacka.
+- **Rješenje:** Dodata `font-family: var(--font)` deklaracija direktno na `.summary-content` — Inter font koji se koristi za UI tekst (u `--font` varijabli) ima punu Latin Extended-A podršku. Headings `h1-h3` unutar `.summary-content` dobili su `var(--font-tech), var(--font)` stack — Share Tech gdje dostupan, Inter kao sigurni fallback.
+- **Fajl:** `src/renderer/src/components/SessionSummaryModal.css`
+
+### Jezička ispravka: ijekavica → ekavica
+
+- **Problem:** UI tekst, AI prompts i interni stringovi koristili su ijekavski dijalekt (provjeri, sljedeći, promijenjen, posljednji, itd.) — srpsko govorno područje koristi ekavski dijalekt.
+- **Izmjene — vidljivi UI tekst:**
+  - `SidePanel`: "Provjeri update" → "Proveri update" · "Provjera..." → "Provera..." · "Greška pri provjeri" → "Greška pri proveri" · "Provjeri ažuriranje" → "Proveri ažuriranje"
+  - `ChatWindow`: tooltip "Sljedeća (Enter)" → "Sledeća (Enter)"
+  - `HandoffModal`: "posljednjih 6 poruka" → "poslednjih 6 poruka"
+  - `MessageBubble`: "Model promijenjen" → "Model promenjen" (divider u chatu)
+  - `SessionSummaryModal`: "Sljedeći koraci" → "Sledeći koraci" · "250 riječi" → "250 reči" (u AI promptu)
+- **Izmjene — AI prompts (forgekit-context.ts):**
+  - `FORGEKIT_SYSTEM_PREAMBLE`: "provjera" → "provera" · "zahtijeva" → "zahteva" · "mijenjati" → "menjati"
+  - `buildModelSwitchNotice`: "promijenjen" → "promenjen" · "mijenjaj" → "menjaj"
+  - `buildRePrimeMessages`: "sljedeća poruka" → "sledeća poruka" (×2)
+  - `buildHandoffDoc`: "Posljednje poruke" → "Poslednje poruke" · "POSLJEDNJI OUTPUT" → "POSLEDNJI OUTPUT"
+- **Izmjene — user-visible string u updater.ts:**
+  - "Nije moguce provjeriti azuriranje" → "Nije moguće proveriti ažuriranje (bez mreže)"
+  - "Previse preusmjeravanja" → "Previše preusmeravanja"
+- **Izmjene — komentari (konzistentnost):** `ipc-handlers.ts`, `store.ts`, `github.ts`, `updater.ts`, `system-prompt.ts`, `InputBar.tsx`, `WindowControls.tsx`, `SettingsModal.tsx`, `App.tsx`, `forgekit.store.ts`
+
+---
+
 ## [1.0.0] — 2026-05-19 — PROLAZ 4: Arhitektura — streaming buffer, safeStorage, systemPrompt
 
 ### Arhitekturalne promjene — 3 poboljšanja

@@ -106,7 +106,7 @@ export function HandoffModal(): JSX.Element | null {
             <span className="handoff-toggle-text">
               Izvod sesije
               <span className="handoff-toggle-sub">
-                posljednjih 6 poruka (od {messages.length} ukupno)
+                poslednjih 6 poruka (od {messages.length} ukupno)
               </span>
             </span>
           </label>

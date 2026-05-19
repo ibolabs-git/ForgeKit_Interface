@@ -105,6 +105,25 @@ Svaki prolaz dobija backup tag i changelog entry.
 
 ---
 
+## Bugfixevi post-audit
+
+### v1.0.1 — 2026-05-19
+
+| ID | Problem | Fajl | Status |
+|----|---------|------|--------|
+| ISS-001 | Font — dijakritika (š,đ,č,ć,ž) → □ u SessionSummaryModal | `SessionSummaryModal.css` | ✅ v1.0.1 |
+| LANG-01 | Ijekavica → ekavica: UI tekst, AI promptovi, komentari | Više fajlova | ✅ v1.0.1 |
+
+**ISS-001 detalji:**
+- Uzrok: `Share Tech`/`Share Tech Mono` nema Latin Extended-A glifove; `.summary-content` nije imao eksplicitnu `font-family`
+- Fix: `font-family: var(--font)` na `.summary-content` (Inter ima punu latin-ext podršku); h1-h3 u summary dobili `var(--font-tech), var(--font)` fallback stack
+
+**LANG-01 detalji:**
+- Srpsko govorno područje = ekavski dijalekt; ijekavica je bila dosljedno prisutna u UI, AI promptovima i komentarima
+- Izmjenjeni fajlovi: `SidePanel.tsx`, `ChatWindow.tsx`, `HandoffModal.tsx`, `MessageBubble.tsx`, `SessionSummaryModal.tsx`, `App.tsx`, `forgekit-context.ts`, `updater.ts`, `ipc-handlers.ts`, `store.ts`, `github.ts`, `system-prompt.ts`, `InputBar.tsx`, `WindowControls.tsx`, `SettingsModal.tsx`, `forgekit.store.ts`
+
+---
+
 ## Kompletirane faze
 
 ### FAZA A — Chat UX ✅ (v0.6.x)

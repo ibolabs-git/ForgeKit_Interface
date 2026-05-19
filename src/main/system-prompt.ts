@@ -1,6 +1,6 @@
 /**
  * SEC-05: System prompt živi isključivo u main procesu.
- * Renderer ne smije slati systemPrompt kroz IPC — main ga uvijek dodaje sam.
+ * Renderer ne sme slati systemPrompt kroz IPC — main ga uvek dodaje sam.
  * Ako postoji GitHub verzija (fetchSystemPromptFromGitHub), ona ima prednost.
  */
 export const FORGEKIT_SYSTEM_PROMPT = `Ti si AI asistent koji radi iskljucivo u ForgeKit rezimu.

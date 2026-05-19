@@ -1,7 +1,7 @@
 /**
  * ForgeKit Context Utilities
  *
- * Gradi Re-Prime kontekst koji se šalje AI modelu pri promjeni modela ili
+ * Gradi Re-Prime kontekst koji se šalje AI modelu pri promeni modela ili
  * eksplicitnom refresh-u. Aplikacija je nosilac ForgeKit kontinuiteta.
  */
 
@@ -76,7 +76,7 @@ ${taskList}
 
 Ukupno poruka u sesiji: **${messages.length}**
 
-### Posljednje poruke
+### Poslednje poruke
 
 ${msgPreview}
 
@@ -146,19 +146,19 @@ AKTIVNA ULOGA: ${state.activeRole}
 
 ${taskSummary || 'Nema definisanih taskova.'}
 
-POSLJEDNJI RELEVANTAN OUTPUT:
+POSLEDNJI RELEVANTAN OUTPUT:
 ${recentOutput}`
 }
 
-/** Poruka o promjeni modela (interna assistant poruka u Re-Prime nizu) */
+/** Poruka o promeni modela (interna assistant poruka u Re-Prime nizu) */
 export function buildModelSwitchNotice(from: string, to: string): string {
-  return `Model je promijenjen tokom aktivnog ForgeKit projekta.
+  return `Model je promenjen tokom aktivnog ForgeKit projekta.
 Prethodni model: ${from}
 Novi model: ${to}
 
 Nastavi postojeći tok na osnovu datog project state-a.
 Ne resetuj projekat. Ne ponavljaj onboarding.
-Poštuj ForgeKit tok, ne preskači potvrde, ne mijenjaj prethodne odluke bez razloga.
+Poštuj ForgeKit tok, ne preskači potvrde, ne menjaj prethodne odluke bez razloga.
 Ako ti nedostaje kontekst, postavi jedno ciljano pitanje.`
 }
 
@@ -166,13 +166,13 @@ Ako ti nedostaje kontekst, postavi jedno ciljano pitanje.`
 export const FORGEKIT_SYSTEM_PREAMBLE = `Radiš u ForgeKit režimu.
 
 ForgeKit je strukturiran radni protokol koji definiše:
-- Jasne uloge: ORCHESTRATOR (vodi tok), THINKER (analiza), BUILDER (implementacija), REVIEWER (provjera), MEMORY CURATOR (pamćenje), OBSERVER (praćenje)
+- Jasne uloge: ORCHESTRATOR (vodi tok), THINKER (analiza), BUILDER (implementacija), REVIEWER (provera), MEMORY CURATOR (pamćenje), OBSERVER (praćenje)
 - Faze projekta: F1 Fundament → F2 ForgeKit Logika → F3 Multi-model
-- Pravilo potvrde: svaki korak zahtijeva potvrdu prije nastavka
+- Pravilo potvrde: svaki korak zahteva potvrdu pre nastavka
 - Format odgovora: počni sa [ULOGA] tagom
 
 Ti si AI motor koji u svakom requestu dobija dovoljno konteksta da nastavi ForgeKit tok.
-Aplikacija je nosilac kontinuiteta — model se može mijenjati, ForgeKit pravila ostaju ista.`
+Aplikacija je nosilac kontinuiteta — model se može menjati, ForgeKit pravila ostaju ista.`
 
 /**
  * Gradi poruke za Re-Prime request (promjena modela ili ručni refresh).
@@ -199,12 +199,12 @@ PROJECT STATE
 ${projectCtx}
 
 ---
-NASTAVAK — sljedeća poruka korisnika:`
+NASTAVAK — sledeća poruka korisnika:`
     },
     {
       role: 'assistant',
       content: '[ORCHESTRATOR] Razumijem. Nastavljam ForgeKit tok za projekat "' +
-        state.projectName + '" u fazi ' + state.currentPhase + '. Primam sljedeću poruku.'
+        state.projectName + '" u fazi ' + state.currentPhase + '. Primam sledeću poruku.'
     },
     {
       role: 'user',

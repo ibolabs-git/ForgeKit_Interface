@@ -32,7 +32,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // ── AI STREAMING ──────────────────────────────────────────────────────────
 
   // SEC-05: payload više ne prima systemPrompt od renderer-a.
-  // Main process uvijek koristi vlastitu kopiju prompta (ili GitHub verziju ako dostupna).
+  // Main process uvek koristi vlastitu kopiju prompta (ili GitHub verziju ako dostupna).
   // Renderer ne može podmetnuti drugačiji system prompt.
   let cachedSystemPrompt: string | null = null
 
@@ -232,8 +232,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('project:read-file-from-path', (_e, projectPath: string, filename: string) => {
     if (!projectPath) return null
 
-    // SEC-02: provjeri da je projectPath u listi poznatih (korisničkih) putanja.
-    // Renderer ne smije čitati proizvoljne putanje s diska — samo one koje su
+    // SEC-02: proveri da je projectPath u listi poznatih (korisničkih) putanja.
+    // Renderer ne sme čitati proizvoljne putanje s diska — samo one koje su
     // prethodno registrovane u electron-store kroz project:choose-folder ili
     // project:create-folder (čuvaju se u openTabs i currentProjectPath).
     const knownTabs = (settingsStore.get('openTabs') ?? []) as Array<{ projectPath: string }>

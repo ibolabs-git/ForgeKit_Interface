@@ -46,7 +46,7 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 
-  // Provjera azuriranja — samo u production buildu, sa odgodom od 5s
+  // Provera ažuriranja — samo u production buildu, sa odgodom od 5s
   if (!process.env['ELECTRON_RENDERER_URL']) {
     setTimeout(() => runStartupUpdateCheck(win), 5000)
   }

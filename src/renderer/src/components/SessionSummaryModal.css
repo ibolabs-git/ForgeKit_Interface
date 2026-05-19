@@ -117,10 +117,13 @@
 }
 
 /* Content — markdown rendering */
+/* ISS-001: eksplicitno postavi Inter koji podrZava Latin Extended-A (s, dj, c, c, z sa dijakritikama).
+   Share Tech / Share Tech Mono ne sadrzavaju te glifove pa bi doslo do prikaza praznog kvadrata. */
 .summary-content {
   font-size: 13px;
   line-height: 1.65;
   color: var(--text-primary);
+  font-family: var(--font);
 }
 
 .summary-content p      { margin: 4px 0 8px; }
@@ -128,7 +131,7 @@
 .summary-content ul, .summary-content ol { padding-left: 18px; margin: 4px 0 8px; }
 .summary-content li     { margin: 2px 0; line-height: 1.55; }
 .summary-content h1, .summary-content h2, .summary-content h3 {
-  font-family: var(--font-tech);
+  font-family: var(--font-tech), var(--font);
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);

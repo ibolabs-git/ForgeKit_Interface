@@ -56,7 +56,7 @@ export function InputBar(): JSX.Element {
     // Efektivni model — custom ID override ili izabrani iz dropdown-a
     const effectiveModel = customModelId.trim() || selectedModel
 
-    // Re-Prime logika: koristi se kada je model upravo promijenjen ili context treba refresh
+    // Re-Prime logika: koristi se kada je model upravo promenjen ili context treba refresh
     const needsRePrime = modelJustChanged || contextStatus === 'needs_refresh'
 
     let history: Array<{ role: 'user' | 'assistant'; content: string }>

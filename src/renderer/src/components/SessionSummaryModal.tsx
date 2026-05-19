@@ -10,9 +10,9 @@ Format (koristi markdown):
 - **Projekat i kontekst** — o čemu se radilo
 - **Ključne odluke** — šta je zaključeno ili dogovoreno
 - **Urađeno** — šta je implementirano ili završeno
-- **Sljedeći koraci** — šta ostaje ili treba nastaviti
+- **Sledeći koraci** — šta ostaje ili treba nastaviti
 
-Budi koncizan (max 250 riječi). Piši na jeziku koji dominira u razgovoru.`
+Budi koncizan (max 250 reči). Piši na jeziku koji dominira u razgovoru.`
 
 export function SessionSummaryModal(): JSX.Element | null {
   const {

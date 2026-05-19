@@ -22,7 +22,7 @@ const MAX_TABS = 4
 const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
   anthropic: ['claude'],
   openai:    ['gpt', 'o1', 'o3'],
-  nvidia:    []  // NVIDIA NIM modeli imaju format "owner/model" — provjera po znaku /
+  nvidia:    []  // NVIDIA NIM modeli imaju format "owner/model" — provera po znaku /
 }
 
 const DEFAULT_MODELS: Record<string, string> = {
@@ -61,7 +61,7 @@ function extractTasks(content: string, sourceMessageId?: string): Task[] {
     const checkMatch = CHECKBOX_RE.exec(line)
     if (!checkMatch) continue
 
-    // Provjeri da li postoji keyword za taskove u prethodnih 8 redova (uključujući trenutni)
+    // Proveri da li postoji keyword za taskove u prethodnih 8 redova (uključujući trenutni)
     let hasTaskContext = false
     for (let j = Math.max(0, i - 8); j <= i; j++) {
       if (TASK_KEYWORD_RE.test(lines[j])) {

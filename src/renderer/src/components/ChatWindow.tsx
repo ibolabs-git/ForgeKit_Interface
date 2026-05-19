@@ -263,7 +263,7 @@ export function ChatWindow(): JSX.Element {
             </span>
           )}
           <button className="search-nav-btn" onClick={goPrev} disabled={matchIds.length < 2} title="Prethodna (Shift+Enter)">↑</button>
-          <button className="search-nav-btn" onClick={goNext} disabled={matchIds.length < 2} title="Sljedeća (Enter)">↓</button>
+          <button className="search-nav-btn" onClick={goNext} disabled={matchIds.length < 2} title="Sledeća (Enter)">↓</button>
           <button className="search-close-btn" onClick={() => { setSearchOpen(false); setSearchQuery(''); setMatchIndex(0) }}>✕</button>
         </div>
       )}

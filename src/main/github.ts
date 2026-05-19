@@ -33,7 +33,7 @@ export async function testGitHubConnection(config: GitHubConfig): Promise<{ ok: 
     if (res.status === 404) return { ok: false, message: 'Repozitorijum nije pronadjen ili nije privatno dostupan' }
     return { ok: false, message: `HTTP ${res.status}` }
   } catch (err) {
-    // COMP-06: instanceof provjera umjesto as Error — catch može primiti bilo koji thrown tip
+    // COMP-06: instanceof provera umesto as Error — catch može primiti bilo koji thrown tip
     const msg = err instanceof Error ? err.message : 'Nepoznata mrežna greška'
     return { ok: false, message: `Mreža nedostupna: ${msg}` }
   }
@@ -84,7 +84,7 @@ export async function uploadFileToGitHub(
     const errData = await res.json() as { message?: string }
     return { ok: false, message: errData.message ?? `HTTP ${res.status}` }
   } catch (err) {
-    // COMP-06: instanceof provjera umjesto as Error
+    // COMP-06: instanceof provera umesto as Error
     const msg = err instanceof Error ? err.message : 'Nepoznata greška pri uploadu'
     return { ok: false, message: msg }
   }

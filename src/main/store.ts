@@ -21,7 +21,7 @@ interface SecureData {
 
 const secureStore = new Store<SecureData>({
   name: 'forgekit-secure',
-  // Bez encryptionKey — vrijednosti su već enkriptovane sa safeStorage iznutra
+  // Bez encryptionKey — vrednosti su već enkriptovane sa safeStorage iznutra
   defaults: { anthropicKey: '', openaiKey: '', nvidiaKey: '', githubToken: '' }
 })
 
@@ -57,7 +57,7 @@ export function setApiKeySecure(key: SecureKey, value: string): void {
 export function getApiKeySecure(key: SecureKey): string {
   const stored = secureStore.get(key)
   if (stored) return decryptValue(stored)
-  // Soft migracija: provjeri legacy store (može biti prazan string ako nije migriran)
+  // Soft migracija: proveri legacy store (može biti prazan string ako nije migriran)
   return getApiKeyLegacy(key)
 }
 

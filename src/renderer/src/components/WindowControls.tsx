@@ -5,7 +5,7 @@ export function WindowControls(): JSX.Element {
   const [maximized, setMaximized] = useState(false)
 
   useEffect(() => {
-    // Provjeri početno stanje
+    // Proveri početno stanje
     window.api.winIsMaximized().then(setMaximized).catch(() => {})
   }, [])
 

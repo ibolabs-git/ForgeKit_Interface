@@ -1,9 +1,9 @@
 /**
  * ForgeKit Interface — Updater modul
  *
- * Logika provjere i preuzimanja azuriranja sa GitHub Releases.
- * Pokusava electron-updater (zahtijeva latest.yml u Release-u),
- * a ako ne uspije — koristi GitHub API + direktni download.
+ * Logika provere i preuzimanja ažuriranja sa GitHub Releases.
+ * Pokusava electron-updater (zahteva latest.yml u Release-u),
+ * a ako ne uspe — koristi GitHub API + direktni download.
  */
 
 import { app, BrowserWindow, dialog, shell } from 'electron'
@@ -34,7 +34,7 @@ function compareVersions(a: string, b: string): number {
   return 0
 }
 
-// ── Provjera najnovijeg release-a na GitHub-u ─────────────────────────────────
+// ── Provera najnovijeg release-a na GitHub-u ─────────────────────────────────
 export async function checkForLatestRelease(): Promise<UpdateCheckResult> {
   const currentVersion = app.getVersion()
 
@@ -84,7 +84,7 @@ export async function checkForLatestRelease(): Promise<UpdateCheckResult> {
   } catch {
     return {
       hasUpdate: false, currentVersion, latestVersion: '',
-      message: 'Nije moguce provjeriti azuriranje (bez mreze)'
+      message: 'Nije moguće proveriti ažuriranje (bez mreže)'
     }
   }
 }
@@ -97,7 +97,7 @@ function downloadFile(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     function doGet(getUrl: string, redirects = 0) {
-      if (redirects > 8) { reject(new Error('Previse preusmjeravanja')); return }
+      if (redirects > 8) { reject(new Error('Previše preusmeravanja')); return }
 
       https.get(getUrl, (res) => {
         // Pratimo redirect-e (GitHub assets se preusmeravaju na CDN)
@@ -157,7 +157,7 @@ export async function downloadAndInstall(
   app.quit()
 }
 
-// ── Automatska provjera pri pokretanju ────────────────────────────────────────
+// ── Automatska provera pri pokretanju ────────────────────────────────────────
 export async function runStartupUpdateCheck(win: BrowserWindow): Promise<void> {
   // Pokusaj electron-updater (radi samo ako latest.yml postoji u GitHub release)
   let usedElectronUpdater = false

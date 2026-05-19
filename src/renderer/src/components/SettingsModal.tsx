@@ -105,9 +105,9 @@ export function SettingsModal(): JSX.Element | null {
       setLocalModel(selectedModel)
       setProjectSaved(false)
     }
-  // COMP-03: selectedProvider/projectName/selectedModel namjerno izostavljeni iz dep arraya.
+  // COMP-03: selectedProvider/projectName/selectedModel namerno izostavljeni iz dep arraya.
   // Effect se pokreće SAMO pri otvaranju modala (showSettings true→false→true) i tada čita
-  // aktualne vrijednosti iz store-a. Dodavanje ostalih dep bi resetovalo korisnička polja
+  // aktuelne vrednosti iz store-a. Dodavanje ostalih dep bi resetovalo korisnička polja
   // (editName, localProvider...) dok je modal otvoren — to nije željeno ponašanje.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSettings])
@@ -178,13 +178,13 @@ export function SettingsModal(): JSX.Element | null {
     <div className="modal-overlay" onClick={() => setShowSettings(false)}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
 
-        {/* Header — uvijek vidljiv */}
+        {/* Header — uvek vidljiv */}
         <div className="modal-header">
           <h2>Podešavanja</h2>
           <button className="modal-close" onClick={() => setShowSettings(false)}>✕</button>
         </div>
 
-        {/* Tabovi — uvijek vidljivi */}
+        {/* Tabovi — uvek vidljivi */}
         <div className="settings-tabs">
           <button
             className={`settings-tab ${settingsTab === 'global' ? 'active' : ''}`}
@@ -344,7 +344,7 @@ export function SettingsModal(): JSX.Element | null {
               </div>
             </div>
 
-            {/* Footer — uvijek vidljiv */}
+            {/* Footer — uvek vidljiv */}
             <div className="modal-footer">
               <button className="btn-cancel" onClick={() => setShowSettings(false)}>Otkazi</button>
               <button className={`btn-save ${saved ? 'saved' : ''}`} onClick={handleSaveGlobal}>
