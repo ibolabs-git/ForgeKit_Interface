@@ -40,6 +40,8 @@ contextBridge.exposeInMainWorld('api', {
   githubFetchSystemPrompt: () => ipcRenderer.invoke('github:fetch-system-prompt'),
   githubFetchTemplate: (filePath: string) =>
     ipcRenderer.invoke('github:fetch-template', filePath),
+  githubPromptSource: () =>
+    ipcRenderer.invoke('github:prompt-source'),
 
   // Project folder
   projectChooseFolder: () => ipcRenderer.invoke('project:choose-folder'),

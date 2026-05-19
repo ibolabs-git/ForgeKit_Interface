@@ -80,6 +80,7 @@ export interface ElectronAPI {
   githubUploadMemory: (p: { projectName: string; content: string }) => Promise<{ ok: boolean; message: string }>
   githubFetchSystemPrompt: () => Promise<string | null>
   githubFetchTemplate: (filePath: string) => Promise<{ ok: boolean; content: string | null; message?: string }>
+  githubPromptSource: () => Promise<'github' | 'bundled' | 'pending'>
   projectChooseFolder: () => Promise<string | null>
   projectCreateFolder: (name: string) => Promise<string | null>
   projectGetPath: () => Promise<string | null>

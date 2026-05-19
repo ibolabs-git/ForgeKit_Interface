@@ -458,6 +458,18 @@
   border: 1px solid var(--accent-border);
 }
 
+.prompt-source-row { margin-bottom: 7px; }
+
+.prompt-source {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.prompt-source-github  { color: var(--accent); }
+.prompt-source-bundled { color: #c4976a; }
+.prompt-source-pending { color: var(--text-muted); }
+
 .update-row { display: flex; align-items: center; gap: 8px; }
 
 .btn-check-update {

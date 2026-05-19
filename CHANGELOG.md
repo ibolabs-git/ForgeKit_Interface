@@ -6,6 +6,23 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.10] — 2026-05-19 — Prompt source indikator
+
+### Novo
+- **Prompt Source indikator** u SidePanel ispod broja verzije:
+  - `■ PROMPT: GITHUB` (teal) — system prompt ucitan iz ForgeKit_tool repo-a
+  - `■ PROMPT: BUNDLED` (narandzasta) — koristi se lokalni fallback prompt
+  - `■ PROMPT: —` (sivo) — jos nije poslata prva poruka u sesiji
+- Indikator se osvezava automatski nakon prve AI poruke u sesiji
+- `github:prompt-source` IPC handler — vraca trenutni izvor prompta
+- `window.api.githubPromptSource()` izlozeno kroz preload bridge
+
+### Fajlovi promenjeni
+`ipc-handlers.ts`, `preload/index.ts`, `types/index.ts`,
+`SidePanel.tsx`, `SidePanel.css`, `package.json`
+
+---
+
 ## [1.0.9] — 2026-05-19 — Memorija u Master Tool repo
 
 ### Arhitekturalna ispravka

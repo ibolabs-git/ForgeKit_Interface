@@ -36,6 +36,7 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // Main process uvek koristi vlastitu kopiju prompta (ili GitHub verziju ako dostupna).
   // Renderer ne može podmetnuti drugačiji system prompt.
   let cachedSystemPrompt: string | null = null
+  let promptSource: 'github' | 'bundled' | 'pending' = 'pending'
 
   ipcMain.on('send-message', async (event, payload: {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
@@ -50,9 +51,16 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       const config = getMasterToolConfig()  // masterToolRepo > githubRepo kao fallback
       if (config.token && config.repo) {
         const remote = await fetchSystemPromptFromGitHub(config).catch(() => null)
-        cachedSystemPrompt = remote ?? FORGEKIT_SYSTEM_PROMPT
+        if (remote) {
+          cachedSystemPrompt = remote
+          promptSource = 'github'
+        } else {
+          cachedSystemPrompt = FORGEKIT_SYSTEM_PROMPT
+          promptSource = 'bundled'
+        }
       } else {
         cachedSystemPrompt = FORGEKIT_SYSTEM_PROMPT
+        promptSource = 'bundled'
       }
     }
 
@@ -185,6 +193,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
       return { ok: false, message: 'GitHub nije podesen' }
     return uploadMemoryRecord(config, payload.projectName, payload.content)
   })
+
+  ipcMain.handle('github:prompt-source', () => promptSource)
 
   ipcMain.handle('github:fetch-system-prompt', async () => {
     const config = getMasterToolConfig()

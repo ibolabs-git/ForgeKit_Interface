@@ -60,6 +60,7 @@ export function SidePanel(): JSX.Element {
 
   const [newTaskInput, setNewTaskInput] = useState('')
   const [appVersion, setAppVersion] = useState('')
+  const [promptSource, setPromptSource] = useState<'github' | 'bundled' | 'pending'>('pending')
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
   const [updateMsg, setUpdateMsg] = useState('')
   const [reprimePreviewOpen, setReprimePreviewOpen] = useState(false)
@@ -71,6 +72,12 @@ export function SidePanel(): JSX.Element {
   useEffect(() => {
     window.api.getAppVersion().then(setAppVersion).catch(() => {})
     window.api.getProviders().then(setAvailableProviders).catch(() => {})
+    window.api.githubPromptSource().then(setPromptSource).catch(() => {})
+    // Osvezi izvor prompta nakon sto main process zavrsi prvu poruku
+    const unsub = window.api.onStreamComplete(() => {
+      window.api.githubPromptSource().then(setPromptSource).catch(() => {})
+    })
+    return unsub
   }, [])
 
   useEffect(() => {
@@ -347,6 +354,11 @@ export function SidePanel(): JSX.Element {
         <div className="version-row">
           <span className="version-label">ForgeKit Interface</span>
           {appVersion && <span className="version-badge">v{appVersion}</span>}
+        </div>
+        <div className="prompt-source-row">
+          {promptSource === 'github'  && <span className="prompt-source prompt-source-github">■ Prompt: GitHub</span>}
+          {promptSource === 'bundled' && <span className="prompt-source prompt-source-bundled">■ Prompt: Bundled</span>}
+          {promptSource === 'pending' && <span className="prompt-source prompt-source-pending">■ Prompt: —</span>}
         </div>
         <div className="update-row">
           <button
