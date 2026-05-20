@@ -13,6 +13,19 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.20] - 2026-05-20 - Runtime role boundary i file action guard
+
+### Stabilizacija
+- Assistant poruka se sada vezuje za aktivnu runtime ulogu u trenutku generisanja, pa Reviewer/Thinker odgovor vise ne moze biti prikazan kao Orchestrator samo zato sto model vrati pogresan tag.
+- Ako aktivna ne-Orchestrator uloga u tekstu greskom vrati `[ORCHESTRATOR]`, app zadrzava stvarnu runtime ulogu kao izvor istine.
+- `PROJECT_WRITE_FILE` predlozi se prihvataju samo iz Builder poruke; predlozi iz Reviewer/Thinker/Observer/Orchestrator toka se blokiraju i jasno oznacavaju u Project File Actions panelu.
+- Project File Actions sada prikazuje izvor uloge za pending akcije i poseban blokirani status za pogresnu ulogu.
+
+### Validacija
+- Cilj testa: aktivna uloga u levom panelu, desnom panelu i poruci mora ostati uskladjena; Reviewer ne sme upisivati fajlove kroz file action tok.
+
+---
+
 ## [1.0.19] — 2026-05-19 — Stream lifecycle i context refresh
 
 ### Stabilizacija

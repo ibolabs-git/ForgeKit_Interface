@@ -68,7 +68,8 @@ export interface ProjectFileAction {
   content: string
   createdAt: number
   sourceMessageId?: string
-  status: 'pending' | 'writing' | 'written' | 'error'
+  sourceRole?: ForgeKitRole
+  status: 'pending' | 'writing' | 'written' | 'error' | 'blocked'
   errorMessage?: string
 }
 

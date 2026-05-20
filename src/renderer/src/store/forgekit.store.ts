@@ -45,11 +45,18 @@ function sanitizeProviderModel(provider: string, model: string): { provider: str
   return { provider, model: DEFAULT_MODELS[provider] ?? model }
 }
 
-function extractRole(content: string): ForgeKitRole {
+function extractExplicitRole(content: string): ForgeKitRole | null {
   const match = content.match(ROLE_REGEX)
-  if (!match) return 'ORCHESTRATOR'
+  if (!match) return null
   const role = match[1].trim() as ForgeKitRole
-  return VALID_ROLES.includes(role) ? role : 'ORCHESTRATOR'
+  return VALID_ROLES.includes(role) ? role : null
+}
+
+function resolveMessageRole(content: string, fallbackRole: ForgeKitRole): ForgeKitRole {
+  const explicitRole = extractExplicitRole(content)
+  if (!explicitRole) return fallbackRole
+  if (fallbackRole !== 'ORCHESTRATOR' && explicitRole === 'ORCHESTRATOR') return fallbackRole
+  return explicitRole
 }
 
 function extractTasks(content: string, sourceMessageId?: string): Task[] {
@@ -440,7 +447,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: true } : t),
       messages: [...s.messages, {
         id: messageId, role: 'assistant', content: '',
-        forgeRole: 'ORCHESTRATOR', timestamp: Date.now(), isStreaming: true
+        forgeRole: s.activeRole, timestamp: Date.now(), isStreaming: true
       }]
     }))
   },
@@ -458,7 +465,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     const fullContent = get().streamingContent
     if (!fullContent && !get().messages.find((m) => m.id === messageId)) return
 
-    const role = extractRole(fullContent)
+    const currentMessageRole = get().messages.find((m) => m.id === messageId)?.forgeRole ?? get().activeRole
+    const role = resolveMessageRole(fullContent, currentMessageRole)
     const newTasks = extractTasks(fullContent, messageId)
     const phase = extractPhase(fullContent)
 
@@ -730,13 +738,17 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   // ── Project file actions ──
 
   addProjectFileAction: (filename, content, sourceMessageId) => {
+    const sourceRole = get().messages.find((m) => m.id === sourceMessageId)?.forgeRole
+    const isAllowed = sourceRole === 'BUILDER'
     const action: ProjectFileAction = {
       id: `file-action-${Date.now()}-${Math.random()}`,
       filename,
       content,
       sourceMessageId,
+      sourceRole,
       createdAt: Date.now(),
-      status: 'pending'
+      status: isAllowed ? 'pending' : 'blocked',
+      errorMessage: isAllowed ? undefined : `Blokirano: file action sme da predlozi samo BUILDER. Izvor: ${sourceRole ?? 'nepoznato'}.`
     }
     set((s) => ({ projectFileActions: [...s.projectFileActions, action] }))
   },

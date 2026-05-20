@@ -540,6 +540,11 @@
 
 .file-action-written .file-action-meta { color: var(--success); }
 .file-action-error .file-action-meta { color: var(--danger); }
+.file-action-blocked .file-action-meta { color: var(--danger); }
+.file-action-blocked {
+  border-color: var(--danger);
+  background: rgba(231, 76, 60, 0.06);
+}
 
 .file-action-buttons {
   display: flex;

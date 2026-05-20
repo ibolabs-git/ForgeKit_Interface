@@ -49,7 +49,7 @@ async function confirmProjectFileAction(
   id: string,
   filename: string,
   content: string,
-  updateStatus: (id: string, status: 'pending' | 'writing' | 'written' | 'error', msg?: string) => void
+  updateStatus: (id: string, status: 'pending' | 'writing' | 'written' | 'error' | 'blocked', msg?: string) => void
 ) {
   updateStatus(id, 'writing')
   const result = await window.api.projectWriteFile(filename, content)
@@ -359,9 +359,10 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
               <li key={action.id} className={`file-action-item file-action-${action.status}`}>
                 <div className="file-action-path" title={action.filename}>{action.filename}</div>
                 <div className="file-action-meta">
-                  {action.status === 'pending' && 'ceka potvrdu'}
+                  {action.status === 'pending' && `ceka potvrdu${action.sourceRole ? ` · ${action.sourceRole}` : ''}`}
                   {action.status === 'writing' && 'upis...'}
                   {action.status === 'written' && 'upisano'}
+                  {action.status === 'blocked' && (action.errorMessage ?? 'blokirano')}
                   {action.status === 'error' && (action.errorMessage ?? 'greska')}
                 </div>
                 <div className="file-action-buttons">
@@ -376,7 +377,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                       )}
                     >Upisi</button>
                   )}
-                  {(action.status === 'pending' || action.status === 'written' || action.status === 'error') && (
+                  {(action.status === 'pending' || action.status === 'written' || action.status === 'error' || action.status === 'blocked') && (
                     <button
                       className="file-action-remove"
                       onClick={() => removeProjectFileAction(action.id)}
