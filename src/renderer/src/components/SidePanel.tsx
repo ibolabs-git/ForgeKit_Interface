@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { useSendMessage } from '../hooks/useSendMessage'
 import { buildProjectContext } from '../utils/forgekit-context'
-import type { ModelInfo } from '../types'
+import type { ModelInfo, ProjectFileAction } from '../types'
 import './SidePanel.css'
 
 // OPT-07 + OPT-03: ReprimePreviewContent je posebna komponenta koja se mountuje SAMO
@@ -157,7 +157,16 @@ export function SidePanel(): JSX.Element {
       `[APP_REFRESH_CONTEXT]
 Osvezi ForgeKit kontekst za trenutni projekat. Ne donosi nove odluke i ne menjaj opseg.
 Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutne tacke.`,
-      { hiddenUser: true, allowTemplateFollowup: false, timeoutMs: 45_000 }
+      { hiddenUser: true, allowTemplateFollowup: false, timeoutMs: 45_000, forceRePrime: true }
+    )
+  }
+
+  const handleForwardBlockedAction = async (action: ProjectFileAction) => {
+    if (isStreaming) return
+    removeProjectFileAction(action.id)
+    await send(
+      `Pozivam Builder.\n\nBlokirani file action je pripremila uloga ${action.sourceRole ?? 'nepoznato'}, pa nije mogao biti upisan.\n\nFajl: ${action.filename}\n\nZadatak: preuzmi ovaj draft, proveri da li je u granicama odobrenog opsega i ponovi ga kao BUILDER kroz PROJECT_WRITE_FILE pending akciju. Ne menjaj opseg i ne tvrdi da je fajl upisan dok app ne potvrdi.\n\nDRAFT:\n${action.content}`,
+      { allowTemplateFollowup: false }
     )
   }
 
@@ -376,6 +385,14 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                         updateProjectFileActionStatus
                       )}
                     >Upisi</button>
+                  )}
+                  {action.status === 'blocked' && (
+                    <button
+                      className="file-action-confirm"
+                      onClick={() => handleForwardBlockedAction(action)}
+                      disabled={isStreaming}
+                      title="Prosledi draft Builder-u da ga pravilno pripremi za upis"
+                    >Prosledi Builder-u</button>
                   )}
                   {(action.status === 'pending' || action.status === 'written' || action.status === 'error' || action.status === 'blocked') && (
                     <button

@@ -109,16 +109,27 @@ function phaseLabel(phase: ForgeKitPhase): string {
   }
 }
 
-/** Izvlači sažetak zadnjih N relevantnih assistant poruka (max ~600 chars) */
+function isInternalAssistantMessage(content: string): boolean {
+  return content === '[SESSION_DIVIDER]' ||
+    content.startsWith('[MODEL_SWITCH:') ||
+    content.startsWith('[TEMPLATE_INJECT]')
+}
+
+function stripLeadingRoleTag(content: string): string {
+  return content.replace(/^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|SYSTEM)\]\s*\n?/i, '').trim()
+}
+
+/** Izvlaci sazetak zadnjih N relevantnih assistant poruka (max ~600 chars) */
 function extractRecentSummary(messages: ChatMessage[], maxChars = 600): string {
   const assistantMsgs = messages
-    .filter((m) => m.role === 'assistant' && !m.content.startsWith('['))
+    .filter((m) => m.role === 'assistant' && !isInternalAssistantMessage(m.content))
     .slice(-3)
 
   if (assistantMsgs.length === 0) return '(nema prethodnog outputa)'
 
   const combined = assistantMsgs
-    .map((m) => m.content.slice(0, 300))
+    .map((m) => stripLeadingRoleTag(m.content).slice(0, 300))
+    .filter(Boolean)
     .join('\n---\n')
 
   return combined.length > maxChars ? combined.slice(0, maxChars) + '...' : combined

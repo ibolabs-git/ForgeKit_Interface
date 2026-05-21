@@ -38,6 +38,7 @@ interface SendOptions {
   hiddenUser?: boolean
   allowTemplateFollowup?: boolean
   timeoutMs?: number
+  forceRePrime?: boolean
 }
 
 function normalizeOutboundText(text: string): string {
@@ -181,7 +182,7 @@ export function useSendMessage() {
       return
     }
 
-    const isForgeKitInit = outboundText === '[FORGEKIT_INIT]' && !options.hiddenUser
+    const isForgeKitInit = outboundText === '[FORGEKIT_INIT]'
     const invokedRole = extractInvokedRole(outboundText)
     const modelInput = isForgeKitInit
       ? buildForgeKitInitContext(await loadTemplates(INIT_TEMPLATE_PATHS))
@@ -195,7 +196,7 @@ export function useSendMessage() {
     startAssistantMessage(messageId, invokedRole ?? undefined)
 
     const effectiveModel = customModelId.trim() || selectedModel
-    const needsRePrime = modelJustChanged || contextStatus === 'needs_refresh'
+    const needsRePrime = Boolean(options.forceRePrime) || modelJustChanged || contextStatus === 'needs_refresh'
 
     let history: Array<{ role: 'user' | 'assistant'; content: string }>
 

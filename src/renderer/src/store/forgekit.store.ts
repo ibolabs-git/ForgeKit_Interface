@@ -3,6 +3,7 @@ import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, Proj
 
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
+const ROLE_LINE_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]/gim
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
 const PHASE_REGEX = /\b(?:F([1-4])|Faza\s*([1-4])|Phase\s*([1-4]))\b/i
 
@@ -53,10 +54,22 @@ function extractExplicitRole(content: string): ForgeKitRole | null {
 }
 
 function resolveMessageRole(content: string, fallbackRole: ForgeKitRole): ForgeKitRole {
-  const explicitRole = extractExplicitRole(content)
-  if (!explicitRole) return fallbackRole
-  if (fallbackRole !== 'ORCHESTRATOR' && explicitRole === 'ORCHESTRATOR') return fallbackRole
-  return explicitRole
+  const matches = [...content.matchAll(ROLE_LINE_REGEX)]
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const role = matches[i][1].trim() as ForgeKitRole
+    if (VALID_ROLES.includes(role)) return role
+  }
+  return fallbackRole
+}
+
+function hasVisibleAssistantConversation(messages: ChatMessage[]): boolean {
+  return messages.some((m) =>
+    m.role === 'assistant' &&
+    !m.isStreaming &&
+    m.content !== '[SESSION_DIVIDER]' &&
+    !m.content.startsWith('[MODEL_SWITCH:') &&
+    !m.content.startsWith('[TEMPLATE_INJECT]')
+  )
 }
 
 function extractTasks(content: string, sourceMessageId?: string): Task[] {
@@ -641,23 +654,49 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   // ── Provider ──
 
   setProvider: (provider, model) => {
-    if (get().isStreaming) return
-    set({
-    selectedProvider: provider,
-    selectedModel: model,
-    customModelId: '',
-    // Provider switch = context needs refresh ako već imamo poruke
-    modelJustChanged: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')),
-    contextStatus: get().messages.some((m) => m.role === 'assistant' && !m.content.startsWith('[')) ? 'needs_refresh' : 'synced',
-    previousEffectiveModel: get().customModelId.trim() || get().selectedModel
-    })
+    const s = get()
+    if (s.isStreaming) return
+
+    const oldEffective = s.customModelId.trim() || s.selectedModel
+    const newEffective = model
+    const isMidSession = hasVisibleAssistantConversation(s.messages)
+    const timestamp = Date.now()
+
+    if (isMidSession && newEffective && newEffective !== oldEffective) {
+      const switchMsg: ChatMessage = {
+        id: `model-switch-${timestamp}`,
+        role: 'assistant',
+        content: `[MODEL_SWITCH:${oldEffective}\u2192${newEffective}:${timestamp}]`,
+        forgeRole: 'SYSTEM',
+        timestamp
+      }
+      set((st) => ({
+        selectedProvider: provider,
+        selectedModel: model,
+        customModelId: '',
+        modelJustChanged: true,
+        contextStatus: 'needs_refresh',
+        previousEffectiveModel: oldEffective,
+        messages: [...st.messages, switchMsg],
+        modelHistory: [...st.modelHistory, { from: oldEffective, to: newEffective, time: timestamp }]
+      }))
+    } else {
+      set({
+        selectedProvider: provider,
+        selectedModel: model,
+        customModelId: '',
+        modelJustChanged: false,
+        contextStatus: 'synced',
+        previousEffectiveModel: oldEffective
+      })
+    }
   },
 
   setModel: (newModel) => {
     const s = get()
     if (s.isStreaming) return
     const oldEffective = s.customModelId.trim() || s.selectedModel
-    const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))
+    const isMidSession = hasVisibleAssistantConversation(s.messages)
 
     if (isMidSession && newModel !== s.selectedModel) {
       const switchMsg: ChatMessage = {
@@ -686,7 +725,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     if (s.isStreaming) return
     const oldEffective = s.customModelId.trim() || s.selectedModel
     const newEffective = id.trim() || s.selectedModel
-    const isMidSession = s.messages.some((m) => m.role === 'assistant' && !m.content.startsWith('['))
+    const isMidSession = hasVisibleAssistantConversation(s.messages)
 
     if (isMidSession && newEffective !== oldEffective && id.trim()) {
       const switchMsg: ChatMessage = {

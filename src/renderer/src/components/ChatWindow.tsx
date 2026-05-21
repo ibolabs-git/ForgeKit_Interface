@@ -156,7 +156,17 @@ export function ChatWindow(): JSX.Element {
         }
         continue
       }
-      if (msg.content.startsWith('[MODEL_SWITCH:')) continue
+      if (msg.content.startsWith('[MODEL_SWITCH:')) {
+        const raw = msg.content.replace(/^\[MODEL_SWITCH:/, '').replace(/\]$/, '')
+        const lastColon = raw.lastIndexOf(':')
+        const pair = lastColon >= 0 ? raw.slice(0, lastColon) : raw
+        const [from, to] = pair.split('\u2192')
+        const time = new Date(msg.timestamp).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
+        const line = to ? `Model promenjen: ${from} -> ${to}` : `Model promenjen: ${pair}`
+        if (format === 'md') lines.push(`\n---\n*${line} — ${time}*\n---\n`)
+        else lines.push(`\n${'-'.repeat(40)}\n${line} — ${time}\n${'-'.repeat(40)}\n`)
+        continue
+      }
 
       const time = new Date(msg.timestamp).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
       const role = msg.role === 'user' ? 'YOU' : msg.forgeRole

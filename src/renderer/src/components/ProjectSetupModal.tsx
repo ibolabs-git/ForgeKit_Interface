@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
+import { useSendMessage } from '../hooks/useSendMessage'
 import './ProjectSetupModal.css'
 
 export function ProjectSetupModal(): JSX.Element | null {
-  const { showProjectSetup, setShowProjectSetup, projectName, setProjectPath, setProjectName } =
+  const { showProjectSetup, setShowProjectSetup, projectName, setProjectPath, setProjectName, messages } =
     useForgeKitStore()
+  const { send, isStreaming } = useSendMessage()
 
   const [newName, setNewName] = useState(projectName)
   const [creating, setCreating] = useState(false)
@@ -12,12 +14,20 @@ export function ProjectSetupModal(): JSX.Element | null {
 
   if (!showProjectSetup) return null
 
+  const maybeStartForgeKit = () => {
+    if (messages.length > 0 || isStreaming) return
+    window.setTimeout(() => {
+      send('[FORGEKIT_INIT]', { hiddenUser: true, allowTemplateFollowup: false })
+    }, 120)
+  }
+
   const handleChooseExisting = async () => {
     setError('')
     const path = await window.api.projectChooseFolder()
     if (path) {
       setProjectPath(path)
       setShowProjectSetup(false)
+      maybeStartForgeKit()
     }
   }
 
@@ -32,6 +42,7 @@ export function ProjectSetupModal(): JSX.Element | null {
         setProjectPath(path)
         setProjectName(name)
         setShowProjectSetup(false)
+        maybeStartForgeKit()
       } else {
         setError('Kreiranje otkazano.')
       }

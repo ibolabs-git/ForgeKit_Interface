@@ -1,98 +1,151 @@
-# ForgeKit Interface — Issues & Dopune
+﻿# ForgeKit Interface - Issues & Dopune
 
-Evidencija poznatih grešaka, UI propusta i planiranih dopuna.
+Evidencija poznatih gresaka, UI propusta i planiranih dopuna.
 Svaki issue dobija ID, prioritet, opis i status.
 
-Format: `[PRIORITET]` — KRITIČNO / VAŽNO / NICE
+Prioriteti:
+- `KRITICNO` - blokira tok, moze izazvati pogresan zapis, gubitak stanja ili laznu potvrdu
+- `VAZNO` - vidljiva greska ili runtime neuskladjenost
+- `NICE` - UX poboljsanje ili kasnija nadogradnja
 
 ---
 
-## Otvoreni issues
+## Otvoreni issues za v1.0.24+
+
+### [ISS-017] Phase sidebar se ne osvezava posle potvrdjene izmene faza
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
+- **Simptom:** Inicijalne faze se prikazu u levom sidebar-u, ali nakon Reviewer/Premortem predloga i korisnicke potvrde nove fazne strukture sidebar ostaje na starom modelu.
+- **Ocekivano:** Kada korisnik potvrdi novi fazni model ili Orchestrator eksplicitno zakljuca faze, sidebar treba da osvezi faze iz potvrdjene strukture.
+- **Status:** Otvoreno - dodati confirmed phase update trigger.
+
+### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** `RE-PRIME KONTEKST` prikazuje osnovni status sesije, ali ne ukljucuje kljucne zakljucke iz dotadasnjeg razgovora.
+- **Ocekivano:** Re-Prime treba da radi kao mini handoff za nastavak rada ili promenu modela: cilj, potvrdjene odluke, pretpostavke, otvorena pitanja, poslednji relevantan output, sledeci korak i zabrane/granice.
+- **Status:** Otvoreno - prosiriti `buildProjectContext`/Re-Prime logiku u structured handoff/state packet.
+
+### [ISS-012] Dugme `POKRENI FORGEKIT` ostaje primarna akcija i kada je rezim vec aktivan
+- **Prioritet:** NICE
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** Nakon uspesnog init-a dugme i dalje izgleda kao primarni start rezima.
+- **Ocekivano:** Kada je ForgeKit init vec uradjen, dugme treba da promeni stanje ili namenu, npr. `ForgeKit aktivan`, `Osvezi ForgeKit kontekst` ili `Ponovo ucitaj instrukcije`.
+- **Status:** Otvoreno - uskladiti label i ponasanje dugmeta sa stvarnim init stanjem.
+
+### [ISS-011] Intake pitanje ponekad postaje predugacko
+- **Prioritet:** NICE
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** Orchestrator postavlja dobra pitanja, ali neka pitanja kombinuju previse objasnjenja i vise implicitnih odluka u jednoj poruci.
+- **Ocekivano:** Intake pitanja treba da budu kratka: jedna odluka po poruci, uz najvise jednu kratku recenicu obrazlozenja.
+- **Status:** Otvoreno - doraditi prompt/guidance za kraca intake pitanja u ForgeKit app kontekstu.
 
 ### [ISS-006] Spontani role tag u AI odgovoru ne uskladjuje runtime ulogu
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** Model moze u odgovoru sam zapoceti segment kao `[THINKER]`, dok UI i dalje prikazuje `ORCHESTRATOR MODE` ili prethodnu runtime ulogu. `INVOKE` tok je stabilizovan, ali spontana promena role taga tokom normalnog odgovora jos nije jasno tretirana.
-- **Napomena (v1.0.22):** Kontrolisani poziv uloge je prosiren na prirodne poruke (`Pozivam Reviewer.`) i klik na levi role tile. Ovo ne resava automatski spontani `[ROLE]` tag koji model sam upise bez korisnickog poziva.
-- **Status:** Otvoreno - definisati pravilo: da li prvi validan role tag u assistant odgovoru menja runtime ulogu, ili se tretira kao tekstualna sekcija ako nije dosao iz eksplicitnog invoke/handoff toka.
+- **Simptom:** Model moze u odgovoru sam zapoceti segment kao `[THINKER]`, dok UI i dalje prikazuje `ORCHESTRATOR MODE` ili prethodnu runtime ulogu.
+- **Napomena:** Kontrolisani poziv uloge je prosiren na prirodne poruke i klik na levi role tile. To ne resava svaki spontani `[ROLE]` tag koji model sam upise bez korisnickog poziva.
+- **Status:** Otvoreno - tretirati role promenu samo kroz eksplicitni invoke/handoff/return signal, ne kroz svaki tekstualni tag.
 
 ### [ISS-004] NVIDIA modeli povremeno ne vrate odgovor u ocekivanom roku
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.19/v1.0.20 - 2026-05-20
 - **Simptom:** Pojedini NVIDIA NIM modeli, posebno veci reasoning modeli, mogu ostati bez vidljivog odgovora do timeout-a.
-- **Status:** Otvoreno - potrebno preciznije provider-level timeout/fallback ponasanje i jasniji model health signal u UI-u.
+- **Ocekivano:** Provider treba da vrati jasan timeout/fallback status i predlog brzeg modela.
+- **Status:** Otvoreno - provider-level timeout/fallback ponasanje i model health signal.
 
 ### [ISS-005] Project File Actions blokirani predlog nije dovoljno objasnjen korisniku
 - **Prioritet:** NICE
 - **Otkriveno:** v1.0.20 - 2026-05-20
 - **Simptom:** Blokirana putanja se prikaze kao bezbednosni nalaz, ali korisniku nije dovoljno jasno cemu panel sluzi i sta treba da uradi.
-- **Status:** Otvoreno - dodati kratak helper tekst ili tooltip za `blocked` status.
+- **Ocekivano:** Dodati helper tekst, tooltip ili recovery akciju.
+- **Status:** Otvoreno - dodati objasnjenje za `blocked` status.
 
 ---
 
 ## Zatvoreni issues
 
+### [ISS-019] Validan PROJECT_WRITE_FILE se blokira zbog zaglavljene uloge
+- **Prioritet:** KRITICNO
+- **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
+- **Simptom:** `PROJECT_WRITE_FILE` za `project_security_manifest.md` je blokiran jer app dozvoljava file action samo iz `BUILDER` izvora, dok je runtime ostao u Reviewer modu nakon Reviewer/Premortem provere.
+- **Ocekivano:** Posle Reviewer provere kontrola treba da se vrati Orchestrator-u, zatim Builder treba da pripremi pending write; validan dokument ne sme biti blokiran zbog zastarele `activeRole` vrednosti.
+- **Status:** Zatvoreno - v1.0.23
+
+### [ISS-018] Role ostaje zaglavljen na Reviewer posle zavrsene provere
+- **Prioritet:** KRITICNO
+- **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
+- **Simptom:** Reviewer/Premortem se pravilno aktivira, ali nakon zavrsene provere i prelaska na Orchestrator odluke UI i chat label ostaju u Reviewer modu.
+- **Ocekivano:** Kada se Reviewer output zavrsi i Orchestrator nastavi tok, aktivna uloga, chat label, levi badge i session status treba da se vrate na Orchestrator.
+- **Status:** Zatvoreno - v1.0.23
+
+### [ISS-015] Model switch divider se vise ne vidi u chat/report toku
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** Promena modela se vidi u desnom panelu, ali u chat toku vise nije jasno prikazana linija tipa `Model promenjen - old -> new`.
+- **Ocekivano:** Svaka promena providera/modela tokom aktivne sesije treba da upise nenametljiv divider u chat/report tok, bez slanja tog divider-a modelu kao AI kontekst.
+- **Status:** Zatvoreno - v1.0.23
+
+### [ISS-014] Novi projekat ne pokrece ForgeKit init automatski
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** Nakon kreiranja novog projekta i izbora projektnog foldera Orchestrator se ne oglasava sam.
+- **Ocekivano:** ForgeKit Interface je namenski ForgeKit alat; novi projekat treba automatski da ucita minimalni ForgeKit kontekst i pokrene kratak Orchestrator uvod sa prvim intake pitanjem.
+- **Status:** Zatvoreno - v1.0.23
+
+### [ISS-013] Interni `[FORGEKIT_INIT]` se prikazuje kao korisnicka poruka
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 test - 2026-05-21
+- **Simptom:** Klik na `POKRENI FORGEKIT` upisuje vidljiv korisnicki message `[FORGEKIT_INIT]`.
+- **Ocekivano:** Init signal treba biti interna/system akcija. Korisnik treba da vidi samo kratak Orchestrator uvod.
+- **Status:** Zatvoreno - v1.0.23
+
 ### [ISS-010] Export naziv i naslov chat_export ne opisuje stvarnu vrednost izvestaja
 - **Prioritet:** NICE
-- **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** Export fajl se zvao `chat_export_...md`, ali u ForgeKit kontekstu to nije samo chat, vec projektni tok, odluke, file action statusi i procesni izvestaj.
-- **Resenje (v1.0.22):** Export sada koristi naziv `project_session_report_...` i naslov `ForgeKit Project Session Report`.
+- **Resenje:** Export sada koristi naziv `project_session_report_...` i naslov `ForgeKit Project Session Report`.
 - **Status:** Zatvoreno - v1.0.22
 
 ### [ISS-009] App dozvoljava lazno procesno stanje posle blokiranih file actions
 - **Prioritet:** KRITICNO
-- **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** Nakon sto su `PROJECT_WRITE_FILE` akcije blokirane, korisnik je poslao potvrdu, a model je nastavio sa tvrdnjom da su dokumenti upisani iako fajlovi nisu nastali.
-- **Resenje (v1.0.22):** Tekstualna potvrda se zaustavlja ako postoje `blocked`, `pending` ili `error` file action stavke; app upisuje sistemsku poruku i trazi stvarno resavanje kroz panel.
+- **Resenje:** Tekstualna potvrda se zaustavlja ako postoje `blocked`, `pending` ili `error` file action stavke; app upisuje sistemsku poruku i trazi stvarno resavanje kroz panel.
 - **Status:** Zatvoreno - v1.0.22
 
 ### [ISS-008] Project File Actions ne prepoznaje BUILDER segment unutar ORCHESTRATOR poruke
 - **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** AI moze u jednoj assistant poruci da krene iz `[ORCHESTRATOR]`, zatim otvori `[BUILDER]` segment i generise `[PROJECT_WRITE_FILE: ...]` blokove. Project File Actions je blokirao te akcije jer je kao izvor video runtime ulogu cele poruke.
-- **Resenje (v1.0.22):** File action parser sada koristi najblizi prethodni validan role segment kao izvor akcije.
+- **Resenje:** File action parser sada koristi najblizi prethodni validan role segment kao izvor akcije.
 - **Status:** Zatvoreno - v1.0.22
 
 ### [ISS-007] Parser faza ne prepoznaje tekstualni oblik `Faza 1`
 - **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** AI je u chatu definisao `Faza 1`, `Faza 2`, `Faza 3`, ali levi panel je ostao na placeholder poruci.
-- **Resenje (v1.0.22):** Parser prepoznaje `Faza 1/2/3/4` i `Phase 1/2/3/4`, ukljucujuci naziv faze iza crtice.
+- **Resenje:** Parser prepoznaje `Faza 1/2/3/4` i `Phase 1/2/3/4`, ukljucujuci naziv faze iza crtice.
 - **Status:** Zatvoreno - v1.0.22
 
 ### [ISS-003] Levi panel prerano prikazuje hardkodovane faze
 - **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.20 - 2026-05-20
-- **Simptom:** Novi projekat odmah prikazuje `F1-F4`, iako faze nisu definisane kroz projektni tok.
-- **Resenje (Unreleased):** Levi panel prikazuje faze tek kada se detektuju u projektnom toku ili taskovima.
-- **Status:** Zatvoreno - Unreleased
+- **Resenje:** Levi panel prikazuje faze tek kada se detektuju u projektnom toku ili taskovima.
+- **Status:** Zatvoreno - v1.0.21/v1.0.22
 
 ### [ISS-002] Runtime uloga i role badge mogu se razici pri invoke toku
 - **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.20 - 2026-05-20
-- **Simptom:** Aktivna kartica u levom panelu moze pokazati Reviewer/Thinker, dok poruka ostaje obelezena kao Orchestrator.
-- **Resenje (Unreleased):** `INVOKE` sada postavlja runtime ulogu pre starta assistant poruke.
-- **Status:** Zatvoreno - Unreleased
+- **Resenje:** `INVOKE` i prirodni role tile pozivi postavljaju runtime ulogu pre starta assistant poruke.
+- **Status:** Zatvoreno - v1.0.21/v1.0.22
 
-### [ISS-001] Font — dijakritička slova ne renderuju u SessionSummaryModal
-- **Prioritet:** VAŽNO
-- **Otkriveno:** v0.9.5 — 2026-05-19
-- **Simptom:** `š`, `đ`, `č`, `ć`, `ž` prikazivali se kao □ u Session Summary modalu.
-- **Uzrok:** `Share Tech` / `Share Tech Mono` ne sadrže Latin Extended-A glifove. `.summary-content` nije imao eksplicitnu `font-family` deklaraciju pa su headings nasljeđivali `var(--font-tech)`.
-- **Rješenje (v1.0.1):** Dodano `font-family: var(--font)` na `.summary-content` (Inter, koji podržava latin-ext). Headings `h1-h3` unutar summary-a dobili su `var(--font-tech), var(--font)` fallback.
-- **Fajl:** `SessionSummaryModal.css`
-- **Status:** ✅ Zatvoreno — v1.0.1 (2026-05-19)
+### [ISS-001] Font - dijakriticka slova ne renderuju u SessionSummaryModal
+- **Prioritet:** VAZNO
+- **Resenje:** Summary content koristi Inter fallback i podrzava latin-ext.
+- **Status:** Zatvoreno - v1.0.1
 
 ---
 
-## Pravila unosa
+## Regresioni testovi koji ostaju obavezni
 
-- Svaki issue dobija sledeći slobodni `ISS-XXX` broj
-- Prioriteti: **KRITIČNO** (crash/data loss), **VAŽNO** (vidljiva greška), **NICE** (UX poboljšanje)
-- Status: ⏳ Otvoreno · 🔄 U toku · ✅ Zatvoreno (navesti verziju)
-- Pri zatvaranju: premesti u sekciju "Zatvoreni issues" i dodaj verziju u kojoj je rešeno
+- Stop dugme prekida aktivni odgovor.
+- Promena modela nije dozvoljena dok agent generise odgovor.
+- Project File Actions ne smeju tvrditi da je fajl upisan dok app ne potvrdi stvarni upis.
+- Role badge, chat label i session status moraju ostati uskladjeni.
+- Phase sidebar se menja samo nakon potvrdjene fazne odluke.
 
 ---
 
-*Kreiran: v0.9.5 — 2026-05-19*
-
+*Kreiran: v0.9.5 - 2026-05-19*  
+*Konsolidovano: v1.0.23 planning - 2026-05-21*
