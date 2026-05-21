@@ -9,6 +9,13 @@ Format: `[PRIORITET]` — KRITIČNO / VAŽNO / NICE
 
 ## Otvoreni issues
 
+### [ISS-006] Spontani role tag u AI odgovoru ne uskladjuje runtime ulogu
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** Model moze u odgovoru sam zapoceti segment kao `[THINKER]`, dok UI i dalje prikazuje `ORCHESTRATOR MODE` ili prethodnu runtime ulogu. `INVOKE` tok je stabilizovan, ali spontana promena role taga tokom normalnog odgovora jos nije jasno tretirana.
+- **Napomena (v1.0.22):** Kontrolisani poziv uloge je prosiren na prirodne poruke (`Pozivam Reviewer.`) i klik na levi role tile. Ovo ne resava automatski spontani `[ROLE]` tag koji model sam upise bez korisnickog poziva.
+- **Status:** Otvoreno - definisati pravilo: da li prvi validan role tag u assistant odgovoru menja runtime ulogu, ili se tretira kao tekstualna sekcija ako nije dosao iz eksplicitnog invoke/handoff toka.
+
 ### [ISS-004] NVIDIA modeli povremeno ne vrate odgovor u ocekivanom roku
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.19/v1.0.20 - 2026-05-20
@@ -24,6 +31,34 @@ Format: `[PRIORITET]` — KRITIČNO / VAŽNO / NICE
 ---
 
 ## Zatvoreni issues
+
+### [ISS-010] Export naziv i naslov chat_export ne opisuje stvarnu vrednost izvestaja
+- **Prioritet:** NICE
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** Export fajl se zvao `chat_export_...md`, ali u ForgeKit kontekstu to nije samo chat, vec projektni tok, odluke, file action statusi i procesni izvestaj.
+- **Resenje (v1.0.22):** Export sada koristi naziv `project_session_report_...` i naslov `ForgeKit Project Session Report`.
+- **Status:** Zatvoreno - v1.0.22
+
+### [ISS-009] App dozvoljava lazno procesno stanje posle blokiranih file actions
+- **Prioritet:** KRITICNO
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** Nakon sto su `PROJECT_WRITE_FILE` akcije blokirane, korisnik je poslao potvrdu, a model je nastavio sa tvrdnjom da su dokumenti upisani iako fajlovi nisu nastali.
+- **Resenje (v1.0.22):** Tekstualna potvrda se zaustavlja ako postoje `blocked`, `pending` ili `error` file action stavke; app upisuje sistemsku poruku i trazi stvarno resavanje kroz panel.
+- **Status:** Zatvoreno - v1.0.22
+
+### [ISS-008] Project File Actions ne prepoznaje BUILDER segment unutar ORCHESTRATOR poruke
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** AI moze u jednoj assistant poruci da krene iz `[ORCHESTRATOR]`, zatim otvori `[BUILDER]` segment i generise `[PROJECT_WRITE_FILE: ...]` blokove. Project File Actions je blokirao te akcije jer je kao izvor video runtime ulogu cele poruke.
+- **Resenje (v1.0.22):** File action parser sada koristi najblizi prethodni validan role segment kao izvor akcije.
+- **Status:** Zatvoreno - v1.0.22
+
+### [ISS-007] Parser faza ne prepoznaje tekstualni oblik `Faza 1`
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** AI je u chatu definisao `Faza 1`, `Faza 2`, `Faza 3`, ali levi panel je ostao na placeholder poruci.
+- **Resenje (v1.0.22):** Parser prepoznaje `Faza 1/2/3/4` i `Phase 1/2/3/4`, ukljucujuci naziv faze iza crtice.
+- **Status:** Zatvoreno - v1.0.22
 
 ### [ISS-003] Levi panel prerano prikazuje hardkodovane faze
 - **Prioritet:** VAZNO
@@ -60,3 +95,4 @@ Format: `[PRIORITET]` — KRITIČNO / VAŽNO / NICE
 ---
 
 *Kreiran: v0.9.5 — 2026-05-19*
+

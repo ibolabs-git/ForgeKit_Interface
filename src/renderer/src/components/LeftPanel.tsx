@@ -15,20 +15,51 @@ const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
   { id: 'F4', label: 'F4 — Nexus',           short: 'F4' }
 ]
 
-const PHASE_MARKER_REGEX = /\b(F1|F2|F3|F4)\b/g
+const PHASE_MARKER_REGEX = /\bF([1-4])\b/gi
+const PHASE_DEFINITION_REGEX = /\b(?:Faza|Phase)\s*([1-4])\s*(?:[—–-]\s*([^\n\r]+))?/gi
 
-function detectDefinedPhases(sourceText: string, tasks: Task[]): ForgeKitPhase[] {
-  const detected = new Set<ForgeKitPhase>()
+type DetectedPhase = { id: ForgeKitPhase; label: string; short: string }
+
+function roleDisplayName(role: ForgeKitRole): string {
+  return role
+    .toLowerCase()
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function normalizePhaseLabel(id: ForgeKitPhase, rawLabel?: string): DetectedPhase {
+  const fallback = PHASES.find((p) => p.id === id) ?? { id, label: id, short: id }
+  const cleanLabel = rawLabel
+    ?.replace(/\*\*/g, '')
+    .replace(/<\/?[^>]+>/g, '')
+    .replace(/[:.]+$/g, '')
+    .trim()
+
+  if (!cleanLabel) return fallback
+  return { id, label: `${id} — ${cleanLabel}`, short: id }
+}
+
+function detectDefinedPhases(sourceText: string, tasks: Task[]): DetectedPhase[] {
+  const detected = new Map<ForgeKitPhase, DetectedPhase>()
+
+  const addPhase = (phase: ForgeKitPhase, label?: string) => {
+    if (!detected.has(phase)) detected.set(phase, normalizePhaseLabel(phase, label))
+  }
 
   for (const task of tasks) {
-    if (task.phase) detected.add(task.phase)
+    if (task.phase) addPhase(task.phase)
+  }
+
+  for (const match of sourceText.matchAll(PHASE_DEFINITION_REGEX)) {
+    addPhase(`F${match[1]}` as ForgeKitPhase, match[2])
   }
 
   for (const match of sourceText.matchAll(PHASE_MARKER_REGEX)) {
-    detected.add(match[1] as ForgeKitPhase)
+    addPhase(`F${match[1]}` as ForgeKitPhase)
   }
 
-  return PHASES.map((p) => p.id).filter((id) => detected.has(id))
+  return PHASES.map((p) => detected.get(p.id)).filter(Boolean) as DetectedPhase[]
 }
 
 export function LeftPanel(): JSX.Element {
@@ -47,16 +78,15 @@ export function LeftPanel(): JSX.Element {
   } = useForgeKitStore()
   const { send, isStreaming } = useSendMessage()
 
-  const visiblePhaseIds = useMemo(
+  const visiblePhases = useMemo(
     () => detectDefinedPhases(phaseSourceText, tasks),
     [phaseSourceText, tasks]
   )
-  const visiblePhases = PHASES.filter((p) => visiblePhaseIds.includes(p.id))
   const currentPhaseIndex = visiblePhases.findIndex((p) => p.id === currentPhase)
 
   const handleInvoke = (role: ForgeKitRole) => {
     if (isStreaming) return
-    send(`[INVOKE:${role}]`)
+    send(`Pozivam ${roleDisplayName(role)}.`)
   }
 
   const handleForgeKitInit = () => {
@@ -81,7 +111,7 @@ export function LeftPanel(): JSX.Element {
                 data-role={dataRole}
                 onClick={() => handleInvoke(role)}
                 disabled={isStreaming}
-                title={isActive ? `Aktivna uloga: ${role}` : `Pozovi ${role}`}
+                title={isActive ? `Aktivna uloga: ${role}. Klik poziva ulogu ponovo.` : `Pozovi ${role}`}
               >
                 <span className="lrt-num">{String(i + 1).padStart(2, '0')}</span>
                 <div className="lrt-name">{role}</div>

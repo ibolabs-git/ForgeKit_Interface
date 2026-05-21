@@ -136,11 +136,11 @@ export function ChatWindow(): JSX.Element {
     const lines: string[] = []
 
     if (format === 'md') {
-      lines.push(`# Chat Export — ${projectName}`)
+      lines.push(`# ForgeKit Project Session Report — ${projectName}`)
       lines.push(`\n*Izvezeno: ${new Date().toLocaleString('sr-RS')}*\n`)
       lines.push('---\n')
     } else {
-      lines.push(`CHAT EXPORT — ${projectName.toUpperCase()}`)
+      lines.push(`FORGEKIT PROJECT SESSION REPORT — ${projectName.toUpperCase()}`)
       lines.push(`Izvezeno: ${new Date().toLocaleString('sr-RS')}`)
       lines.push('='.repeat(60), '')
     }
@@ -170,7 +170,7 @@ export function ChatWindow(): JSX.Element {
     }
 
     const ts = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-')
-    const filename = `chat_export_${ts}.${format}`
+    const filename = `project_session_report_${ts}.${format}`
     try {
       await window.api.projectWriteFile(filename, lines.join('\n'))
     } catch (err) {

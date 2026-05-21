@@ -10,6 +10,22 @@ Format: `[verzija] — datum — opis`
 
 ### Napomena
 - Sledece izmene unositi ovde pre novog release-a.
+- Evidentiran app backlog za spontani role tag (`[THINKER]`, `[REVIEWER]`...) koji jos ne uskladjuje runtime ulogu kao eksplicitni `INVOKE` tok.
+
+---
+
+## [1.0.22] - 2026-05-21 - Project file action guard i fazni parser
+
+### Stabilizacija
+- `PROJECT_WRITE_FILE` blok sada dobija izvor najblizeg validnog role segmenta u istoj assistant poruci, pa `[BUILDER]` segment unutar Orchestrator odgovora vise ne biva pogresno blokiran kao `ORCHESTRATOR`.
+- Tekstualna potvrda tipa `potvrdjujem` vise ne moze da nastavi AI tok dok postoje `blocked`, `pending` ili `error` Project File Actions stavke; app upisuje sistemsku poruku i trazi stvarno resavanje panel akcija.
+- Parser faza prepoznaje `Faza 1/2/3/4` i `Phase 1/2/3/4`, ukljucujuci naziv faze iza crtice, pa levi panel moze prikazati faze kada ih projektni tok definise prirodnim jezikom.
+- Role tile-ovi u levom panelu sada imaju dvojnu funkciju: semafor aktivne uloge i dugme koje salje prirodan poziv tipa `Pozivam Reviewer.`, dok app interno koristi kontrolisani invoke signal.
+- Export fajl je preimenovan iz `chat_export_...` u `project_session_report_...`, sa naslovom `ForgeKit Project Session Report`.
+- Verzija bumpovana na `1.0.22`.
+
+### Validacija
+- `npm.cmd run build` prolazi.
 
 ---
 
@@ -398,3 +414,4 @@ Master_ForgeKit_Tool dokumentacija se nalazi na:
 - Share Tech + Share Tech Mono + Inter (Google Fonts)
 - 3-kolumna layout: 200px levo | flex chat | 280px desno
 - CSS custom properties za temu, bez CSS framework zavisnosti
+

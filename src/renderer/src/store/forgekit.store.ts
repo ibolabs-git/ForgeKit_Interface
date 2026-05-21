@@ -4,7 +4,7 @@ import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, Proj
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
-const PHASE_REGEX = /\b(F1|F2|F3|F4)\b/
+const PHASE_REGEX = /\b(?:F([1-4])|Faza\s*([1-4])|Phase\s*([1-4]))\b/i
 
 // Ključne riječi koje signaliziraju task sekciju (case-insensitive)
 const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
@@ -95,7 +95,8 @@ function extractMemoryContent(content: string): string | null {
 
 function extractPhase(content: string): ForgeKitPhase | null {
   const m = content.match(PHASE_REGEX)
-  return m ? (m[1] as ForgeKitPhase) : null
+  const phaseNumber = m?.[1] ?? m?.[2] ?? m?.[3]
+  return phaseNumber ? (`F${phaseNumber}` as ForgeKitPhase) : null
 }
 
 // ── Tab tipovi ────────────────────────────────────────────────────────────────
@@ -226,6 +227,7 @@ interface ForgeKitStore {
 
   // ── Akcije — poruke ──
   addUserMessage: (content: string) => string
+  addSystemMessage: (content: string) => void
   startAssistantMessage: (messageId: string, initialRole?: ForgeKitRole) => void
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
@@ -274,7 +276,7 @@ interface ForgeKitStore {
   removeMemoryRecord: (id: string) => void
 
   // ── Project file actions ──
-  addProjectFileAction: (filename: string, content: string, sourceMessageId?: string) => void
+  addProjectFileAction: (filename: string, content: string, sourceMessageId?: string, sourceRoleOverride?: ForgeKitRole) => void
   updateProjectFileActionStatus: (id: string, status: ProjectFileAction['status'], errorMessage?: string) => void
   removeProjectFileAction: (id: string) => void
 
@@ -437,6 +439,18 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       messages: [...s.messages, { id, role: 'user', content, forgeRole: 'USER', timestamp: Date.now() }]
     }))
     return id
+  },
+
+  addSystemMessage: (content) => {
+    set((s) => ({
+      messages: [...s.messages, {
+        id: `system-${Date.now()}-${Math.random()}`,
+        role: 'assistant',
+        content,
+        forgeRole: 'SYSTEM',
+        timestamp: Date.now()
+      }]
+    }))
   },
 
   startAssistantMessage: (messageId, initialRole) => {
@@ -738,8 +752,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   // ── Project file actions ──
 
-  addProjectFileAction: (filename, content, sourceMessageId) => {
-    const sourceRole = get().messages.find((m) => m.id === sourceMessageId)?.forgeRole
+  addProjectFileAction: (filename, content, sourceMessageId, sourceRoleOverride) => {
+    const sourceRole = sourceRoleOverride ?? get().messages.find((m) => m.id === sourceMessageId)?.forgeRole
     const isAllowed = sourceRole === 'BUILDER'
     const action: ProjectFileAction = {
       id: `file-action-${Date.now()}-${Math.random()}`,

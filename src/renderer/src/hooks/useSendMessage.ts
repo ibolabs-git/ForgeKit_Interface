@@ -5,13 +5,24 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
-import type { ForgeKitRole } from '../types'
+import type { ForgeKitRole, ProjectFileAction } from '../types'
 
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[[A-Z][A-Z\s]+\]\s*)?(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
+const ROLE_SEGMENT_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]\s*$/gim
+const FILE_ACTION_CONFIRM_REGEX = /^\s*(?:da[\s,;:-]*)?(?:potvrdjujem|potvrđujem|potvrda|confirm|odobreno|upisi|upiši)\s*\.?\s*$/i
 const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uklju\u010di)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|re\u017eim|mode)\b)?/i
 const INVOKE_REGEX = /^\[INVOKE:(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]$/i
+const NATURAL_INVOKE_TRIGGER_REGEX = /\b(pozivam|pozovi|zovi|aktiviraj|prebaci|prebacujem|handoff|invoke)\b/i
+const ROLE_ALIASES: Array<{ role: ForgeKitRole; patterns: RegExp[] }> = [
+  { role: 'ORCHESTRATOR', patterns: [/\borchestrator\b/i, /\borkestrator\b/i] },
+  { role: 'THINKER', patterns: [/\bthinker\b/i, /\banaliticar\b/i, /\banaliti[cč]ar\b/i] },
+  { role: 'BUILDER', patterns: [/\bbuilder\b/i, /\bizvrsilac\b/i, /\bizvr[sš]ilac\b/i] },
+  { role: 'REVIEWER', patterns: [/\breviewer\b/i, /\breview\b/i, /\brevizor\b/i] },
+  { role: 'MEMORY CURATOR', patterns: [/\bmemory\s+curator\b/i, /\bmemorijski\s+kustos\b/i, /\bkustos\s+memorije\b/i] },
+  { role: 'OBSERVER', patterns: [/\bobserver\b/i, /\bopserver\b/i, /\bposmatrac\b/i, /\bposmatra[cč]\b/i] }
+]
 const INIT_TEMPLATE_PATHS = [
   'README.md',
   'BRANCH_MANIFEST.md',
@@ -33,6 +44,8 @@ function normalizeOutboundText(text: string): string {
   const trimmed = text.trim()
   if (trimmed === '[FORGEKIT_INIT]') return trimmed
   if (FORGEKIT_INIT_TEXT_REGEX.test(trimmed)) return '[FORGEKIT_INIT]'
+  const naturalRole = extractNaturalInvokedRole(trimmed)
+  if (naturalRole) return `[INVOKE:${naturalRole}]`
   return text
 }
 
@@ -44,6 +57,38 @@ function isInternalTemplateMessage(content: string): boolean {
 function extractInvokedRole(content: string): ForgeKitRole | null {
   const match = content.trim().match(INVOKE_REGEX)
   return match ? (match[1].toUpperCase() as ForgeKitRole) : null
+}
+
+function extractNaturalInvokedRole(content: string): ForgeKitRole | null {
+  if (!NATURAL_INVOKE_TRIGGER_REGEX.test(content)) return null
+  for (const entry of ROLE_ALIASES) {
+    if (entry.patterns.some((pattern) => pattern.test(content))) return entry.role
+  }
+  return null
+}
+
+function resolveSegmentRole(content: string, index: number): ForgeKitRole | null {
+  let currentRole: ForgeKitRole | null = null
+  for (const match of content.matchAll(ROLE_SEGMENT_REGEX)) {
+    if ((match.index ?? 0) > index) break
+    currentRole = match[1].toUpperCase() as ForgeKitRole
+  }
+  return currentRole
+}
+
+function getUnresolvedFileActions(actions: ProjectFileAction[]): ProjectFileAction[] {
+  return actions.filter((a) => a.status === 'blocked' || a.status === 'pending' || a.status === 'error')
+}
+
+function buildFileActionGuardMessage(actions: ProjectFileAction[]): string {
+  const blocked = actions.filter((a) => a.status === 'blocked').length
+  const pending = actions.filter((a) => a.status === 'pending').length
+  const errored = actions.filter((a) => a.status === 'error').length
+
+  return `[SYSTEM]
+Upis nije izvrsen. Postoje nerazresene Project File Actions stavke: ${blocked} blokirano, ${pending} ceka potvrdu, ${errored} greska.
+
+Tekstualna potvrda u chatu ne sme da zameni stvarni upis fajla. Prvo ukloni blokirane stavke ili potvrdi pending stavke u Project File Actions panelu. Nakon stvarnog upisa nastavi tok.`
 }
 
 function buildTemplateContinuation(fetched: { path: string; content: string }[]): string {
@@ -84,10 +129,11 @@ export function useSendMessage() {
     modelJustChanged, contextStatus,
     currentPhase, activeRole, tasks,
     projectName, previousEffectiveModel,
+    projectFileActions,
     addUserMessage, startAssistantMessage,
     appendStreamToken, finalizeMessage,
     addErrorMessage, cancelStreaming, markContextSynced,
-    addProjectFileAction
+    addProjectFileAction, addSystemMessage
   } = useForgeKitStore()
 
   const sendRef = useRef<(text: string, options?: SendOptions) => Promise<void>>(
@@ -128,6 +174,13 @@ export function useSendMessage() {
     if (!text.trim() || isStreaming) return
 
     const outboundText = normalizeOutboundText(text)
+    const unresolvedFileActions = getUnresolvedFileActions(projectFileActions)
+    if (!options.hiddenUser && FILE_ACTION_CONFIRM_REGEX.test(text.trim()) && unresolvedFileActions.length > 0) {
+      addUserMessage(text)
+      addSystemMessage(buildFileActionGuardMessage(unresolvedFileActions))
+      return
+    }
+
     const isForgeKitInit = outboundText === '[FORGEKIT_INIT]' && !options.hiddenUser
     const invokedRole = extractInvokedRole(outboundText)
     const modelInput = isForgeKitInit
@@ -197,7 +250,8 @@ export function useSendMessage() {
       for (const match of fileMatches) {
         const filename = match[1].trim()
         const content = match[2].trim()
-        if (filename && content) addProjectFileAction(filename, content, messageId)
+        const sourceRole = resolveSegmentRole(fullContent, match.index ?? 0)
+        if (filename && content) addProjectFileAction(filename, content, messageId, sourceRole ?? undefined)
       }
 
       const matches = [...fullContent.matchAll(READ_TEMPLATE_REGEX)]
@@ -236,10 +290,10 @@ export function useSendMessage() {
   }, [
     isStreaming, messages, selectedProvider, selectedModel, customModelId,
     modelJustChanged, contextStatus, currentPhase, activeRole, tasks,
-    projectName, previousEffectiveModel,
+    projectName, previousEffectiveModel, projectFileActions,
     addUserMessage, startAssistantMessage, appendStreamToken,
     finalizeMessage, addErrorMessage, cancelStreaming, markContextSynced,
-    addProjectFileAction, loadTemplates
+    addProjectFileAction, addSystemMessage, loadTemplates
   ])
 
   const cancel = useCallback(() => {

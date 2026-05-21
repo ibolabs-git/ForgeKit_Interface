@@ -144,6 +144,7 @@ STANDARD
 | Prioritet | Stavka |
 |---|---|
 | Visok | Stabilizovati NVIDIA provider timeout/fallback i jasnije prikazati kada model ne vraca odgovor |
+| Visok | Definisati role sync za spontani `[ROLE]` tag u AI odgovoru, odvojeno od eksplicitnog/natural invoke toka |
 | Srednji | Dodati korisnicko objasnjenje za blokirane Project File Actions stavke |
 | Srednji | Proveriti runtime role sync u duzim invoke tokovima kroz vise modela |
 | Srednji | Auto-zatvaranje i deduplikacija taskova kada AI vrati zavrsen task koji vec postoji u task listi |
@@ -152,3 +153,13 @@ STANDARD
 | Nizak | Ollama provider (lokalni modeli) |
 | Nizak | Token counter u SidePanel-u |
 | Nizak | Keyboard shortcut za invoke ulogu (Ctrl+1..6) |
+
+---
+
+## Zavrseno u v1.0.22
+
+- [x] Project File Actions podrzava segment-level role source za `[PROJECT_WRITE_FILE]` unutar `[BUILDER]` segmenta.
+- [x] Write-state guard sprecava nastavak toka tekstualnom potvrdom dok postoje nerazresene file action stavke.
+- [x] Parser faza prepoznaje `Faza 1/2/3/4`, `Phase 1/2/3/4` i naziv faze iza crtice.
+- [x] Role tile-ovi rade kao semafor i dugme; klik salje prirodan poziv ulozi, a app ga interno mapira na runtime invoke.
+- [x] Export je preimenovan u `project_session_report_...`.
