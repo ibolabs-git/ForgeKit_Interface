@@ -1,6 +1,7 @@
+import { useMemo } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { useSendMessage } from '../hooks/useSendMessage'
-import type { ForgeKitPhase, ForgeKitRole } from '../types'
+import type { ForgeKitPhase, ForgeKitRole, Task } from '../types'
 import './LeftPanel.css'
 
 const ALL_ROLES: ForgeKitRole[] = [
@@ -14,17 +15,44 @@ const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
   { id: 'F4', label: 'F4 — Nexus',           short: 'F4' }
 ]
 
+const PHASE_MARKER_REGEX = /\b(F1|F2|F3|F4)\b/g
+
+function detectDefinedPhases(sourceText: string, tasks: Task[]): ForgeKitPhase[] {
+  const detected = new Set<ForgeKitPhase>()
+
+  for (const task of tasks) {
+    if (task.phase) detected.add(task.phase)
+  }
+
+  for (const match of sourceText.matchAll(PHASE_MARKER_REGEX)) {
+    detected.add(match[1] as ForgeKitPhase)
+  }
+
+  return PHASES.map((p) => p.id).filter((id) => detected.has(id))
+}
+
 export function LeftPanel(): JSX.Element {
   // OPT-08: messages.length selektor umjesto cijelog messages arraya.
   const messagesLength = useForgeKitStore((s) => s.messages.length)
+  const phaseSourceText = useForgeKitStore((s) =>
+    s.messages
+      .filter((m) => !m.isStreaming)
+      .map((m) => m.content)
+      .join('\n')
+  )
   const {
     activeRole, currentPhase,
-    projectName, projectPath,
+    projectName, projectPath, tasks,
     setPhase, setShowProjectSetup
   } = useForgeKitStore()
   const { send, isStreaming } = useSendMessage()
 
-  const currentPhaseIndex = PHASES.findIndex((p) => p.id === currentPhase)
+  const visiblePhaseIds = useMemo(
+    () => detectDefinedPhases(phaseSourceText, tasks),
+    [phaseSourceText, tasks]
+  )
+  const visiblePhases = PHASES.filter((p) => visiblePhaseIds.includes(p.id))
+  const currentPhaseIndex = visiblePhases.findIndex((p) => p.id === currentPhase)
 
   const handleInvoke = (role: ForgeKitRole) => {
     if (isStreaming) return
@@ -81,7 +109,12 @@ export function LeftPanel(): JSX.Element {
       <section className="lp-section lp-section-grow">
         <div className="lp-label">Faza rada</div>
         <div className="lp-phase-list">
-          {PHASES.map((p, i) => {
+          {visiblePhases.length === 0 && (
+            <div className="lp-phase-empty">
+              Faze ce se pojaviti kada ih projekat definise.
+            </div>
+          )}
+          {visiblePhases.map((p, i) => {
             const isDone   = i < currentPhaseIndex
             const isActive = currentPhase === p.id
             return (

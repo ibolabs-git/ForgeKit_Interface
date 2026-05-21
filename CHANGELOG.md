@@ -13,6 +13,18 @@ Format: `[verzija] — datum — opis`
 
 ---
 
+## [1.0.21] - 2026-05-21 - Runtime role sync i dinamicke faze
+
+### Stabilizacija
+- `INVOKE` komanda sada odmah postavlja runtime ulogu pre pocetka stream-a, tako da aktivna kartica u levom panelu i role badge poruke ostaju uskladjeni.
+- Levi panel vise ne prikazuje hardkodovane faze `F1-F4` cim se kreira novi projekat; faze se prikazuju tek kada se pojave u projektnom toku ili taskovima.
+- Task lista je dopunjena backlog stavkama za auto-zatvaranje taskova, pracenje potrosnje/performansi po modelu i project phase editor kao buducu nadogradnju.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+
+---
+
 ## [1.0.20] - 2026-05-20 - Runtime role boundary i file action guard
 
 ### Stabilizacija

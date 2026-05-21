@@ -5,11 +5,13 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { buildRePrimeMessages } from '../utils/forgekit-context'
+import type { ForgeKitRole } from '../types'
 
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[[A-Z][A-Z\s]+\]\s*)?(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
 const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uklju\u010di)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|re\u017eim|mode)\b)?/i
+const INVOKE_REGEX = /^\[INVOKE:(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]$/i
 const INIT_TEMPLATE_PATHS = [
   'README.md',
   'BRANCH_MANIFEST.md',
@@ -37,6 +39,11 @@ function normalizeOutboundText(text: string): string {
 function isInternalTemplateMessage(content: string): boolean {
   const trimmed = content.trim()
   return trimmed.startsWith('[TEMPLATE_INJECT]') || READ_TEMPLATE_ONLY_REGEX.test(trimmed)
+}
+
+function extractInvokedRole(content: string): ForgeKitRole | null {
+  const match = content.trim().match(INVOKE_REGEX)
+  return match ? (match[1].toUpperCase() as ForgeKitRole) : null
 }
 
 function buildTemplateContinuation(fetched: { path: string; content: string }[]): string {
@@ -122,6 +129,7 @@ export function useSendMessage() {
 
     const outboundText = normalizeOutboundText(text)
     const isForgeKitInit = outboundText === '[FORGEKIT_INIT]' && !options.hiddenUser
+    const invokedRole = extractInvokedRole(outboundText)
     const modelInput = isForgeKitInit
       ? buildForgeKitInitContext(await loadTemplates(INIT_TEMPLATE_PATHS))
       : outboundText
@@ -131,7 +139,7 @@ export function useSendMessage() {
 
     const messageId = `ai-${Date.now()}`
     activeMessageIdRef.current = messageId
-    startAssistantMessage(messageId)
+    startAssistantMessage(messageId, invokedRole ?? undefined)
 
     const effectiveModel = customModelId.trim() || selectedModel
     const needsRePrime = modelJustChanged || contextStatus === 'needs_refresh'

@@ -226,7 +226,7 @@ interface ForgeKitStore {
 
   // ── Akcije — poruke ──
   addUserMessage: (content: string) => string
-  startAssistantMessage: (messageId: string) => void
+  startAssistantMessage: (messageId: string, initialRole?: ForgeKitRole) => void
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
   addErrorMessage: (error: string, messageId: string) => void
@@ -439,15 +439,16 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     return id
   },
 
-  startAssistantMessage: (messageId) => {
+  startAssistantMessage: (messageId, initialRole) => {
     set((s) => ({
       isStreaming: true,
       streamingMessageId: messageId,
+      activeRole: initialRole ?? s.activeRole,
       // Ažuriraj streaming indikator u tab headeru
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: true } : t),
       messages: [...s.messages, {
         id: messageId, role: 'assistant', content: '',
-        forgeRole: s.activeRole, timestamp: Date.now(), isStreaming: true
+        forgeRole: initialRole ?? s.activeRole, timestamp: Date.now(), isStreaming: true
       }]
     }))
   },

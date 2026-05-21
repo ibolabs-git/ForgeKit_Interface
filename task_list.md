@@ -4,7 +4,7 @@
 ForgeKit Interface App
 
 ## Poslednje azurirano
-2026-05-19
+2026-05-21
 
 ## Nivo
 STANDARD
@@ -143,11 +143,12 @@ STANDARD
 
 | Prioritet | Stavka |
 |---|---|
-| Visok | Dopuniti system prompt uputstvom za READ_TEMPLATE koristenje |
-| Visok | AbortController za pravo zaustavljanje streaminga |
-| Srednji | Filtrirati TEMPLATE_INJECT poruke iz Re-Prime istorije |
-| Srednji | Stilizovati / sakriti INVOKE poruke u chat-u |
-| Srednji | Session persist (export/import JSON) |
+| Visok | Stabilizovati NVIDIA provider timeout/fallback i jasnije prikazati kada model ne vraca odgovor |
+| Srednji | Dodati korisnicko objasnjenje za blokirane Project File Actions stavke |
+| Srednji | Proveriti runtime role sync u duzim invoke tokovima kroz vise modela |
+| Srednji | Auto-zatvaranje i deduplikacija taskova kada AI vrati zavrsen task koji vec postoji u task listi |
+| Srednji | Pracenje potrosnje i performansi po modelu: procena tokena, vreme do prvog tokena, ukupno vreme odgovora i timeout broj |
+| Nizak | Project phase editor evidentirati kao buducu nadogradnju; za sada faze ostaju automatski detektovane iz toka i taskova |
 | Nizak | Ollama provider (lokalni modeli) |
 | Nizak | Token counter u SidePanel-u |
 | Nizak | Keyboard shortcut za invoke ulogu (Ctrl+1..6) |

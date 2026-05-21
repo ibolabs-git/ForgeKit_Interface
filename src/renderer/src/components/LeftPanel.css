@@ -126,6 +126,14 @@
   flex-direction: column;
 }
 
+.lp-phase-empty {
+  padding: 8px 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .lp-phase-item {
   display: flex;
   align-items: center;
