@@ -6,15 +6,34 @@ Format: `[verzija] - datum - opis`
 
 ---
 
-## [Unreleased] - v1.0.24 planning
+## [Unreleased] - sledeci ciklus
 
 ### Otvoreno
-- Confirmed phase refresh: levi phase sidebar treba dodatno proveriti i osvezavati nakon potvrdjene izmene fazne strukture.
 - Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
 - Project session report treba dalje obogatiti odlukama, file action statusima i memory signalima.
 - U glavni ForgeKit repo treba uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` kao inicijalni mentor/handoff dokument ako se potvrdi kao standard.
+
+---
+
+## [1.0.24] - 2026-05-22 - Dinamicke faze i live role sync
+
+### Stabilizacija
+- Levi phase sidebar vise nije ogranicen na `F1-F4`; parser prihvata proizvoljan broj faza i verzijske faze tipa `v1.0 - Core Operations`, `v1.1 - Exercise Sets`, `v1.2 - Reminders`.
+- Faze se sortiraju po realnom redosledu i mogu se osveziti iz kasnijeg potvrdjenog projektno-faznog output-a, sto resava PulseFit scenario gde su faze promenjene posle Reviewer/Premortem provere.
+- Aktivna uloga se sada sinhronizuje tokom stream-a: ako model krene u segment `[THINKER]`, `[REVIEWER]`, `[BUILDER]`, `[OBSERVER]` ili `[MEMORY CURATOR]`, levi role panel, desni session status i streaming poruka se uskladjuju odmah, ne tek posle kraja odgovora.
+- Model switch audit zapis je normalizovan na ASCII `old->new` format i parser prihvata stare varijante (`->`, `→`, mojibake zapis), pa promena modela ostaje vidljiva u chatu i project session report-u.
+- Release skripta sada prosledjuje argumente `gh`/`npm` komandama preko eksplicitnih named parametara, da deploy ne moze lazno proci prikazivanjem samo `gh` help-a.
+- Verzija bumpovana na `1.0.24`.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+
+### Ostaje otvoreno
+- `POKRENI FORGEKIT` treba dobiti jasniju post-init namenu.
+- Re-Prime treba prosiriti u puniji handoff/state packet.
+- NVIDIA provider timeout/fallback ostaje poseban provider task.
 
 ---
 

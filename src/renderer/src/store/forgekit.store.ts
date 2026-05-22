@@ -5,7 +5,7 @@ import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, Proj
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
 const ROLE_LINE_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]/gim
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
-const PHASE_REGEX = /\b(?:F([1-4])|Faza\s*([1-4])|Phase\s*([1-4]))\b/i
+const PHASE_REGEX = /\b(?:F(\d+)|Faza\s*(\d+)|Phase\s*(\d+))\b/i
 
 // Ključne riječi koje signaliziraju task sekciju (case-insensitive)
 const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
@@ -60,6 +60,10 @@ function resolveMessageRole(content: string, fallbackRole: ForgeKitRole): ForgeK
     if (VALID_ROLES.includes(role)) return role
   }
   return fallbackRole
+}
+
+function createModelSwitchContent(from: string, to: string, timestamp: number): string {
+  return `[MODEL_SWITCH:${from}->${to}:${timestamp}]`
 }
 
 function hasVisibleAssistantConversation(messages: ChatMessage[]): boolean {
@@ -484,7 +488,19 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   // Token se dodaje na streamingContent string — O(1) operacija.
   // MessageBubble sa isStreaming=true čita streamingContent direktno iz store-a.
   appendStreamToken: (token, _messageId) => {
-    set((s) => ({ streamingContent: s.streamingContent + token }))
+    set((s) => {
+      const nextContent = s.streamingContent + token
+      const nextRole = resolveMessageRole(nextContent, s.activeRole)
+      return {
+        streamingContent: nextContent,
+        activeRole: nextRole,
+        messages: s.messages.map((m) =>
+          m.id === s.streamingMessageId && m.isStreaming
+            ? { ...m, forgeRole: nextRole }
+            : m
+        )
+      }
+    })
   },
 
   finalizeMessage: (messageId) => {
@@ -666,7 +682,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       const switchMsg: ChatMessage = {
         id: `model-switch-${timestamp}`,
         role: 'assistant',
-        content: `[MODEL_SWITCH:${oldEffective}\u2192${newEffective}:${timestamp}]`,
+        content: createModelSwitchContent(oldEffective, newEffective, timestamp),
         forgeRole: 'SYSTEM',
         timestamp
       }
@@ -699,12 +715,13 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     const isMidSession = hasVisibleAssistantConversation(s.messages)
 
     if (isMidSession && newModel !== s.selectedModel) {
+      const timestamp = Date.now()
       const switchMsg: ChatMessage = {
-        id: `model-switch-${Date.now()}`,
+        id: `model-switch-${timestamp}`,
         role: 'assistant',
-        content: `[MODEL_SWITCH:${oldEffective}→${newModel}:${Date.now()}]`,
+        content: createModelSwitchContent(oldEffective, newModel, timestamp),
         forgeRole: 'SYSTEM',
-        timestamp: Date.now()
+        timestamp
       }
       set((st) => ({
         selectedModel: newModel,
@@ -713,7 +730,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         contextStatus: 'needs_refresh',
         previousEffectiveModel: oldEffective,
         messages: [...st.messages, switchMsg],
-        modelHistory: [...st.modelHistory, { from: oldEffective, to: newModel, time: Date.now() }]
+        modelHistory: [...st.modelHistory, { from: oldEffective, to: newModel, time: timestamp }]
       }))
     } else {
       set({ selectedModel: newModel, customModelId: '' })
@@ -728,12 +745,13 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     const isMidSession = hasVisibleAssistantConversation(s.messages)
 
     if (isMidSession && newEffective !== oldEffective && id.trim()) {
+      const timestamp = Date.now()
       const switchMsg: ChatMessage = {
-        id: `model-switch-${Date.now()}`,
+        id: `model-switch-${timestamp}`,
         role: 'assistant',
-        content: `[MODEL_SWITCH:${oldEffective}→${newEffective}:${Date.now()}]`,
+        content: createModelSwitchContent(oldEffective, newEffective, timestamp),
         forgeRole: 'SYSTEM',
-        timestamp: Date.now()
+        timestamp
       }
       set((st) => ({
         customModelId: id,
@@ -741,7 +759,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         contextStatus: 'needs_refresh',
         previousEffectiveModel: oldEffective,
         messages: [...st.messages, switchMsg],
-        modelHistory: [...st.modelHistory, { from: oldEffective, to: newEffective, time: Date.now() }]
+        modelHistory: [...st.modelHistory, { from: oldEffective, to: newEffective, time: timestamp }]
       }))
     } else {
       set({ customModelId: id })

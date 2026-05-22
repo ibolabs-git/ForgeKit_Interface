@@ -160,7 +160,7 @@ export function ChatWindow(): JSX.Element {
         const raw = msg.content.replace(/^\[MODEL_SWITCH:/, '').replace(/\]$/, '')
         const lastColon = raw.lastIndexOf(':')
         const pair = lastColon >= 0 ? raw.slice(0, lastColon) : raw
-        const [from, to] = pair.split('\u2192')
+        const [from, to] = pair.split(/->|→|â†’/)
         const time = new Date(msg.timestamp).toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' })
         const line = to ? `Model promenjen: ${from} -> ${to}` : `Model promenjen: ${pair}`
         if (format === 'md') lines.push(`\n---\n*${line} — ${time}*\n---\n`)

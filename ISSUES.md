@@ -10,14 +10,7 @@ Prioriteti:
 
 ---
 
-## Otvoreni issues za v1.0.24+
-
-### [ISS-017] Phase sidebar se ne osvezava posle potvrdjene izmene faza
-- **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
-- **Simptom:** Inicijalne faze se prikazu u levom sidebar-u, ali nakon Reviewer/Premortem predloga i korisnicke potvrde nove fazne strukture sidebar ostaje na starom modelu.
-- **Ocekivano:** Kada korisnik potvrdi novi fazni model ili Orchestrator eksplicitno zakljuca faze, sidebar treba da osvezi faze iz potvrdjene strukture.
-- **Status:** Otvoreno - dodati confirmed phase update trigger.
+## Otvoreni issues za v1.0.25+
 
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
@@ -40,13 +33,6 @@ Prioriteti:
 - **Ocekivano:** Intake pitanja treba da budu kratka: jedna odluka po poruci, uz najvise jednu kratku recenicu obrazlozenja.
 - **Status:** Otvoreno - doraditi prompt/guidance za kraca intake pitanja u ForgeKit app kontekstu.
 
-### [ISS-006] Spontani role tag u AI odgovoru ne uskladjuje runtime ulogu
-- **Prioritet:** VAZNO
-- **Otkriveno:** v1.0.21 test - 2026-05-21
-- **Simptom:** Model moze u odgovoru sam zapoceti segment kao `[THINKER]`, dok UI i dalje prikazuje `ORCHESTRATOR MODE` ili prethodnu runtime ulogu.
-- **Napomena:** Kontrolisani poziv uloge je prosiren na prirodne poruke i klik na levi role tile. To ne resava svaki spontani `[ROLE]` tag koji model sam upise bez korisnickog poziva.
-- **Status:** Otvoreno - tretirati role promenu samo kroz eksplicitni invoke/handoff/return signal, ne kroz svaki tekstualni tag.
-
 ### [ISS-004] NVIDIA modeli povremeno ne vrate odgovor u ocekivanom roku
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.19/v1.0.20 - 2026-05-20
@@ -64,6 +50,20 @@ Prioriteti:
 ---
 
 ## Zatvoreni issues
+
+### [ISS-017] Phase sidebar se ne osvezava posle potvrdjene izmene faza
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
+- **Simptom:** Inicijalne faze se prikazu u levom sidebar-u, ali nakon Reviewer/Premortem predloga i korisnicke potvrde nove fazne strukture sidebar ostaje na starom modelu.
+- **Resenje:** Parser vise nije ogranicen na `F1-F4`; prepoznaje `F<number>`, `Faza/Phase <number>` i verzijske faze tipa `v1.0 - Core Operations`.
+- **Status:** Zatvoreno - v1.0.24
+
+### [ISS-006] Spontani role tag u AI odgovoru ne uskladjuje runtime ulogu
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.21 test - 2026-05-21
+- **Simptom:** Model moze u odgovoru sam zapoceti segment kao `[THINKER]`, dok UI i dalje prikazuje `ORCHESTRATOR MODE` ili prethodnu runtime ulogu.
+- **Resenje:** Streaming token parser sada detektuje poslednji validni role tag tokom odgovora i odmah uskladjuje aktivnu ulogu, poruku i session status.
+- **Status:** Zatvoreno - v1.0.24
 
 ### [ISS-019] Validan PROJECT_WRITE_FILE se blokira zbog zaglavljene uloge
 - **Prioritet:** KRITICNO

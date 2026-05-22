@@ -74,7 +74,7 @@ Write-Host "Version: $Version"
 Write-Host "Tag:     $tag"
 
 Run-Step "Provera GitHub autentifikacije" {
-    Invoke-Native "gh" @("auth", "status")
+    Invoke-Native -Exe "gh" -ArgumentList @("auth", "status")
 }
 
 Run-Step "Provera da li tag vec postoji lokalno" {
@@ -92,7 +92,7 @@ Run-Step "Provera da li tag vec postoji na origin" {
 
 if (-not $SkipBuild) {
     Run-Step "Build installer-a" {
-        Invoke-Native "npm.cmd" @("run", "package")
+        Invoke-Native -Exe "npm.cmd" -ArgumentList @("run", "package")
     }
 }
 
@@ -142,7 +142,7 @@ if (-not $DryRun) {
 }
 
 Run-Step "Kreiranje GitHub release-a" {
-    Invoke-Native "gh" @(
+    Invoke-Native -Exe "gh" -ArgumentList @(
         "release", "create", $tag,
         "--repo", "ibolabs-git/ForgeKit_Interface",
         "--title", "ForgeKit Interface v$Version",

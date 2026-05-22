@@ -4,7 +4,7 @@
 ForgeKit Interface App
 
 ## Poslednje azurirano
-2026-05-21
+2026-05-22
 
 ## Nivo
 STANDARD
@@ -45,7 +45,7 @@ Napomena: v1.0.22 nije resio role return, Builder file-action recovery, Re-Prime
 - [x] Popraviti `PROJECT_WRITE_FILE` ownership nakon role handoff-a kroz Builder recovery tok.
 - [x] Ako Orchestrator/Reviewer predlozi file action, app nudi `Prosledi Builder-u` umesto samo blokade.
 - [x] Builder postaje validan source za pending write kroz kontrolisano prosledjivanje blokirane akcije.
-- [ ] Phase sidebar mora da se osvezi nakon potvrdjene fazne odluke, ne na svaki draft.
+- [x] Phase sidebar mora da se osvezi nakon potvrdjene fazne odluke i da podrzi faze van starog `F1-F4` modela.
 
 ## v1.0.23 - P1 init/context flow
 
@@ -54,6 +54,26 @@ Napomena: v1.0.22 nije resio role return, Builder file-action recovery, Re-Prime
 - [ ] Promeniti stanje dugmeta `POKRENI FORGEKIT` nakon init-a u `Osvezi ForgeKit kontekst` ili slicno.
 - [x] Re-Prime dugme sada forsira slanje project context handoff-a; puniji state packet sa potvrdjenim odlukama ostaje za v1.0.24.
 - [x] Vratiti model switch divider u chat/report tok kao audit trag promene modela.
+
+## v1.0.24 - P0 stabilizacija posle PulseFit testa
+
+- [x] Prosiriti phase parser na proizvoljan broj `F<number>` faza.
+- [x] Prepoznati verzijske faze tipa `v1.0`, `v1.1`, `v1.2`, `v2` i prikazati ih u levom phase sidebar-u.
+- [x] Sinhronizovati aktivnu ulogu tokom stream-a kada model u odgovoru otvori novi role segment.
+- [x] Uskladiti role badge, levi role semafor i desni session status tokom dugih odgovora, ne samo na kraju poruke.
+- [x] Normalizovati model switch zapis na `old->new` i sacuvati kompatibilnost sa starim zapisima.
+- [x] Proveriti da `project_session_report` i dalje prikazuje promene modela kao audit trag.
+- [x] Ispraviti release skriptu da `gh auth status` i `gh release create` dobijaju stvarne argumente, ne prazan `gh` poziv.
+
+## v1.0.24 - Ostaje za sledeci ciklus
+
+- [ ] Preimenovati/repurpose dugme `POKRENI FORGEKIT` posle init-a.
+- [ ] Prosiriti Re-Prime u pravi handoff/state packet: cilj, odluke, otvorena pitanja, pending file actions, sledeci korak.
+- [ ] NVIDIA timeout/fallback: razlikovati timeout, rate limit, provider error i model_not_found.
+- [ ] Project session report obogatiti file action statusima i memory signalima.
+- [ ] Uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` u glavni ForgeKit repo kao provereni inicijalni handoff dokument.
+- [ ] Dokumentovati Creue Real / sub-agent runtime mehanizam u ForgeKit Tool master dokumentaciji.
+- [ ] Razdvojiti app zadatke od ForgeKit Tool zadataka u trajnom razvojnom tracker-u.
 
 ## v1.0.23 - P1 provider/report stabilizacija
 

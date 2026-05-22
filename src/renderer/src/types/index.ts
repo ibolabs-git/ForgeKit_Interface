@@ -8,7 +8,7 @@ export type ForgeKitRole =
   | 'USER'
   | 'SYSTEM'
 
-export type ForgeKitPhase = 'F1' | 'F2' | 'F3' | 'F4'
+export type ForgeKitPhase = `F${number}`
 
 export interface Task {
   id: string

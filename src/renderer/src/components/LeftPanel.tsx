@@ -18,6 +18,10 @@ const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
 const PHASE_MARKER_REGEX = /\bF([1-4])\b/gi
 const PHASE_DEFINITION_REGEX = /\b(?:Faza|Phase)\s*([1-4])\s*(?:[—–-]\s*([^\n\r]+))?/gi
 
+const PHASE_MARKER_ANY_REGEX = /\bF(\d+)\b/gi
+const PHASE_DEFINITION_ANY_REGEX = /\b(?:Faza|Phase)\s*(\d+)\s*(?:[—–-]\s*([^\n\r]+))?/gi
+const VERSION_PHASE_REGEX = /^\s*(?:#{1,4}\s*)?(v\d+(?:\.\d+)?)\s*(?:[—–-]\s*([^\n\r]+))?/gim
+
 type DetectedPhase = { id: ForgeKitPhase; label: string; short: string }
 
 function roleDisplayName(role: ForgeKitRole): string {
@@ -40,6 +44,11 @@ function normalizePhaseLabel(id: ForgeKitPhase, rawLabel?: string): DetectedPhas
   return { id, label: `${id} — ${cleanLabel}`, short: id }
 }
 
+function phaseSortValue(phase: ForgeKitPhase): number {
+  const match = phase.match(/\d+/)
+  return match ? Number(match[0]) : 999
+}
+
 function detectDefinedPhases(sourceText: string, tasks: Task[]): DetectedPhase[] {
   const detected = new Map<ForgeKitPhase, DetectedPhase>()
 
@@ -51,15 +60,22 @@ function detectDefinedPhases(sourceText: string, tasks: Task[]): DetectedPhase[]
     if (task.phase) addPhase(task.phase)
   }
 
-  for (const match of sourceText.matchAll(PHASE_DEFINITION_REGEX)) {
+  for (const match of sourceText.matchAll(PHASE_DEFINITION_ANY_REGEX)) {
     addPhase(`F${match[1]}` as ForgeKitPhase, match[2])
   }
 
-  for (const match of sourceText.matchAll(PHASE_MARKER_REGEX)) {
+  let versionIndex = 1
+  for (const match of sourceText.matchAll(VERSION_PHASE_REGEX)) {
+    const label = [match[1], match[2]].filter(Boolean).join(' - ')
+    addPhase(`F${versionIndex}` as ForgeKitPhase, label)
+    versionIndex += 1
+  }
+
+  for (const match of sourceText.matchAll(PHASE_MARKER_ANY_REGEX)) {
     addPhase(`F${match[1]}` as ForgeKitPhase)
   }
 
-  return PHASES.map((p) => detected.get(p.id)).filter(Boolean) as DetectedPhase[]
+  return [...detected.values()].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
 }
 
 export function LeftPanel(): JSX.Element {

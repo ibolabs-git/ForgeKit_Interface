@@ -243,7 +243,7 @@ export const MessageBubble = React.memo(function MessageBubble(
   }
 
   // ── Model switch divider ──
-  const modelSwitchMatch = message.content.match(/^\[MODEL_SWITCH:(.+?)→(.+?):(\d+)\]$/)
+  const modelSwitchMatch = message.content.match(/^\[MODEL_SWITCH:(.+?)(?:->|→|â†’)(.+?):(\d+)\]$/)
   if (modelSwitchMatch) {
     const [, from, to, ts] = modelSwitchMatch
     const d = new Date(Number(ts))
@@ -254,10 +254,10 @@ export const MessageBubble = React.memo(function MessageBubble(
       <div className="model-switch-divider">
         <div className="session-divider-line" />
         <span className="model-switch-label">
-          ⇄ Model promenjen — <span className="model-switch-from">{fromShort}</span>
-          {' → '}
+          Model promenjen - <span className="model-switch-from">{fromShort}</span>
+          {' -> '}
           <span className="model-switch-to">{toShort}</span>
-          {' · '}{timeLabel}
+          {' - '}{timeLabel}
         </span>
         <div className="session-divider-line" />
       </div>
