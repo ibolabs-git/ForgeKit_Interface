@@ -4,6 +4,7 @@ import { ChatWindow } from './components/ChatWindow'
 import { InputBar } from './components/InputBar'
 import { LeftPanel } from './components/LeftPanel'
 import { SidePanel } from './components/SidePanel'
+import { TopStateBar } from './components/TopStateBar'
 import { SettingsModal } from './components/SettingsModal'
 import { ProjectSetupModal } from './components/ProjectSetupModal'
 import { HandoffModal } from './components/HandoffModal'
@@ -100,6 +101,7 @@ export function App(): JSX.Element {
   return (
     <div className="app-shell">
       <Header />
+      <TopStateBar />
       <div className="app-body">
         <LeftPanel />
         <main className="app-main">

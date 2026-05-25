@@ -1,0 +1,86 @@
+.top-state-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(180px, 1.25fr) repeat(5, minmax(112px, 0.8fr)) minmax(190px, 1.2fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.top-state-group {
+  min-width: 0;
+  padding: 7px 10px;
+  background: var(--bg-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.top-state-primary {
+  border-left: 2px solid var(--accent);
+}
+
+.top-state-label {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-state-value {
+  min-width: 0;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-state-subvalue {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.top-state-ok {
+  color: var(--success);
+}
+
+.top-state-warn {
+  color: var(--warning);
+}
+
+.top-state-danger {
+  color: var(--danger);
+}
+
+.top-state-model .top-state-value,
+.top-state-next .top-state-value {
+  text-transform: none;
+}
+
+@media (max-width: 1280px) {
+  .top-state-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .top-state-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
