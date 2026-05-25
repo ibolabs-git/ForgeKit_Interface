@@ -780,7 +780,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     streamingMessageId: null,
     streamingContent: '',
     projectName: s.projectName,
-    projectPath: s.projectPath
+    projectPath: s.projectPath,
+    projectFileActions: [],
+    modelJustChanged: false,
+    contextStatus: 'synced',
+    highlightMessageId: null
   })),
 
   initTabsFromSaved: (savedTabs, savedActiveId) => {
