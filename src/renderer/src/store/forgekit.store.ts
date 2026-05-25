@@ -54,6 +54,13 @@ function extractExplicitRole(content: string): ForgeKitRole | null {
 
 function resolveMessageRole(content: string, fallbackRole: ForgeKitRole): ForgeKitRole {
   const matches = [...content.matchAll(ROLE_LINE_REGEX)]
+  const returnMatch = content.match(/(?:vra[cć]am\s+tok\s+orchestratoru|vra[cć]am\s+orchestratoru)/i)
+
+  if (returnMatch) {
+    const lastRoleIndex = matches.length > 0 ? matches[matches.length - 1].index ?? -1 : -1
+    if ((returnMatch.index ?? -1) >= lastRoleIndex) return 'ORCHESTRATOR'
+  }
+
   for (let i = matches.length - 1; i >= 0; i--) {
     const role = matches[i][1].trim() as ForgeKitRole
     if (VALID_ROLES.includes(role)) return role
