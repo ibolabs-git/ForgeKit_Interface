@@ -10,6 +10,15 @@ export type ForgeKitRole =
 
 export type ForgeKitPhase = `F${number}`
 
+export type PhaseLockStatus = 'none' | 'draft' | 'confirmed' | 'synced'
+
+export interface ProjectPhaseDefinition {
+  id: ForgeKitPhase
+  label: string
+  summary?: string
+  status?: PhaseLockStatus
+}
+
 export interface Task {
   id: string
   content: string
@@ -69,7 +78,7 @@ export interface ProjectFileAction {
   createdAt: number
   sourceMessageId?: string
   sourceRole?: ForgeKitRole
-  status: 'pending' | 'writing' | 'written' | 'error' | 'blocked'
+  status: 'pending' | 'writing' | 'written' | 'error' | 'blocked' | 'stale' | 'requires_review'
   errorMessage?: string
 }
 
