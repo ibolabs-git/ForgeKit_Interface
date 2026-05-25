@@ -130,6 +130,7 @@ export function useSendMessage() {
     modelJustChanged, contextStatus,
     currentPhase, activeRole, tasks,
     projectName, previousEffectiveModel,
+    projectPhases, phaseLockStatus,
     projectFileActions,
     addUserMessage, startAssistantMessage,
     appendStreamToken, finalizeMessage,
@@ -204,6 +205,7 @@ export function useSendMessage() {
       history = buildRePrimeMessages(
         {
           projectName, currentPhase, activeRole, tasks,
+          projectPhases, phaseLockStatus,
           messages, selectedModel: effectiveModel, previousEffectiveModel
         },
         modelInput
@@ -291,7 +293,7 @@ export function useSendMessage() {
   }, [
     isStreaming, messages, selectedProvider, selectedModel, customModelId,
     modelJustChanged, contextStatus, currentPhase, activeRole, tasks,
-    projectName, previousEffectiveModel, projectFileActions,
+    projectName, previousEffectiveModel, projectPhases, phaseLockStatus, projectFileActions,
     addUserMessage, startAssistantMessage, appendStreamToken,
     finalizeMessage, addErrorMessage, cancelStreaming, markContextSynced,
     addProjectFileAction, addSystemMessage, loadTemplates

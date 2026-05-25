@@ -22,6 +22,8 @@ function ReprimePreviewContent(): JSX.Element {
   const tasks         = useForgeKitStore((s) => s.tasks)
   const selectedModel = useForgeKitStore((s) => s.selectedModel)
   const customModelId = useForgeKitStore((s) => s.customModelId)
+  const projectPhases = useForgeKitStore((s) => s.projectPhases)
+  const phaseLockStatus = useForgeKitStore((s) => s.phaseLockStatus)
 
   const text = buildProjectContext({
     projectName,
@@ -30,7 +32,9 @@ function ReprimePreviewContent(): JSX.Element {
     tasks,
     messages,
     selectedModel: customModelId.trim() || selectedModel,
-    previousEffectiveModel: selectedModel
+    previousEffectiveModel: selectedModel,
+    projectPhases,
+    phaseLockStatus
   })
 
   return <pre className="reprime-preview-text">{text}</pre>

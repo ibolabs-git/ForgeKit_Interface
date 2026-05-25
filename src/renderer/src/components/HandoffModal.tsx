@@ -12,7 +12,7 @@ const PHASE_LABELS: Record<string, string> = {
 export function HandoffModal(): JSX.Element | null {
   const {
     showHandoffModal, setShowHandoffModal,
-    projectName, currentPhase, tasks, messages,
+    projectName, currentPhase, projectPhases, phaseLockStatus, tasks, messages,
     selectedProvider, selectedModel, projectPath,
     addSessionDivider
   } = useForgeKitStore()
@@ -29,8 +29,8 @@ export function HandoffModal(): JSX.Element | null {
     buildHandoffDoc(projectName, currentPhase, tasks, messages, selectedProvider, selectedModel, {
       includeTasks,
       includeMessages
-    }),
-    [projectName, currentPhase, tasks, messages, selectedProvider, selectedModel, includeTasks, includeMessages]
+    }, projectPhases, phaseLockStatus),
+    [projectName, currentPhase, projectPhases, phaseLockStatus, tasks, messages, selectedProvider, selectedModel, includeTasks, includeMessages]
   )
 
   const handleSave = async () => {
@@ -72,7 +72,7 @@ export function HandoffModal(): JSX.Element | null {
         <div className="handoff-meta">
           <span className="handoff-meta-item"><span className="handoff-meta-label">PROJEKAT</span>{projectName}</span>
           <span className="handoff-meta-sep">·</span>
-          <span className="handoff-meta-item"><span className="handoff-meta-label">FAZA</span>{PHASE_LABELS[currentPhase] ?? currentPhase}</span>
+          <span className="handoff-meta-item"><span className="handoff-meta-label">PHASE / FAZA</span>{projectPhases.find((p) => p.id === currentPhase)?.label ?? PHASE_LABELS[currentPhase] ?? currentPhase}</span>
           <span className="handoff-meta-sep">·</span>
           <span className="handoff-meta-item"><span className="handoff-meta-label">MODEL</span>{selectedModel}</span>
         </div>
