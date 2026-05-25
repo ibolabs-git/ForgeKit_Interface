@@ -243,7 +243,7 @@ export const MessageBubble = React.memo(function MessageBubble(
   }
 
   // ── Model switch divider ──
-  const modelSwitchMatch = message.content.match(/^\[MODEL_SWITCH:(.+?)(?:->|→|â†’)(.+?):(\d+)\]$/)
+  const modelSwitchMatch = message.content.match(/^\[MODEL_SWITCH:(.+?)(?:->|\u2192)(.+?):(\d+)\]$/)
   if (modelSwitchMatch) {
     const [, from, to, ts] = modelSwitchMatch
     const d = new Date(Number(ts))
