@@ -1,11 +1,10 @@
 import { create } from 'zustand'
-import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, ProjectFileAction } from '../types'
+import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, ProjectFileAction, ProjectPhaseDefinition, PhaseLockStatus } from '../types'
 
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
 const ROLE_LINE_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]/gim
 const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
-const PHASE_REGEX = /\b(?:F(\d+)|Faza\s*(\d+)|Phase\s*(\d+))\b/i
 
 // Ključne riječi koje signaliziraju task sekciju (case-insensitive)
 const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
@@ -62,6 +61,102 @@ function resolveMessageRole(content: string, fallbackRole: ForgeKitRole): ForgeK
   return fallbackRole
 }
 
+const GENERIC_PHASE_LABELS = new Set([
+  'fundament',
+  'forgekit logika',
+  'multi-model',
+  'multi model',
+  'nexus',
+  'nexus implementacija'
+])
+
+function cleanPhaseLabel(label?: string): string {
+  return (label ?? '')
+    .replace(/\*\*/g, '')
+    .replace(/<\/?[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[:.]+$/g, '')
+    .trim()
+}
+
+function isGenericPhaseLabel(label: string): boolean {
+  const clean = cleanPhaseLabel(label).toLowerCase()
+  return !clean || GENERIC_PHASE_LABELS.has(clean) || /^f\d+$/i.test(clean)
+}
+
+function phaseSortValue(phase: ForgeKitPhase): number {
+  const match = phase.match(/\d+/)
+  return match ? Number(match[0]) : 999
+}
+
+function addPhase(
+  map: Map<ForgeKitPhase, ProjectPhaseDefinition>,
+  id: ForgeKitPhase,
+  label: string,
+  status: PhaseLockStatus
+) {
+  const clean = cleanPhaseLabel(label)
+  if (isGenericPhaseLabel(clean)) return
+  if (!map.has(id)) {
+    map.set(id, { id, label: clean, status })
+  }
+}
+
+function parseProjectPhasesFromText(content: string, status: PhaseLockStatus = 'confirmed'): ProjectPhaseDefinition[] {
+  const phases = new Map<ForgeKitPhase, ProjectPhaseDefinition>()
+
+  for (const line of content.split('\n')) {
+    const cells = line
+      .split('|')
+      .map((cell) => cleanPhaseLabel(cell))
+      .filter(Boolean)
+
+    if (cells.length >= 2 && /^F\d+$/i.test(cells[0])) {
+      addPhase(phases, cells[0].toUpperCase() as ForgeKitPhase, cells[1], status)
+    }
+  }
+
+  for (const match of content.matchAll(/^\s*(?:#{1,4}\s*)?(F\d+)\s*(?:[—–-]\s*|:\s+)([^\n\r|]+)/gim)) {
+    addPhase(phases, match[1].toUpperCase() as ForgeKitPhase, match[2], status)
+  }
+
+  let versionIndex = 1
+  for (const match of content.matchAll(/^\s*(?:#{1,4}\s*)?(v\d+(?:\.\d+)?)\s*(?:[—–-]\s*|:\s+)([^\n\r|]+)/gim)) {
+    const label = [match[1], match[2]].filter(Boolean).join(' - ')
+    addPhase(phases, `F${versionIndex}` as ForgeKitPhase, label, status)
+    versionIndex += 1
+  }
+
+  return [...phases.values()].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
+}
+
+function extractPhaseLock(content: string): { phases: ProjectPhaseDefinition[]; status: PhaseLockStatus } | null {
+  const synced = content.match(/\[PROJECT_PHASES_SYNCED\]([\s\S]+?)\[\/PROJECT_PHASES_SYNCED\]/i)
+  if (synced) {
+    const phases = parseProjectPhasesFromText(synced[1], 'synced')
+    return phases.length ? { phases, status: 'synced' } : null
+  }
+
+  const confirmed = content.match(/\[PROJECT_PHASES_CONFIRMED\]([\s\S]+?)\[\/PROJECT_PHASES_CONFIRMED\]/i)
+  if (confirmed) {
+    const phases = parseProjectPhasesFromText(confirmed[1], 'confirmed')
+    return phases.length ? { phases, status: 'confirmed' } : null
+  }
+
+  const legacy = content.match(/\[PHASE_UPDATE\]([\s\S]+?)\[\/PHASE_UPDATE\]/i)
+  if (legacy) {
+    const phases = parseProjectPhasesFromText(legacy[1], 'confirmed')
+    return phases.length ? { phases, status: 'confirmed' } : null
+  }
+
+  return null
+}
+
+function isPhasesFile(filename: string): boolean {
+  const normalized = filename.replace(/\\/g, '/').toLowerCase()
+  return normalized.endsWith('/phases.md') || normalized === 'phases.md'
+}
+
 function createModelSwitchContent(from: string, to: string, timestamp: number): string {
   return `[MODEL_SWITCH:${from}->${to}:${timestamp}]`
 }
@@ -110,12 +205,6 @@ function extractMemoryContent(content: string): string | null {
   return m ? m[1].trim() : null
 }
 
-function extractPhase(content: string): ForgeKitPhase | null {
-  const m = content.match(PHASE_REGEX)
-  const phaseNumber = m?.[1] ?? m?.[2] ?? m?.[3]
-  return phaseNumber ? (`F${phaseNumber}` as ForgeKitPhase) : null
-}
-
 // ── Tab tipovi ────────────────────────────────────────────────────────────────
 
 /** Lagani zapis za tab bar — samo prikaz */
@@ -136,6 +225,8 @@ interface TabSnapshot {
   isStreaming: boolean
   activeRole: ForgeKitRole
   currentPhase: ForgeKitPhase
+  projectPhases: ProjectPhaseDefinition[]
+  phaseLockStatus: PhaseLockStatus
   tasks: Task[]
   selectedProvider: string
   selectedModel: string
@@ -156,6 +247,8 @@ function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
     isStreaming: false,
     activeRole: 'ORCHESTRATOR',
     currentPhase: 'F1',
+    projectPhases: [],
+    phaseLockStatus: 'none',
     tasks: [],
     selectedProvider: 'anthropic',
     selectedModel: 'claude-sonnet-4-6',
@@ -178,6 +271,8 @@ function captureSnapshot(s: ForgeKitStore): TabSnapshot {
     isStreaming: s.isStreaming,
     activeRole: s.activeRole,
     currentPhase: s.currentPhase,
+    projectPhases: s.projectPhases,
+    phaseLockStatus: s.phaseLockStatus,
     tasks: s.tasks,
     selectedProvider: s.selectedProvider,
     selectedModel: s.selectedModel,
@@ -212,6 +307,8 @@ interface ForgeKitStore {
   // ── ForgeKit stanje (aktivni tab) ──
   activeRole: ForgeKitRole
   currentPhase: ForgeKitPhase
+  projectPhases: ProjectPhaseDefinition[]
+  phaseLockStatus: PhaseLockStatus
   tasks: Task[]
 
   // ── Provider / model (aktivni tab) ──
@@ -258,6 +355,8 @@ interface ForgeKitStore {
   removeTask: (id: string) => void
   clearTasks: () => void
   setPhase: (phase: ForgeKitPhase) => void
+  setProjectPhases: (phases: ProjectPhaseDefinition[], status?: PhaseLockStatus) => void
+  setPhaseLockStatus: (status: PhaseLockStatus) => void
   setProjectName: (name: string) => void
   newSession: () => void
   initTabsFromSaved: (
@@ -423,6 +522,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   streamingContent: '',
   activeRole: 'ORCHESTRATOR',
   currentPhase: 'F1',
+  projectPhases: [],
+  phaseLockStatus: 'none' as PhaseLockStatus,
   tasks: [],
   selectedProvider: 'anthropic',
   selectedModel: 'claude-sonnet-4-6',
@@ -512,14 +613,16 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     const currentMessageRole = get().messages.find((m) => m.id === messageId)?.forgeRole ?? get().activeRole
     const role = resolveMessageRole(fullContent, currentMessageRole)
     const newTasks = extractTasks(fullContent, messageId)
-    const phase = extractPhase(fullContent)
+    const phaseLock = extractPhaseLock(fullContent)
 
     set((s) => ({
       isStreaming: false,
       streamingMessageId: null,
       streamingContent: '',   // oslobodi buffer
       activeRole: role,
-      currentPhase: phase ?? s.currentPhase,
+      currentPhase: phaseLock?.phases.length ? phaseLock.phases[0].id : s.currentPhase,
+      projectPhases: phaseLock?.phases.length ? phaseLock.phases : s.projectPhases,
+      phaseLockStatus: phaseLock?.phases.length ? phaseLock.status : s.phaseLockStatus,
       tasks: newTasks.length > 0 ? [...s.tasks, ...newTasks] : s.tasks,
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
       messages: s.messages.map((m) =>
@@ -618,7 +721,23 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   clearTasks: () => set({ tasks: [] }),
 
-  setPhase: (phase) => set({ currentPhase: phase }),
+  setPhase: (phase) => set((s) => {
+    const allowed = s.projectPhases.some((p) => p.id === phase)
+    return {
+      currentPhase: (s.phaseLockStatus === 'confirmed' || s.phaseLockStatus === 'synced') && allowed
+        ? phase
+        : s.currentPhase
+    }
+  }),
+
+  setProjectPhases: (phases, status = 'confirmed') => set((s) => ({
+    projectPhases: phases,
+    phaseLockStatus: phases.length > 0 ? status : 'none',
+    currentPhase: phases[0]?.id ?? s.currentPhase,
+    contextStatus: 'needs_refresh'
+  })),
+
+  setPhaseLockStatus: (status) => set({ phaseLockStatus: status }),
 
   setProjectName: (name) => set((s) => ({
     projectName: name,
@@ -632,6 +751,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     tasks: [],
     activeRole: 'ORCHESTRATOR',
     currentPhase: 'F1',
+    projectPhases: [],
+    phaseLockStatus: 'none',
     isStreaming: false,
     streamingMessageId: null,
     streamingContent: '',
@@ -826,11 +947,27 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   },
 
   updateProjectFileActionStatus: (id, status, errorMessage) => {
-    set((s) => ({
-      projectFileActions: s.projectFileActions.map((a) =>
+    set((s) => {
+      const target = s.projectFileActions.find((a) => a.id === id)
+      const nextActions = s.projectFileActions.map((a) =>
         a.id === id ? { ...a, status, errorMessage } : a
       )
-    }))
+
+      if (target && status === 'written' && isPhasesFile(target.filename)) {
+        const phases = parseProjectPhasesFromText(target.content, 'synced')
+        if (phases.length > 0) {
+          return {
+            projectFileActions: nextActions,
+            projectPhases: phases,
+            phaseLockStatus: 'synced' as PhaseLockStatus,
+            currentPhase: phases[0].id,
+            contextStatus: 'needs_refresh' as const
+          }
+        }
+      }
+
+      return { projectFileActions: nextActions }
+    })
   },
 
   removeProjectFileAction: (id) => {
@@ -860,6 +997,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       tasks: s.tasks,
       messages: s.messages.filter((m) => !m.isStreaming),
       currentPhase: s.currentPhase,
+      projectPhases: s.projectPhases,
+      phaseLockStatus: s.phaseLockStatus,
       selectedProvider: s.selectedProvider,
       selectedModel: s.selectedModel,
       customModelId: s.customModelId,
@@ -882,6 +1021,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         tasks?: Task[]
         messages?: ChatMessage[]
         currentPhase?: ForgeKitPhase
+        projectPhases?: ProjectPhaseDefinition[]
+        phaseLockStatus?: PhaseLockStatus
         selectedProvider?: string
         selectedModel?: string
         customModelId?: string
@@ -898,6 +1039,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         tasks: data.tasks ?? [],
         messages: data.messages ?? [],
         currentPhase: data.currentPhase ?? s.currentPhase,
+        projectPhases: data.projectPhases ?? [],
+        phaseLockStatus: data.phaseLockStatus ?? 'none',
         selectedProvider: safeProvider,
         selectedModel: safeModel,
         customModelId: data.customModelId ?? '',

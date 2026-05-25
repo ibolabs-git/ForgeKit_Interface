@@ -1,28 +1,12 @@
 import { useMemo } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { useSendMessage } from '../hooks/useSendMessage'
-import type { ForgeKitPhase, ForgeKitRole, Task } from '../types'
+import type { ForgeKitRole } from '../types'
 import './LeftPanel.css'
 
 const ALL_ROLES: ForgeKitRole[] = [
   'ORCHESTRATOR', 'THINKER', 'BUILDER', 'REVIEWER', 'MEMORY CURATOR', 'OBSERVER'
 ]
-
-const PHASES: { id: ForgeKitPhase; label: string; short: string }[] = [
-  { id: 'F1', label: 'F1 — Fundament',       short: 'F1' },
-  { id: 'F2', label: 'F2 — ForgeKit Logika', short: 'F2' },
-  { id: 'F3', label: 'F3 — Multi-model',     short: 'F3' },
-  { id: 'F4', label: 'F4 — Nexus',           short: 'F4' }
-]
-
-const PHASE_MARKER_REGEX = /\bF([1-4])\b/gi
-const PHASE_DEFINITION_REGEX = /\b(?:Faza|Phase)\s*([1-4])\s*(?:[—–-]\s*([^\n\r]+))?/gi
-
-const PHASE_MARKER_ANY_REGEX = /\bF(\d+)\b/gi
-const PHASE_DEFINITION_ANY_REGEX = /\b(?:Faza|Phase)\s*(\d+)\s*(?:[—–-]\s*([^\n\r]+))?/gi
-const VERSION_PHASE_REGEX = /^\s*(?:#{1,4}\s*)?(v\d+(?:\.\d+)?)\s*(?:[—–-]\s*([^\n\r]+))?/gim
-
-type DetectedPhase = { id: ForgeKitPhase; label: string; short: string }
 
 function roleDisplayName(role: ForgeKitRole): string {
   return role
@@ -32,71 +16,26 @@ function roleDisplayName(role: ForgeKitRole): string {
     .join(' ')
 }
 
-function normalizePhaseLabel(id: ForgeKitPhase, rawLabel?: string): DetectedPhase {
-  const fallback = PHASES.find((p) => p.id === id) ?? { id, label: id, short: id }
-  const cleanLabel = rawLabel
-    ?.replace(/\*\*/g, '')
-    .replace(/<\/?[^>]+>/g, '')
-    .replace(/[:.]+$/g, '')
-    .trim()
-
-  if (!cleanLabel) return fallback
-  return { id, label: `${id} — ${cleanLabel}`, short: id }
-}
-
-function phaseSortValue(phase: ForgeKitPhase): number {
+function phaseSortValue(phase: string): number {
   const match = phase.match(/\d+/)
   return match ? Number(match[0]) : 999
 }
 
-function detectDefinedPhases(sourceText: string, tasks: Task[]): DetectedPhase[] {
-  const detected = new Map<ForgeKitPhase, DetectedPhase>()
-
-  const addPhase = (phase: ForgeKitPhase, label?: string) => {
-    if (!detected.has(phase)) detected.set(phase, normalizePhaseLabel(phase, label))
-  }
-
-  for (const task of tasks) {
-    if (task.phase) addPhase(task.phase)
-  }
-
-  for (const match of sourceText.matchAll(PHASE_DEFINITION_ANY_REGEX)) {
-    addPhase(`F${match[1]}` as ForgeKitPhase, match[2])
-  }
-
-  let versionIndex = 1
-  for (const match of sourceText.matchAll(VERSION_PHASE_REGEX)) {
-    const label = [match[1], match[2]].filter(Boolean).join(' - ')
-    addPhase(`F${versionIndex}` as ForgeKitPhase, label)
-    versionIndex += 1
-  }
-
-  for (const match of sourceText.matchAll(PHASE_MARKER_ANY_REGEX)) {
-    addPhase(`F${match[1]}` as ForgeKitPhase)
-  }
-
-  return [...detected.values()].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
-}
-
 export function LeftPanel(): JSX.Element {
-  // OPT-08: messages.length selektor umjesto cijelog messages arraya.
   const messagesLength = useForgeKitStore((s) => s.messages.length)
-  const phaseSourceText = useForgeKitStore((s) =>
-    s.messages
-      .filter((m) => !m.isStreaming)
-      .map((m) => m.content)
-      .join('\n')
-  )
   const {
     activeRole, currentPhase,
-    projectName, projectPath, tasks,
+    projectName, projectPath,
+    projectPhases, phaseLockStatus,
     setPhase, setShowProjectSetup
   } = useForgeKitStore()
   const { send, isStreaming } = useSendMessage()
 
   const visiblePhases = useMemo(
-    () => detectDefinedPhases(phaseSourceText, tasks),
-    [phaseSourceText, tasks]
+    () => (phaseLockStatus === 'confirmed' || phaseLockStatus === 'synced')
+      ? [...projectPhases].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
+      : [],
+    [projectPhases, phaseLockStatus]
   )
   const currentPhaseIndex = visiblePhases.findIndex((p) => p.id === currentPhase)
 
@@ -113,7 +52,6 @@ export function LeftPanel(): JSX.Element {
   return (
     <aside className="left-panel">
 
-      {/* Agent uloge — grid */}
       <section className="lp-section">
         <div className="lp-label">Agenti</div>
         <div className="lp-role-grid">
@@ -138,7 +76,6 @@ export function LeftPanel(): JSX.Element {
         </div>
       </section>
 
-      {/* ForgeKit Init */}
       <section className="lp-section lp-section-init">
         <button
           className={`lp-btn-init${isStreaming ? ' disabled' : ''}`}
@@ -151,38 +88,36 @@ export function LeftPanel(): JSX.Element {
         </button>
       </section>
 
-      {/* Faza rada */}
       <section className="lp-section lp-section-grow">
         <div className="lp-label">Faza rada</div>
         <div className="lp-phase-list">
           {visiblePhases.length === 0 && (
             <div className="lp-phase-empty">
-              Faze ce se pojaviti kada ih projekat definise.
+              Faze ce se pojaviti kada ih projekat potvrdi i upise.
             </div>
           )}
           {visiblePhases.map((p, i) => {
-            const isDone   = i < currentPhaseIndex
+            const isDone = i < currentPhaseIndex
             const isActive = currentPhase === p.id
             return (
               <div
                 key={p.id}
                 className={`lp-phase-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
                 onClick={() => setPhase(p.id)}
-                title={`Prebaci na ${p.id}`}
+                title={phaseLockStatus === 'synced' ? `Faza iz phases.md: ${p.id}` : `Potvrdjena faza: ${p.id}`}
               >
                 <span className="lp-phase-check">
-                  {isDone   && <span className="lp-check-done">✓</span>}
+                  {isDone && <span className="lp-check-done">✓</span>}
                   {isActive && <span className="lp-check-active">■</span>}
                   {!isDone && !isActive && <span className="lp-check-empty">□</span>}
                 </span>
-                <span className={`lp-phase-txt ${isActive ? 'active' : ''}`}>{p.label}</span>
+                <span className={`lp-phase-txt ${isActive ? 'active' : ''}`}>{p.id} — {p.label}</span>
               </div>
             )
           })}
         </div>
       </section>
 
-      {/* Projekat */}
       <section className="lp-section">
         <div className="lp-label">Projekat</div>
         <div className="lp-project-name">{projectName}</div>
@@ -201,7 +136,6 @@ export function LeftPanel(): JSX.Element {
           {projectPath ? 'Promeni folder' : '+ Podesi folder'}
         </button>
       </section>
-
     </aside>
   )
 }
