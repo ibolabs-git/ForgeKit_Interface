@@ -159,6 +159,19 @@ function extractPhaseLock(content: string): { phases: ProjectPhaseDefinition[]; 
   return null
 }
 
+const CORRECTION_SIGNAL_RE = /\b(ispravka|korekcija|moja greska|moja greška|pogresno|pogrešno|nije tacno|nije tačno|menjam odluku|promena odluke|promenio sam odluku)\b/i
+
+function markDependentActionsForReview(actions: ProjectFileAction[]): ProjectFileAction[] {
+  return actions.map((action) => {
+    if (action.status !== 'pending' && action.status !== 'writing') return action
+    return {
+      ...action,
+      status: 'requires_review' as const,
+      errorMessage: 'Korisnik je uneo korekciju odluke. Pregledaj draft pre upisa.'
+    }
+  })
+}
+
 function isPhasesFile(filename: string): boolean {
   const normalized = filename.replace(/\\/g, '/').toLowerCase()
   return normalized.endsWith('/phases.md') || normalized === 'phases.md'
@@ -560,8 +573,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   addUserMessage: (content) => {
     const id = `msg-${Date.now()}`
+    const hasCorrectionSignal = CORRECTION_SIGNAL_RE.test(content)
     set((s) => ({
-      messages: [...s.messages, { id, role: 'user', content, forgeRole: 'USER', timestamp: Date.now() }]
+      messages: [...s.messages, { id, role: 'user', content, forgeRole: 'USER', timestamp: Date.now() }],
+      projectFileActions: hasCorrectionSignal ? markDependentActionsForReview(s.projectFileActions) : s.projectFileActions,
+      contextStatus: hasCorrectionSignal ? 'needs_refresh' : s.contextStatus
     }))
     return id
   },
