@@ -12,6 +12,27 @@ Prioriteti:
 
 ## Otvoreni issues za v1.0.25+
 
+### [ISS-020] Phase Sync protokol ne razlikuje placeholder, confirmed, written i synced faze
+- **Prioritet:** KRITICNO
+- **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
+- **Simptom:** Levi sidebar, session state i Re-Prime mogu tretirati genericke ForgeKit faze kao projektne faze. Model je na osnovu toga pogresno zakljucio da je "F1 fundament paket kompletan" i pitao za prelazak na "F2 ForgeKit Logika", sto nije projektna faza PulseFit-a.
+- **Ocekivano:** App mora razlikovati app/setup placeholder faze od projektnih faza. Sidebar i Re-Prime smeju koristiti samo faze koje su potvrdjene kroz `PROJECT_PHASES_CONFIRMED` ili sinhronizovane kroz `PROJECT_PHASES_SYNCED`.
+- **Status:** Otvoreno - v1.0.25 stabilizacija.
+
+### [ISS-021] Korisnicka korekcija ne zastareva zavisne draftove i file actions
+- **Prioritet:** KRITICNO
+- **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
+- **Simptom:** Kada korisnik ispravi odluku, raniji nacrti, pending file actions, fazni zakljucci ili taskovi mogu ostati vazeci iako zavise od pogresne odluke.
+- **Ocekivano:** Korekcioni signali korisnika moraju oznaciti zavisne nacrte/file actions kao `requires_review` ili `stale`, osveziti context status i traziti novi Decision Lock ako korekcija utice na stack, faze, scope, arhitekturu ili dokumente.
+- **Status:** Otvoreno - v1.0.25 stabilizacija.
+
+### [ISS-022] project_security_manifest se pogresno koristi za zakljucavanje arhitekture
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
+- **Simptom:** Manifest moze sadrzati i zakljucati arhitekturne odluke kao row-level tenant model, JWT tenant ID ili hosting pre posebnog Decision Lock-a.
+- **Ocekivano:** `project_security_manifest.md` zakljucava filesystem i bezbednosne granice rada nad fajlovima. Arhitektura, stack, tenant model, data model, faze i implementacioni scope smeju biti zakljucani samo kroz odvojeni Decision Lock i odgovarajuci projektni dokument.
+- **Status:** Otvoreno - v1.0.25 Master/app uskladjivanje.
+
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.22 test - 2026-05-21
@@ -56,7 +77,7 @@ Prioriteti:
 - **Otkriveno:** v1.0.22 PulseFit test - 2026-05-21
 - **Simptom:** Inicijalne faze se prikazu u levom sidebar-u, ali nakon Reviewer/Premortem predloga i korisnicke potvrde nove fazne strukture sidebar ostaje na starom modelu.
 - **Resenje:** Parser vise nije ogranicen na `F1-F4`; prepoznaje `F<number>`, `Faza/Phase <number>` i verzijske faze tipa `v1.0 - Core Operations`.
-- **Status:** Zatvoreno - v1.0.24
+- **Status:** Delimicno zatvoreno - v1.0.24 parser; dublji Phase Sync problem prati se kroz ISS-020.
 
 ### [ISS-006] Spontani role tag u AI odgovoru ne uskladjuje runtime ulogu
 - **Prioritet:** VAZNO
@@ -143,7 +164,10 @@ Prioriteti:
 - Promena modela nije dozvoljena dok agent generise odgovor.
 - Project File Actions ne smeju tvrditi da je fajl upisan dok app ne potvrdi stvarni upis.
 - Role badge, chat label i session status moraju ostati uskladjeni.
-- Phase sidebar se menja samo nakon potvrdjene fazne odluke.
+- Phase sidebar se menja samo nakon potvrdjene ili sinhronizovane projektne fazne odluke.
+- Re-Prime kontekst mora nositi isti `projectPhases` i `phaseLockStatus` koji prikazuje sidebar.
+- Korekcija korisnika mora oznaciti zavisne pending file actions kao `requires_review`.
+- `project_security_manifest.md` ne sme zakljucati arhitekturu, stack, tenant model, data model ili faze bez posebnog Decision Lock-a.
 
 ---
 
