@@ -35,6 +35,9 @@ export interface OperationalTruthState {
   providerModel: string
 }
 
+export type FileActionRecoveryGroup = 'active' | 'recentWritten' | 'oldWritten'
+export type PhaseLadderStepState = 'done' | 'active' | 'inactive'
+
 interface OperationalStateInput {
   activeRole: ForgeKitRole
   currentPhase: ForgeKitPhase
@@ -48,6 +51,19 @@ interface OperationalStateInput {
   isStreaming: boolean
 }
 
+export interface PhaseLadderInput {
+  currentPhase: ForgeKitPhase
+  projectPhases: ProjectPhaseDefinition[]
+  phaseLockStatus: PhaseLockStatus
+  projectFileActions: ProjectFileAction[]
+}
+
+export interface PhaseLadderStep {
+  id: PhaseOperationalStatus
+  label: string
+  state: PhaseLadderStepState
+}
+
 const criticalStatuses: ProjectFileAction['status'][] = [
   'error',
   'blocked',
@@ -55,8 +71,108 @@ const criticalStatuses: ProjectFileAction['status'][] = [
   'stale'
 ]
 
+const fileActionRank: Record<ProjectFileAction['status'], number> = {
+  error: 1,
+  blocked: 2,
+  requires_review: 3,
+  stale: 4,
+  pending: 5,
+  writing: 6,
+  written: 7
+}
+
 function isCriticalFileAction(action: ProjectFileAction): boolean {
   return criticalStatuses.includes(action.status)
+}
+
+function isPhasesFile(filename: string): boolean {
+  const normalized = filename.replace(/\\/g, '/').toLowerCase()
+  return normalized.endsWith('/phases.md') || normalized === 'phases.md'
+}
+
+export function sortProjectFileActions(actions: ProjectFileAction[]): ProjectFileAction[] {
+  return [...actions].sort((a, b) => {
+    const rank = fileActionRank[a.status] - fileActionRank[b.status]
+    if (rank !== 0) return rank
+    return b.createdAt - a.createdAt
+  })
+}
+
+export function splitProjectFileActions(
+  actions: ProjectFileAction[],
+  recentWrittenLimit = 2
+): Record<FileActionRecoveryGroup, ProjectFileAction[]> {
+  const sorted = sortProjectFileActions(actions)
+  const written = sorted.filter((action) => action.status === 'written')
+
+  return {
+    active: sorted.filter((action) => action.status !== 'written'),
+    recentWritten: written.slice(0, recentWrittenLimit),
+    oldWritten: written.slice(recentWrittenLimit)
+  }
+}
+
+export function getFileActionStatusCopy(status: ProjectFileAction['status']): string {
+  const copy: Record<ProjectFileAction['status'], string> = {
+    error: 'error / greska',
+    blocked: 'blocked / blokirano',
+    requires_review: 'requires review / trazi proveru',
+    stale: 'stale / zastarelo',
+    pending: 'pending write / ceka upis',
+    writing: 'writing / upis u toku',
+    written: 'written / upisano'
+  }
+
+  return copy[status]
+}
+
+export function getFileActionRecoveryAction(action: ProjectFileAction): string {
+  const recovery: Record<ProjectFileAction['status'], string> = {
+    error: 'Retry or remove / Ponovi ili ukloni',
+    blocked: 'Forward to Builder / Prosledi Builder-u',
+    requires_review: 'Review before write / Proveri pre upisa',
+    stale: 'Refresh draft / Osvezi draft',
+    pending: 'Confirm write / Potvrdi upis',
+    writing: 'Wait for write / Sacekaj upis',
+    written: 'No recovery needed / Oporavak nije potreban'
+  }
+
+  return recovery[action.status]
+}
+
+export function buildPhaseLadder(input: PhaseLadderInput): PhaseLadderStep[] {
+  const phaseIsKnown = input.projectPhases.some((phase) => phase.id === input.currentPhase)
+  const confirmed = phaseIsKnown && (input.phaseLockStatus === 'confirmed' || input.phaseLockStatus === 'synced')
+  const pendingWrite = input.projectFileActions.some((action) =>
+    isPhasesFile(action.filename) && (action.status === 'pending' || action.status === 'writing')
+  )
+  const written = input.projectFileActions.some((action) =>
+    isPhasesFile(action.filename) && action.status === 'written'
+  )
+  const synced = phaseIsKnown && input.phaseLockStatus === 'synced'
+
+  const truth: Record<PhaseOperationalStatus, boolean> = {
+    proposed_not_confirmed: false,
+    confirmed,
+    pending_write: pendingWrite,
+    written,
+    synced,
+    validated: false
+  }
+  const order: PhaseOperationalStatus[] = ['confirmed', 'pending_write', 'written', 'synced', 'validated']
+  const activeIndex = order.reduce((found, step, index) => truth[step] ? index : found, -1)
+
+  return order.map((step, index) => ({
+    id: step,
+    label: {
+      confirmed: 'confirmed / potvrdjeno',
+      pending_write: 'pending_write / ceka upis',
+      written: 'written / upisano',
+      synced: 'synced / sinhronizovano',
+      validated: 'validated / validirano'
+    }[step],
+    state: truth[step] ? (index === activeIndex ? 'active' : 'done') : 'inactive'
+  }))
 }
 
 function resolvePhaseState(

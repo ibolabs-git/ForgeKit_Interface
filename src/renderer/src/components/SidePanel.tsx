@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { useSendMessage } from '../hooks/useSendMessage'
 import { buildProjectContext } from '../utils/forgekit-context'
+import {
+  buildPhaseLadder,
+  getFileActionRecoveryAction,
+  getFileActionStatusCopy,
+  splitProjectFileActions
+} from '../utils/operational-state'
 import type { ModelInfo, ProjectFileAction } from '../types'
 import './SidePanel.css'
 
@@ -49,7 +55,7 @@ async function confirmProjectFileAction(
   id: string,
   filename: string,
   content: string,
-  updateStatus: (id: string, status: 'pending' | 'writing' | 'written' | 'error' | 'blocked', msg?: string) => void
+  updateStatus: (id: string, status: ProjectFileAction['status'], msg?: string) => void
 ) {
   updateStatus(id, 'writing')
   const result = await window.api.projectWriteFile(filename, content)
@@ -67,6 +73,7 @@ export function SidePanel(): JSX.Element {
   const {
     isStreaming,
     activeRole, currentPhase, tasks,
+    projectPhases, phaseLockStatus,
     selectedProvider, selectedModel, customModelId, contextStatus,
     setProvider, setModel, setCustomModelId,
     memoryRecords, projectFileActions, projectName,
@@ -139,6 +146,20 @@ export function SidePanel(): JSX.Element {
   const modelDisplayName = isCustomActive
     ? 'Custom'
     : shortName(availableModels.find((m) => m.id === selectedModel)?.name ?? selectedModel)
+  const phaseLadder = useMemo(() => buildPhaseLadder({
+    currentPhase,
+    projectPhases,
+    phaseLockStatus,
+    projectFileActions
+  }), [currentPhase, projectPhases, phaseLockStatus, projectFileActions])
+  const fileActionGroups = useMemo(
+    () => splitProjectFileActions(projectFileActions),
+    [projectFileActions]
+  )
+  const visibleFileActions = [
+    ...fileActionGroups.active,
+    ...fileActionGroups.recentWritten
+  ]
 
   const handleAddTask = () => {
     const text = newTaskInput.trim()
@@ -232,6 +253,23 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
             {reprimePreviewOpen ? '▾' : '▸'} RE-PRIME KONTEKST
           </button>
           {reprimePreviewOpen && <ReprimePreviewContent />}
+        </div>
+
+        <div className="phase-state-ladder">
+          <div className="phase-state-title">Phase State / Stanje faze</div>
+          <div className="phase-state-steps">
+            {phaseLadder.map((step) => (
+              <div key={step.id} className={`phase-state-step phase-state-${step.state}`}>
+                <span className="phase-state-dot" />
+                <span className="phase-state-copy">{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="phase-state-note">
+            {projectPhases.some((phase) => phase.id === currentPhase)
+              ? 'Project phase / Projektna faza'
+              : 'Placeholder phase / App faza'}
+          </div>
         </div>
       </section>
 
@@ -356,54 +394,96 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
       {/* ── Memory Curator ── */}
       {/* Project file actions */}
       <section className="panel-section panel-file-actions">
-        <div className="panel-label">PROJECT FILE ACTIONS</div>
+        <div className="panel-label">Project File Actions / Akcije projektnih fajlova</div>
 
         {projectFileActions.length === 0 ? (
           <div className="file-actions-empty">
-            Predlozi za fajlove ce se pojaviti ovde pre upisa.
+            File proposals / Predlozi za fajlove ce se pojaviti ovde pre upisa.
           </div>
         ) : (
-          <ul className="file-action-list">
-            {projectFileActions.map((action) => (
-              <li key={action.id} className={`file-action-item file-action-${action.status}`}>
-                <div className="file-action-path" title={action.filename}>{action.filename}</div>
-                <div className="file-action-meta">
-                  {action.status === 'pending' && `ceka potvrdu${action.sourceRole ? ` · ${action.sourceRole}` : ''}`}
-                  {action.status === 'writing' && 'upis...'}
-                  {action.status === 'written' && 'upisano'}
-                  {action.status === 'blocked' && (action.errorMessage ?? 'blokirano')}
-                  {action.status === 'error' && (action.errorMessage ?? 'greska')}
-                </div>
-                <div className="file-action-buttons">
-                  {action.status === 'pending' && (
-                    <button
-                      className="file-action-confirm"
-                      onClick={() => confirmProjectFileAction(
-                        action.id,
-                        action.filename,
-                        action.content,
-                        updateProjectFileActionStatus
+          <>
+            <ul className="file-action-list">
+              {visibleFileActions.map((action) => {
+                const isPassive = action.status === 'written'
+                return (
+                  <li key={action.id} className={`file-action-item file-action-${action.status}`}>
+                    <div className="file-action-path-wrap">
+                      <span className="file-action-field">affected path / zahvacena putanja</span>
+                      <div className="file-action-path" title={action.filename}>{action.filename}</div>
+                    </div>
+                    <div className="file-action-meta">
+                      <span className={`file-action-status file-action-status-${action.status}`}>
+                        {getFileActionStatusCopy(action.status)}
+                      </span>
+                      {action.sourceRole && <span className="file-action-role">{action.sourceRole}</span>}
+                    </div>
+                    {action.errorMessage && (
+                      <div className="file-action-message">{action.errorMessage}</div>
+                    )}
+                    {!isPassive && (
+                      <div className="file-action-recovery">
+                        <span className="file-action-field">recovery action / akcija oporavka</span>
+                        <span>{getFileActionRecoveryAction(action)}</span>
+                      </div>
+                    )}
+                    <div className="file-action-buttons">
+                      {action.status === 'pending' && (
+                        <button
+                          className="file-action-confirm"
+                          onClick={() => confirmProjectFileAction(
+                            action.id,
+                            action.filename,
+                            action.content,
+                            updateProjectFileActionStatus
+                          )}
+                        >Write / Upisi</button>
                       )}
-                    >Upisi</button>
-                  )}
-                  {action.status === 'blocked' && (
-                    <button
-                      className="file-action-confirm"
-                      onClick={() => handleForwardBlockedAction(action)}
-                      disabled={isStreaming}
-                      title="Prosledi draft Builder-u da ga pravilno pripremi za upis"
-                    >Prosledi Builder-u</button>
-                  )}
-                  {(action.status === 'pending' || action.status === 'written' || action.status === 'error' || action.status === 'blocked') && (
-                    <button
-                      className="file-action-remove"
-                      onClick={() => removeProjectFileAction(action.id)}
-                    >Ukloni</button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+                      {action.status === 'blocked' && (
+                        <button
+                          className="file-action-confirm"
+                          onClick={() => handleForwardBlockedAction(action)}
+                          disabled={isStreaming}
+                          title="Forward to Builder / Prosledi Builder-u"
+                        >Forward / Prosledi</button>
+                      )}
+                      {(action.status === 'pending' ||
+                        action.status === 'written' ||
+                        action.status === 'error' ||
+                        action.status === 'blocked' ||
+                        action.status === 'requires_review' ||
+                        action.status === 'stale') && (
+                        <button
+                          className="file-action-remove"
+                          onClick={() => removeProjectFileAction(action.id)}
+                        >Remove / Ukloni</button>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+
+            {fileActionGroups.oldWritten.length > 0 && (
+              <details className="file-action-history">
+                <summary>Old written history / Stara upisana istorija ({fileActionGroups.oldWritten.length})</summary>
+                <ul className="file-action-list file-action-list-history">
+                  {fileActionGroups.oldWritten.map((action) => (
+                    <li key={action.id} className={`file-action-item file-action-${action.status}`}>
+                      <div className="file-action-path-wrap">
+                        <span className="file-action-field">affected path / zahvacena putanja</span>
+                        <div className="file-action-path" title={action.filename}>{action.filename}</div>
+                      </div>
+                      <div className="file-action-meta">
+                        <span className={`file-action-status file-action-status-${action.status}`}>
+                          {getFileActionStatusCopy(action.status)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </>
         )}
       </section>
 
