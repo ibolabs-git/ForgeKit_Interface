@@ -260,7 +260,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
         </div>
 
         <div className="phase-state-ladder">
-          <div className="phase-state-title">Phase State / Stanje faze</div>
+          <div className="phase-state-title">Stanje faze</div>
           <div className="phase-state-steps">
             {phaseLadder.map((step) => (
               <div key={step.id} className={`phase-state-step phase-state-${step.state}`}>
@@ -271,8 +271,8 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
           </div>
           <div className="phase-state-note">
             {projectPhases.some((phase) => phase.id === currentPhase)
-              ? 'Project phase / Projektna faza'
-              : 'Placeholder phase / App faza'}
+              ? 'Projektna faza'
+              : 'App faza'}
           </div>
         </div>
       </section>
@@ -398,11 +398,11 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
       {/* ── Memory Curator ── */}
       {/* Project file actions */}
       <section className="panel-section panel-file-actions">
-        <div className="panel-label">Project File Actions / Akcije projektnih fajlova</div>
+        <div className="panel-label">Project File Actions</div>
 
         {projectFileActions.length === 0 ? (
           <div className="file-actions-empty">
-            File proposals / Predlozi za fajlove ce se pojaviti ovde pre upisa.
+            Predlozi za fajlove ce se pojaviti ovde pre upisa.
           </div>
         ) : (
           <>
@@ -412,7 +412,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                 return (
                   <li key={action.id} className={`file-action-item file-action-${action.status}`}>
                     <div className="file-action-path-wrap">
-                      <span className="file-action-field">affected path / zahvacena putanja</span>
+                      <span className="file-action-field">zahvacena putanja</span>
                       <div className="file-action-path" title={action.filename}>{action.filename}</div>
                     </div>
                     <div className="file-action-meta">
@@ -426,7 +426,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                     )}
                     {!isPassive && (
                       <div className="file-action-recovery">
-                        <span className="file-action-field">recovery action / akcija oporavka</span>
+                        <span className="file-action-field">akcija oporavka</span>
                         <span>{getFileActionRecoveryAction(action)}</span>
                       </div>
                     )}
@@ -440,15 +440,15 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                             action.content,
                             updateProjectFileActionStatus
                           )}
-                        >Write / Upisi</button>
+                        >Upisi</button>
                       )}
                       {action.status === 'blocked' && (
                         <button
                           className="file-action-confirm"
                           onClick={() => handleForwardBlockedAction(action)}
                           disabled={isStreaming}
-                          title="Forward to Builder / Prosledi Builder-u"
-                        >Forward / Prosledi</button>
+                          title="Prosledi Builder-u"
+                        >Prosledi</button>
                       )}
                       {(action.status === 'pending' ||
                         action.status === 'written' ||
@@ -459,7 +459,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                         <button
                           className="file-action-remove"
                           onClick={() => removeProjectFileAction(action.id)}
-                        >Remove / Ukloni</button>
+                        >Ukloni</button>
                       )}
                     </div>
                   </li>
@@ -469,12 +469,12 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
 
             {fileActionGroups.oldWritten.length > 0 && (
               <details className="file-action-history">
-                <summary>Old written history / Stara upisana istorija ({fileActionGroups.oldWritten.length})</summary>
+                <summary>Stara upisana istorija ({fileActionGroups.oldWritten.length})</summary>
                 <ul className="file-action-list file-action-list-history">
                   {fileActionGroups.oldWritten.map((action) => (
                     <li key={action.id} className={`file-action-item file-action-${action.status}`}>
                       <div className="file-action-path-wrap">
-                        <span className="file-action-field">affected path / zahvacena putanja</span>
+                        <span className="file-action-field">zahvacena putanja</span>
                         <div className="file-action-path" title={action.filename}>{action.filename}</div>
                       </div>
                       <div className="file-action-meta">

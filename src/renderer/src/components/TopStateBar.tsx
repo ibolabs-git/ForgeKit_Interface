@@ -5,23 +5,23 @@ import type { OperationalSignalStatus, PhaseOperationalStatus } from '../utils/o
 import './TopStateBar.css'
 
 const signalCopy: Record<OperationalSignalStatus, string> = {
-  safe_to_continue: 'safe to continue / bezbedno za nastavak',
-  waiting_confirmation: 'waiting confirmation / ceka potvrdu',
-  pending_write: 'pending write / ceka upis',
-  recovery_required: 'recovery required / potreban oporavak',
-  blocked: 'blocked / blokirano',
-  stale: 'stale / zastarelo',
-  requires_review: 'requires review / trazi proveru',
-  validated: 'validated / validirano'
+  safe_to_continue: 'bezbedno za nastavak',
+  waiting_confirmation: 'ceka potvrdu',
+  pending_write: 'ceka upis',
+  recovery_required: 'potreban oporavak',
+  blocked: 'blokirano',
+  stale: 'zastarelo',
+  requires_review: 'trazi proveru',
+  validated: 'validirano'
 }
 
 const phaseCopy: Record<PhaseOperationalStatus, string> = {
-  proposed_not_confirmed: 'proposed not confirmed / predlozeno, nije potvrdjeno',
-  confirmed: 'confirmed / potvrdjeno',
-  pending_write: 'pending_write / ceka upis',
-  written: 'written / upisano',
-  synced: 'synced / sinhronizovano',
-  validated: 'validated / validirano'
+  proposed_not_confirmed: 'predlozeno, nije potvrdjeno',
+  confirmed: 'potvrdjeno',
+  pending_write: 'ceka upis',
+  written: 'upisano',
+  synced: 'sinhronizovano',
+  validated: 'validirano'
 }
 
 function signalTone(status: OperationalSignalStatus): string {
@@ -74,19 +74,19 @@ export function TopStateBar(): JSX.Element {
   return (
     <div className="top-state-bar">
       <div className="top-state-group top-state-primary">
-        <span className="top-state-label">SYSTEM STATE / STANJE SISTEMA</span>
+        <span className="top-state-label">Stanje sistema</span>
         <span className={`top-state-value top-state-${signalTone(operationalState.systemState)}`}>
           {signalCopy[operationalState.systemState]}
         </span>
       </div>
 
       <div className="top-state-group">
-        <span className="top-state-label">active role / aktivna uloga</span>
+        <span className="top-state-label">Aktivna uloga</span>
         <span className="top-state-value">{activeRole}</span>
       </div>
 
       <div className="top-state-group">
-        <span className="top-state-label">active phase / aktivna faza</span>
+        <span className="top-state-label">Aktivna faza</span>
         <span className="top-state-value" title={activePhaseLabel ?? currentPhase}>
           {currentPhase}
           {operationalState.phaseState && (
@@ -105,21 +105,21 @@ export function TopStateBar(): JSX.Element {
       </div>
 
       <div className="top-state-group">
-        <span className="top-state-label">Control Context / Kontrolni kontekst</span>
+        <span className="top-state-label">Kontrolni kontekst</span>
         <span className={`top-state-value top-state-${signalTone(operationalState.controlContext)}`}>
           {signalCopy[operationalState.controlContext]}
         </span>
       </div>
 
       <div className="top-state-group">
-        <span className="top-state-label">WRITE AUTHORITY / OVLASCENJE UPISA</span>
+        <span className="top-state-label">Ovlascenje upisa</span>
         <span className={`top-state-value top-state-${signalTone(operationalState.writeAuthority)}`}>
           {signalCopy[operationalState.writeAuthority]}
         </span>
       </div>
 
       <div className="top-state-group top-state-next">
-        <span className="top-state-label">NEXT SAFE ACTION / SLEDECI BEZBEDAN KORAK</span>
+        <span className="top-state-label">Sledeci bezbedan korak</span>
         <span className={`top-state-value top-state-${operationalState.hasBlockingFileAction ? 'danger' : 'ok'}`} title={criticalPath ?? operationalState.nextSafeAction}>
           {operationalState.nextSafeAction}
         </span>

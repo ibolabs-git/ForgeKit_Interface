@@ -1,9 +1,9 @@
 /**
  * ForgeKit Context Utilities
  *
- * Gradi Re-Prime context / Re-Prime kontekst i Handoff document / handoff dokument.
- * Aplikacija je nosilac kontinuiteta: modeli se mogu menjati, ali project state /
- * stanje projekta i phase state / stanje faze ostaju isti.
+ * Gradi Re-Prime kontekst i Handoff dokument.
+ * Aplikacija je nosilac kontinuiteta: modeli se mogu menjati, ali stanje projekta
+ * i stanje faze ostaju isti.
  */
 
 import type {
@@ -32,7 +32,7 @@ function formatPhaseLabel(
 
 function formatPhaseList(projectPhases: ProjectPhaseDefinition[], phaseLockStatus: PhaseLockStatus): string {
   if (!(phaseLockStatus === 'confirmed' || phaseLockStatus === 'synced') || projectPhases.length === 0) {
-    return 'projectPhases / projektne faze jos nisu confirmed / potvrdjene ili synced / sinhronizovane. Ne zakljucuj fazu iz slobodnog teksta.'
+    return 'Projektne faze jos nisu potvrdjene ili sinhronizovane. Ne zakljucuj fazu iz slobodnog teksta.'
   }
 
   return projectPhases
@@ -42,7 +42,7 @@ function formatPhaseList(projectPhases: ProjectPhaseDefinition[], phaseLockStatu
     .join('\n')
 }
 
-/** Gradi Handoff document / handoff dokument (koristi ga HandoffModal i Header). */
+/** Gradi Handoff dokument (koristi ga HandoffModal i Header). */
 export function buildHandoffDoc(
   projectName: string,
   phase: ForgeKitPhase,
@@ -62,18 +62,18 @@ export function buildHandoffDoc(
   const pending = tasks.filter((t) => !t.completed)
   const phaseText = formatPhaseLabel(phase, projectPhases, phaseLockStatus)
 
-  let doc = `# Handoff document / handoff dokument - ${projectName}
+  let doc = `# Handoff dokument - ${projectName}
 
 **Datum:** ${dateStr} u ${timeStr}
-**Phase / Faza:** ${phaseText}
-**Phase lock status / Status zakljucavanja faze:** ${phaseLockStatus}
+**Faza:** ${phaseText}
+**Status zakljucavanja faze:** ${phaseLockStatus}
 **Model:** ${provider} / ${model}
 
 ---
 `
 
   doc += `
-## Project phases / Projektne faze
+## Projektne faze
 
 ${formatPhaseList(projectPhases, phaseLockStatus)}
 
@@ -125,7 +125,7 @@ ${msgPreview}
 `
   }
 
-  doc += `\n*Handoff document / handoff dokument generisan automatski - ForgeKit Interface*\n*Nova sesija je pokrenuta nakon ovog zapisa.*\n`
+  doc += `\n*Handoff dokument generisan automatski - ForgeKit Interface*\n*Nova sesija je pokrenuta nakon ovog zapisa.*\n`
   return doc
 }
 
@@ -141,7 +141,7 @@ interface ProjectState {
   previousEffectiveModel: string
 }
 
-/** Kratki phase label / labela faze. */
+/** Kratka labela faze. */
 function phaseLabel(phase: ForgeKitPhase): string {
   switch (phase) {
     case 'F1': return 'F1 - Fundament (definisanje projekta)'
@@ -177,7 +177,7 @@ function extractRecentSummary(messages: ChatMessage[], maxChars = 600): string {
   return combined.length > maxChars ? combined.slice(0, maxChars) + '...' : combined
 }
 
-/** Gradi ForgeKit project context / projektni kontekst string (max ~800 tokena). */
+/** Gradi ForgeKit projektni kontekst string (max ~800 tokena). */
 export function buildProjectContext(state: ProjectState): string {
   const completedTasks = state.tasks.filter((t) => t.completed)
   const pendingTasks = state.tasks.filter((t) => !t.completed)
@@ -198,16 +198,16 @@ export function buildProjectContext(state: ProjectState): string {
   const recentOutput = extractRecentSummary(state.messages)
 
   return `PROJEKAT: ${state.projectName}
-ACTIVE PHASE / AKTIVNA FAZA: ${formatPhaseLabel(state.currentPhase, projectPhases, phaseLockStatus)}
-PHASE LOCK STATUS / STATUS ZAKLJUCAVANJA FAZE: ${phaseLockStatus}
-ACTIVE ROLE / AKTIVNA ULOGA: ${state.activeRole}
+AKTIVNA FAZA: ${formatPhaseLabel(state.currentPhase, projectPhases, phaseLockStatus)}
+STATUS ZAKLJUCAVANJA FAZE: ${phaseLockStatus}
+AKTIVNA ULOGA: ${state.activeRole}
 
-PROJECT PHASES / PROJEKTNE FAZE:
+PROJEKTNE FAZE:
 ${formatPhaseList(projectPhases, phaseLockStatus)}
 
 ${taskSummary || 'Nema definisanih taskova.'}
 
-RECENT RELEVANT OUTPUT / POSLEDNJI RELEVANTAN OUTPUT:
+POSLEDNJI RELEVANTAN OUTPUT:
 ${recentOutput}`
 }
 
@@ -217,9 +217,9 @@ export function buildModelSwitchNotice(from: string, to: string): string {
 Prethodni model: ${from}
 Novi model: ${to}
 
-Nastavi postojeci tok na osnovu datog project state / stanja projekta.
+Nastavi postojeci tok na osnovu datog stanja projekta.
 Ne resetuj projekat. Ne ponavljaj onboarding.
-Ne zakljucuj faze iz slobodnog teksta; phase state / stanje faze vazi tek kada je confirmed / potvrdjeno ili synced / sinhronizovano iz phases.md.
+Ne zakljucuj faze iz slobodnog teksta; stanje faze vazi tek kada je potvrdjeno ili sinhronizovano iz phases.md.
 Ako ti nedostaje kontekst, postavi jedno ciljano pitanje.`
 }
 
@@ -236,7 +236,7 @@ Ti si AI motor koji u svakom requestu dobija dovoljno konteksta da nastavi Forge
 Aplikacija je nosilac kontinuiteta - model se moze menjati, ForgeKit pravila ostaju ista.`
 
 /**
- * Gradi poruke za Re-Prime request / Re-Prime zahtev.
+ * Gradi poruke za Re-Prime zahtev.
  * Vraca messages array koji zamenjuje punu historiju.
  */
 export function buildRePrimeMessages(
@@ -252,11 +252,11 @@ export function buildRePrimeMessages(
       content: `${FORGEKIT_SYSTEM_PREAMBLE}
 
 ---
-CONTEXT RE-PRIME / RE-PRIME KONTEKST
+RE-PRIME KONTEKST
 ${switchNotice}
 
 ---
-PROJECT STATE / STANJE PROJEKTA
+STANJE PROJEKTA
 ${projectCtx}
 
 ---

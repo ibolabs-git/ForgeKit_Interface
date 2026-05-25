@@ -72,7 +72,7 @@ export function HandoffModal(): JSX.Element | null {
         <div className="handoff-meta">
           <span className="handoff-meta-item"><span className="handoff-meta-label">PROJEKAT</span>{projectName}</span>
           <span className="handoff-meta-sep">·</span>
-          <span className="handoff-meta-item"><span className="handoff-meta-label">PHASE / FAZA</span>{projectPhases.find((p) => p.id === currentPhase)?.label ?? PHASE_LABELS[currentPhase] ?? currentPhase}</span>
+          <span className="handoff-meta-item"><span className="handoff-meta-label">FAZA</span>{projectPhases.find((p) => p.id === currentPhase)?.label ?? PHASE_LABELS[currentPhase] ?? currentPhase}</span>
           <span className="handoff-meta-sep">·</span>
           <span className="handoff-meta-item"><span className="handoff-meta-label">MODEL</span>{selectedModel}</span>
         </div>

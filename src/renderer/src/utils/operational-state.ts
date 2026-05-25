@@ -114,13 +114,13 @@ export function splitProjectFileActions(
 
 export function getFileActionStatusCopy(status: ProjectFileAction['status']): string {
   const copy: Record<ProjectFileAction['status'], string> = {
-    error: 'error / greska',
-    blocked: 'blocked / blokirano',
-    requires_review: 'requires review / trazi proveru',
-    stale: 'stale / zastarelo',
-    pending: 'pending write / ceka upis',
-    writing: 'writing / upis u toku',
-    written: 'written / upisano'
+    error: 'greska',
+    blocked: 'blokirano',
+    requires_review: 'trazi proveru',
+    stale: 'zastarelo',
+    pending: 'ceka upis',
+    writing: 'upis u toku',
+    written: 'upisano'
   }
 
   return copy[status]
@@ -128,13 +128,13 @@ export function getFileActionStatusCopy(status: ProjectFileAction['status']): st
 
 export function getFileActionRecoveryAction(action: ProjectFileAction): string {
   const recovery: Record<ProjectFileAction['status'], string> = {
-    error: 'Retry or remove / Ponovi ili ukloni',
-    blocked: 'Forward to Builder / Prosledi Builder-u',
-    requires_review: 'Review before write / Proveri pre upisa',
-    stale: 'Refresh draft / Osvezi draft',
-    pending: 'Confirm write / Potvrdi upis',
-    writing: 'Wait for write / Sacekaj upis',
-    written: 'No recovery needed / Oporavak nije potreban'
+    error: 'Ponovi ili ukloni',
+    blocked: 'Prosledi Builder-u',
+    requires_review: 'Proveri pre upisa',
+    stale: 'Osvezi draft',
+    pending: 'Potvrdi upis',
+    writing: 'Sacekaj upis',
+    written: 'Oporavak nije potreban'
   }
 
   return recovery[action.status]
@@ -165,11 +165,11 @@ export function buildPhaseLadder(input: PhaseLadderInput): PhaseLadderStep[] {
   return order.map((step, index) => ({
     id: step,
     label: {
-      confirmed: 'confirmed / potvrdjeno',
-      pending_write: 'pending_write / ceka upis',
-      written: 'written / upisano',
-      synced: 'synced / sinhronizovano',
-      validated: 'validated / validirano'
+      confirmed: 'potvrdjeno',
+      pending_write: 'ceka upis',
+      written: 'upisano',
+      synced: 'sinhronizovano',
+      validated: 'validirano'
     }[step],
     state: truth[step] ? (index === activeIndex ? 'active' : 'done') : 'inactive'
   }))
@@ -228,12 +228,12 @@ export function buildOperationalTruthState(input: OperationalStateInput): Operat
       : 'safe_to_continue'
 
   const nextSafeAction = criticalRecoveryItem
-    ? `Recovery / Oporavak: review ${criticalRecoveryItem.filename}`
+    ? `Oporavak: proveri ${criticalRecoveryItem.filename}`
     : input.contextStatus === 'needs_refresh'
-      ? 'Re-prime / Osvezi kontekst'
+      ? 'Osvezi Re-Prime kontekst'
       : hasPendingWrite
-        ? 'Confirm write / Potvrdi upis'
-        : 'Continue / Nastavi'
+        ? 'Potvrdi upis'
+        : 'Nastavi'
 
   return {
     systemState,
