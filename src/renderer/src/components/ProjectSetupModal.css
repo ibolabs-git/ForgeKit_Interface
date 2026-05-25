@@ -84,3 +84,8 @@
   border-left: 2px solid var(--danger);
   font-family: var(--font-mono);
 }
+
+
+.setup-model-row .setup-model-select {
+  min-width: 0;
+}
