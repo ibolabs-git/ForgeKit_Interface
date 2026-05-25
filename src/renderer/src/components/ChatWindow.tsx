@@ -16,6 +16,8 @@ export function ChatWindow(): JSX.Element {
   const streamingContent   = useForgeKitStore((s) => s.streamingContent)
   const projectName        = useForgeKitStore((s) => s.projectName)
   const currentPhase       = useForgeKitStore((s) => s.currentPhase)
+  const projectPhases      = useForgeKitStore((s) => s.projectPhases)
+  const phaseLockStatus    = useForgeKitStore((s) => s.phaseLockStatus)
   const activeRole         = useForgeKitStore((s) => s.activeRole)
   const projectPath        = useForgeKitStore((s) => s.projectPath)
   const highlightMessageId    = useForgeKitStore((s) => s.highlightMessageId)
@@ -195,7 +197,7 @@ export function ChatWindow(): JSX.Element {
       {/* Context info bar */}
       <div className="chat-header-bar">
         <div className="chat-header-title">
-          CHAT <strong>{projectName} · {PHASE_LABELS[currentPhase] ?? currentPhase}</strong>
+          CHAT <strong>{projectName} · {((phaseLockStatus === 'confirmed' || phaseLockStatus === 'synced') ? projectPhases.find((p) => p.id === currentPhase)?.label : undefined) ?? PHASE_LABELS[currentPhase] ?? currentPhase}</strong>
         </div>
 
         <div className="chat-header-actions">
