@@ -17,6 +17,30 @@ Format: `[verzija] - datum - opis`
 
 ---
 
+## [1.0.26] - 2026-05-26 - Operational truth UX i runtime state
+
+### Stabilizacija
+- Dodata je operational Top State Bar kao stalni signal stvarnog runtime stanja: aktivni projekat, role, phase state i Project File Actions stanje vise nisu sakriveni samo u pojedinacnim panelima.
+- Project File Actions Recovery je prosiren tako da blokirane ili zastarele akcije mogu da se vrate u kontrolisan tok, umesto da korisnik dobije laznu procesnu potvrdu ili zaglavljen panel.
+- Phase State UX/runtime state je stabilizovan: phase header, sidebar i runtime phase signal sada se bolje oslanjaju na potvrdjeno stanje, a ne na privremene ili genericke ForgeKit faze.
+- Re-Prime/Handoff phase context sada nosi vise operativne istine o fazama i stanju rada, sto olaksava nastavak nakon promene modela ili osvezavanja konteksta.
+- Detekcija povratka Orchestrator-u je ojacana, pa se runtime kontrola moze vratiti iz ogranicenih role tokova bez ostavljanja UI-ja u zastareloj ulozi.
+- Correction/file action review guard ukljucuje review statuse: korisnicke korekcije i `requires_review` stanja ne prolaze kao da su file actions spremne ili vec potvrdjene.
+- Provider/model setup UX je prosiren tako da se provider i model mogu izabrati vec tokom project setup toka.
+- Operational state copy je razjasnjen kako bi Top State Bar komunicirao stanje bez pogresnog signala o zavrsenosti rada.
+- Verzija je bumpovana na `1.0.26`.
+
+### Release / update
+- GitHub Release `v1.0.26` je kreiran za app repo `ForgeKit_Interface`.
+- Instalirana `1.0.24` aplikacija je uspesno prepoznala i instalirala update `1.0.24 -> 1.0.26`.
+
+### Validacija
+- `npm.cmd run build` prolazi.
+- Pre-push i release gate provere su potvrdile cist app repo status pre distribucije.
+- Release asset tok je potvrdjen kroz GitHub Release i installed update proveru.
+
+---
+
 ## [1.0.24] - 2026-05-22 - Dinamicke faze i live role sync
 
 ### Stabilizacija
