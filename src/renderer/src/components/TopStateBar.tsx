@@ -24,6 +24,13 @@ const phaseCopy: Record<PhaseOperationalStatus, string> = {
   validated: 'validirano'
 }
 
+function valueTone(value: string): string {
+  const normalized = value.toLowerCase()
+  if (normalized.includes('blokiran') || normalized.includes('oporavak') || normalized.includes('gresku')) return 'danger'
+  if (normalized.includes('ceka') || normalized.includes('pregledaj') || normalized.includes('re-prime') || normalized.includes('sacekaj')) return 'warn'
+  return 'ok'
+}
+
 function signalTone(status: OperationalSignalStatus): string {
   if (status === 'safe_to_continue' || status === 'validated') return 'ok'
   if (status === 'pending_write' || status === 'waiting_confirmation' || status === 'requires_review' || status === 'stale') return 'warn'
@@ -40,6 +47,7 @@ export function TopStateBar(): JSX.Element {
     selectedModel,
     customModelId,
     contextStatus,
+    modelJustChanged,
     projectFileActions,
     isStreaming
   } = useForgeKitStore()
@@ -70,6 +78,7 @@ export function TopStateBar(): JSX.Element {
 
   const activePhaseLabel = projectPhases.find((phase) => phase.id === currentPhase)?.label
   const criticalPath = operationalState.criticalRecoveryItem?.filename
+  const showModelSignal = modelJustChanged || contextStatus === 'needs_refresh'
 
   return (
     <div className="top-state-bar">
@@ -97,33 +106,35 @@ export function TopStateBar(): JSX.Element {
         </span>
       </div>
 
-      <div className="top-state-group top-state-model">
-        <span className="top-state-label">provider/model</span>
-        <span className="top-state-value" title={operationalState.providerModel}>
-          {operationalState.providerModel}
-        </span>
-      </div>
-
       <div className="top-state-group">
-        <span className="top-state-label">Kontrolni kontekst</span>
-        <span className={`top-state-value top-state-${signalTone(operationalState.controlContext)}`}>
-          {signalCopy[operationalState.controlContext]}
+        <span className="top-state-label">Radni kontekst</span>
+        <span className={`top-state-value top-state-${valueTone(operationalState.controlContext)}`}>
+          {operationalState.controlContext}
         </span>
       </div>
 
       <div className="top-state-group">
         <span className="top-state-label">Ovlascenje upisa</span>
-        <span className={`top-state-value top-state-${signalTone(operationalState.writeAuthority)}`}>
-          {signalCopy[operationalState.writeAuthority]}
+        <span className={`top-state-value top-state-${valueTone(operationalState.writeAuthority)}`}>
+          {operationalState.writeAuthority}
         </span>
       </div>
 
       <div className="top-state-group top-state-next">
         <span className="top-state-label">Sledeci bezbedan korak</span>
-        <span className={`top-state-value top-state-${operationalState.hasBlockingFileAction ? 'danger' : 'ok'}`} title={criticalPath ?? operationalState.nextSafeAction}>
+        <span className={`top-state-value top-state-${valueTone(operationalState.nextSafeAction)}`} title={criticalPath ?? operationalState.nextSafeAction}>
           {operationalState.nextSafeAction}
         </span>
       </div>
+
+      {showModelSignal && (
+        <div className="top-state-group top-state-model">
+          <span className="top-state-label">Model</span>
+          <span className="top-state-value top-state-warn" title={operationalState.providerModel}>
+            Re-Prime potreban
+          </span>
+        </div>
+      )}
     </div>
   )
 }

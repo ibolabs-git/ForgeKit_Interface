@@ -232,7 +232,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
         {/* Context status */}
         <div className="context-status-row">
           <span className={`context-badge context-badge-${contextStatus}`}>
-            {contextStatus === 'synced' ? '✓ synced' : '⚠ needs refresh'}
+            {contextStatus === 'synced' ? 'Kontekst: svez' : 'Kontekst: treba Re-Prime'}
           </span>
           <span className="context-role">{activeRole}</span>
         </div>
@@ -469,7 +469,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
 
             {fileActionGroups.oldWritten.length > 0 && (
               <details className="file-action-history">
-                <summary>Stara upisana istorija ({fileActionGroups.oldWritten.length})</summary>
+                <summary>Raniji upisi ({fileActionGroups.oldWritten.length})</summary>
                 <ul className="file-action-list file-action-list-history">
                   {fileActionGroups.oldWritten.map((action) => (
                     <li key={action.id} className={`file-action-item file-action-${action.status}`}>

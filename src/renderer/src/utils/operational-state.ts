@@ -26,8 +26,8 @@ export type PhaseOperationalStatus =
 
 export interface OperationalTruthState {
   systemState: OperationalSignalStatus
-  controlContext: OperationalSignalStatus
-  writeAuthority: OperationalSignalStatus
+  controlContext: string
+  writeAuthority: string
   nextSafeAction: string
   hasBlockingFileAction: boolean
   criticalRecoveryItem: ProjectFileAction | null
@@ -200,6 +200,9 @@ export function buildOperationalTruthState(input: OperationalStateInput): Operat
   const hasPendingWrite = input.projectFileActions.some((action) =>
     action.status === 'pending' || action.status === 'writing'
   )
+  const hasReviewRequired = input.projectFileActions.some((action) =>
+    action.status === 'requires_review' || action.status === 'stale'
+  )
   const phaseState = resolvePhaseState(
     input.phaseLockStatus,
     input.currentPhase,
@@ -217,23 +220,35 @@ export function buildOperationalTruthState(input: OperationalStateInput): Operat
           ? 'waiting_confirmation'
           : 'safe_to_continue'
 
-  const controlContext: OperationalTruthState['controlContext'] = input.contextStatus === 'needs_refresh'
-    ? 'stale'
-    : 'validated'
-
-  const writeAuthority: OperationalTruthState['writeAuthority'] = criticalRecoveryItem
-    ? 'blocked'
+  const controlContext = criticalRecoveryItem
+    ? 'File recovery'
     : hasPendingWrite
-      ? 'pending_write'
-      : 'safe_to_continue'
+      ? 'Builder / priprema upisa'
+      : input.contextStatus === 'needs_refresh'
+        ? 'Re-Prime'
+        : `${input.activeRole} / bez upisa`
+
+  const writeAuthority = criticalRecoveryItem
+    ? criticalRecoveryItem.status === 'blocked'
+      ? 'Upis blokiran'
+      : 'Oporavak pre upisa'
+    : hasPendingWrite
+      ? 'Builder: ceka potvrdu'
+      : 'Nema aktivnog upisa'
 
   const nextSafeAction = criticalRecoveryItem
-    ? `Oporavak: proveri ${criticalRecoveryItem.filename}`
-    : input.contextStatus === 'needs_refresh'
-      ? 'Osvezi Re-Prime kontekst'
+    ? criticalRecoveryItem.status === 'error' || criticalRecoveryItem.status === 'blocked'
+      ? 'Resi gresku u File Actions'
+      : 'Pregledaj stavku pre upisa'
+    : hasReviewRequired
+      ? 'Pregledaj stavku pre upisa'
       : hasPendingWrite
-        ? 'Potvrdi upis'
-        : 'Nastavi'
+        ? 'Pregledaj upis pre potvrde'
+        : input.contextStatus === 'needs_refresh'
+          ? 'Osvezi Re-Prime kontekst'
+          : input.isStreaming
+            ? 'Sacekaj odgovor'
+            : 'Nastavi sa Orchestratorom'
 
   return {
     systemState,
