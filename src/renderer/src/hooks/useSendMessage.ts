@@ -78,18 +78,28 @@ function resolveSegmentRole(content: string, index: number): ForgeKitRole | null
 }
 
 function getUnresolvedFileActions(actions: ProjectFileAction[]): ProjectFileAction[] {
-  return actions.filter((a) => a.status === 'blocked' || a.status === 'pending' || a.status === 'error')
+  return actions.filter((a) =>
+    a.status === 'pending' ||
+    a.status === 'writing' ||
+    a.status === 'blocked' ||
+    a.status === 'error' ||
+    a.status === 'stale' ||
+    a.status === 'requires_review'
+  )
 }
 
 function buildFileActionGuardMessage(actions: ProjectFileAction[]): string {
   const blocked = actions.filter((a) => a.status === 'blocked').length
   const pending = actions.filter((a) => a.status === 'pending').length
+  const writing = actions.filter((a) => a.status === 'writing').length
   const errored = actions.filter((a) => a.status === 'error').length
+  const stale = actions.filter((a) => a.status === 'stale').length
+  const requiresReview = actions.filter((a) => a.status === 'requires_review').length
 
   return `[SYSTEM]
-Upis nije izvrsen. Postoje nerazresene Project File Actions stavke: ${blocked} blokirano, ${pending} ceka potvrdu, ${errored} greska.
+Upis nije izvrsen. Postoje nerazresene Project File Actions stavke: ${blocked} blocked, ${pending} pending, ${writing} writing, ${errored} error, ${stale} stale, ${requiresReview} requires_review.
 
-Tekstualna potvrda u chatu ne sme da zameni stvarni upis fajla. Prvo ukloni blokirane stavke ili potvrdi pending stavke u Project File Actions panelu. Nakon stvarnog upisa nastavi tok.`
+Tekstualna potvrda u chatu ne sme da zameni stvarni upis fajla. Prvo razresi pending, writing, blocked, error, stale ili requires_review stavke u Project File Actions panelu. Nakon stvarnog upisa nastavi tok.`
 }
 
 function buildTemplateContinuation(fetched: { path: string; content: string }[]): string {
