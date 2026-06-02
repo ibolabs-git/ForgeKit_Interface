@@ -33,6 +33,9 @@ const INIT_TEMPLATE_PATHS = [
   '00_SYSTEM/security_policy.md',
   '00_SYSTEM/document_activation_guide.md'
 ]
+const TOKEN_ESTIMATE_DIVISOR = 4
+const TOKEN_WATCH_THRESHOLD = 20_000
+const TOKEN_HIGH_THRESHOLD = 28_000
 
 interface SendOptions {
   hiddenUser?: boolean
@@ -86,6 +89,59 @@ function getUnresolvedFileActions(actions: ProjectFileAction[]): ProjectFileActi
     a.status === 'stale' ||
     a.status === 'requires_review'
   )
+}
+
+function estimateTextTokens(content: string): number {
+  if (!content.trim()) return 0
+  return Math.ceil(content.length / TOKEN_ESTIMATE_DIVISOR)
+}
+
+function estimateMessageTokens(messages: Array<{ role: 'user' | 'assistant'; content: string }>): number {
+  return messages.reduce((total, message) => total + estimateTextTokens(message.content) + 4, 0)
+}
+
+function getTokenRisk(promptEstimate: number): 'ok' | 'watch' | 'high' {
+  if (promptEstimate >= TOKEN_HIGH_THRESHOLD) return 'high'
+  if (promptEstimate >= TOKEN_WATCH_THRESHOLD) return 'watch'
+  return 'ok'
+}
+
+function parseRequestedTokens(error: string): number | null {
+  const match = error.match(/Requested\s+(\d+)/i)
+  return match ? Number(match[1]) : null
+}
+
+function buildUsageNote(risk: 'ok' | 'watch' | 'high', requestedTokens?: number | null): string {
+  if (requestedTokens) {
+    return `Provider je prijavio zahtev od ${requestedTokens.toLocaleString('en-US')} tokena. Smanji kontekst, uradi Re-Prime ili otvori kraci tok.`
+  }
+  if (risk === 'high') return 'Kontekst je verovatno prevelik za stabilno slanje. Smanji istoriju ili osvezi Re-Prime pre nastavka.'
+  if (risk === 'watch') return 'Kontekst je visok. Nastavak je moguc, ali rizik od token limita raste.'
+  return 'Procena je informativna; nije billing usage.'
+}
+
+function buildTokenUsageSnapshot(
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  provider: string,
+  model: string,
+  responseContent = '',
+  requestedTokens?: number | null
+) {
+  const promptEstimate = requestedTokens ?? estimateMessageTokens(history)
+  const responseEstimate = estimateTextTokens(responseContent)
+  const totalEstimate = promptEstimate + responseEstimate
+  const risk = getTokenRisk(promptEstimate)
+
+  return {
+    promptEstimate,
+    responseEstimate,
+    totalEstimate,
+    risk,
+    provider,
+    model,
+    updatedAt: Date.now(),
+    note: buildUsageNote(risk, requestedTokens)
+  }
 }
 
 function buildFileActionGuardMessage(actions: ProjectFileAction[]): string {
@@ -145,7 +201,7 @@ export function useSendMessage() {
     addUserMessage, startAssistantMessage,
     appendStreamToken, finalizeMessage,
     addErrorMessage, cancelStreaming, markContextSynced,
-    addProjectFileAction, addSystemMessage
+    addProjectFileAction, addSystemMessage, setTokenUsage
   } = useForgeKitStore()
 
   const sendRef = useRef<(text: string, options?: SendOptions) => Promise<void>>(
@@ -202,10 +258,6 @@ export function useSendMessage() {
     contentRef.current = ''
     if (!options.hiddenUser) addUserMessage(text)
 
-    const messageId = `ai-${Date.now()}`
-    activeMessageIdRef.current = messageId
-    startAssistantMessage(messageId, invokedRole ?? undefined)
-
     const effectiveModel = customModelId.trim() || selectedModel
     const needsRePrime = Boolean(options.forceRePrime) || modelJustChanged || contextStatus === 'needs_refresh'
 
@@ -231,6 +283,20 @@ export function useSendMessage() {
       history.push({ role: 'user', content: modelInput })
     }
 
+    const requestUsage = buildTokenUsageSnapshot(history, selectedProvider, effectiveModel)
+    setTokenUsage(requestUsage)
+    if (requestUsage.risk === 'high') {
+      addSystemMessage(`[SYSTEM]
+Zahtev nije poslat jer je procena konteksta previsoka: oko ${requestUsage.promptEstimate.toLocaleString('en-US')} tokena.
+
+Smanji istoriju, uradi kraci Re-Prime ili otvori novi scoped tok pre slanja. Ova procena nije billing usage.`)
+      return
+    }
+
+    const messageId = `ai-${Date.now()}`
+    activeMessageIdRef.current = messageId
+    startAssistantMessage(messageId, invokedRole ?? undefined)
+
     const timeoutId = window.setTimeout(() => {
       window.api.cancelMessage(messageId)
       addErrorMessage('Model nije odgovorio u zadatom vremenu. Zahtev je prekinut; probaj brzi model ili ponovi poruku.', messageId)
@@ -252,6 +318,7 @@ export function useSendMessage() {
 
       const fullContent = contentRef.current
       contentRef.current = ''
+      setTokenUsage(buildTokenUsageSnapshot(history, selectedProvider, effectiveModel, fullContent))
 
       finalizeMessage(messageId)
       window.clearTimeout(timeoutId)
@@ -284,6 +351,8 @@ export function useSendMessage() {
 
     const removeError = window.api.onStreamError((error, id) => {
       if (id === messageId) {
+        const requestedTokens = parseRequestedTokens(error)
+        setTokenUsage(buildTokenUsageSnapshot(history, selectedProvider, effectiveModel, '', requestedTokens))
         addErrorMessage(error, messageId)
         window.clearTimeout(timeoutId)
         removeToken(); removeComplete(); removeError()
@@ -306,7 +375,7 @@ export function useSendMessage() {
     projectName, previousEffectiveModel, projectPhases, phaseLockStatus, projectFileActions,
     addUserMessage, startAssistantMessage, appendStreamToken,
     finalizeMessage, addErrorMessage, cancelStreaming, markContextSynced,
-    addProjectFileAction, addSystemMessage, loadTemplates
+    addProjectFileAction, addSystemMessage, setTokenUsage, loadTemplates
   ])
 
   const cancel = useCallback(() => {

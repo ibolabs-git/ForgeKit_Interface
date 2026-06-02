@@ -50,9 +50,9 @@ Prioriteti:
 ### [ISS-024] Token/model usage i performance prikaz nisu implementirani
 
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
-- **Simptom:** Planirano pracenje tokena, model usage-a i performance signala nije vidljivo kao app funkcija.
-- **Ocekivano:** App treba da prikaze osnovne usage/performance signale po modelu/session-u kada ti podaci postoje, bez uvodjenja lazne preciznosti ili teskog dashboard-a.
-- **Status:** Otvoreno - post-v1.0.26 telemetry/usage UX follow-up.
+- **Simptom:** Planirano pracenje tokena, model usage-a i performance signala nije bilo vidljivo kao app funkcija. Runtime test je pokazao i OpenAI `429` TPM gresku kada je zahtev procenjen na previse tokena.
+- **Ocekivano:** App treba da prikaze osnovne usage/performance signale po modelu/session-u kada ti podaci postoje, bez uvodjenja lazne preciznosti ili teskog dashboard-a. Kada nema provider usage metadata, dozvoljena je jasno oznacena procena konteksta.
+- **Status:** Implementirano v1 - ceka runtime proveru. SidePanel prikazuje procenu tokena za poslednji request/response, a slanje se zaustavlja kada procena konteksta predje konzervativni high prag.
 
 ### [ISS-025] Project session report nema pun decision/state/memory model
 

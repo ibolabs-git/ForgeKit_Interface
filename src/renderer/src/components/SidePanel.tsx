@@ -79,6 +79,7 @@ export function SidePanel(): JSX.Element {
     activeRole, currentPhase, tasks,
     projectPhases, phaseLockStatus,
     selectedProvider, selectedModel, customModelId, contextStatus,
+    tokenUsage,
     setProvider, setModel, setCustomModelId,
     memoryRecords, projectFileActions, projectName,
     toggleTask, addManualTask, removeTask, clearTasks,
@@ -150,6 +151,12 @@ export function SidePanel(): JSX.Element {
   const modelDisplayName = isCustomActive
     ? 'Custom'
     : shortName(availableModels.find((m) => m.id === selectedModel)?.name ?? selectedModel)
+  const tokenRiskCopy = tokenUsage.risk === 'high'
+    ? 'Visoko'
+    : tokenUsage.risk === 'watch'
+      ? 'Paznja'
+      : 'OK'
+  const tokenUsageTitle = `${tokenUsage.note} Provider/model: ${tokenUsage.provider || selectedProvider}/${tokenUsage.model || effectiveModelId}.`
   const phaseLadder = useMemo(() => buildPhaseLadder({
     currentPhase,
     projectPhases,
@@ -236,6 +243,16 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
           </span>
           <span className="context-role">{activeRole}</span>
         </div>
+
+        <div className={`usage-status-row usage-status-${tokenUsage.risk}`} title={tokenUsageTitle}>
+          <span>Tokeni: ~{tokenUsage.promptEstimate.toLocaleString('en-US')}</span>
+          <span>{tokenRiskCopy}</span>
+        </div>
+        {tokenUsage.responseEstimate > 0 && (
+          <div className="usage-subrow" title="Procena odgovora iz poslednjeg stream-a; nije billing usage.">
+            Odgovor: ~{tokenUsage.responseEstimate.toLocaleString('en-US')}
+          </div>
+        )}
 
         {contextStatus === 'needs_refresh' && (
           <button

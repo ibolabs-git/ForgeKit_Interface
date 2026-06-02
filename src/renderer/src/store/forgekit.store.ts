@@ -255,6 +255,31 @@ interface TabSnapshot {
   previousEffectiveModel: string
   memoryRecords: MemoryRecord[]
   projectFileActions: ProjectFileAction[]
+  tokenUsage: TokenUsageSnapshot
+}
+
+type TokenUsageRisk = 'ok' | 'watch' | 'high'
+
+interface TokenUsageSnapshot {
+  promptEstimate: number
+  responseEstimate: number
+  totalEstimate: number
+  risk: TokenUsageRisk
+  provider: string
+  model: string
+  updatedAt: number | null
+  note: string
+}
+
+const EMPTY_TOKEN_USAGE: TokenUsageSnapshot = {
+  promptEstimate: 0,
+  responseEstimate: 0,
+  totalEstimate: 0,
+  risk: 'ok',
+  provider: '',
+  model: '',
+  updatedAt: null,
+  note: 'Nema poslednje procene.'
 }
 
 function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
@@ -277,6 +302,7 @@ function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
     previousEffectiveModel: 'claude-sonnet-4-6',
     memoryRecords: [],
     projectFileActions: [],
+    tokenUsage: EMPTY_TOKEN_USAGE,
     ...overrides
   }
 }
@@ -300,7 +326,8 @@ function captureSnapshot(s: ForgeKitStore): TabSnapshot {
     modelHistory: s.modelHistory,
     previousEffectiveModel: s.previousEffectiveModel,
     memoryRecords: s.memoryRecords,
-    projectFileActions: s.projectFileActions
+    projectFileActions: s.projectFileActions,
+    tokenUsage: s.tokenUsage
   }
 }
 
@@ -363,6 +390,7 @@ interface ForgeKitStore {
   projectFileActions: ProjectFileAction[]
 
   // ── Projekat (aktivni tab) ──
+  tokenUsage: TokenUsageSnapshot
   projectPath: string | null
   showProjectSetup: boolean
 
@@ -424,6 +452,7 @@ interface ForgeKitStore {
   removeProjectFileAction: (id: string) => void
 
   // ── Project ──
+  setTokenUsage: (usage: TokenUsageSnapshot) => void
   setProjectPath: (path: string | null) => void
   setShowProjectSetup: (show: boolean) => void
 
@@ -576,6 +605,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   })(),
   memoryRecords: [],
   projectFileActions: [],
+  tokenUsage: EMPTY_TOKEN_USAGE,
   projectPath: null,
   showProjectSetup: false,
 
@@ -802,6 +832,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     projectName: s.projectName,
     projectPath: s.projectPath,
     projectFileActions: [],
+    tokenUsage: EMPTY_TOKEN_USAGE,
     modelJustChanged: false,
     contextStatus: 'synced',
     highlightMessageId: null
@@ -1023,6 +1054,8 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
 
   // ── Projekat ──
 
+  setTokenUsage: (usage) => set({ tokenUsage: usage }),
+
   setProjectPath: (path) => {
     // Sinhroniziraj electron-store currentProjectPath kako bi write operacije koristile pravi folder
     if (path) window.api.setActivePath(path)
@@ -1051,6 +1084,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       customModelId: s.customModelId,
       modelHistory: s.modelHistory,
       projectFileActions: s.projectFileActions,
+      tokenUsage: s.tokenUsage,
       savedAt: Date.now()
     }
     await window.api.projectWriteFile('session.json', JSON.stringify(data, null, 2))
@@ -1075,6 +1109,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         customModelId?: string
         modelHistory?: Array<{ from: string; to: string; time: number }>
         projectFileActions?: ProjectFileAction[]
+        tokenUsage?: TokenUsageSnapshot
       }
       // Validacija provider/model — sprječava mismatch iz starih session.json
       const { provider: safeProvider, model: safeModel } = sanitizeProviderModel(
@@ -1093,6 +1128,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         customModelId: data.customModelId ?? '',
         modelHistory: data.modelHistory ?? [],
         projectFileActions: data.projectFileActions ?? [],
+        tokenUsage: data.tokenUsage ?? EMPTY_TOKEN_USAGE,
         tabs: s.tabs.map((t) => t.id === s.activeTabId
           ? { ...t, projectName: data.projectName ?? t.projectName }
           : t
