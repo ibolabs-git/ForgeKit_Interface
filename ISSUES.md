@@ -38,7 +38,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Ranije planirana funkcija snimanja/obnove projekta pri gasenju taba ili prozora nije jasno dostupna kao pouzdan runtime guarantee.
 - **Ocekivano:** Zatvaranje taba/prozora ne sme izgubiti aktivni project/session state. App treba da ima jasan save/restore path ili eksplicitno upozorenje ako state nije sacuvan.
-- **Status:** Implementirano - ceka runtime close/reopen regression test. Patch dodaje immediate session/tab persistence flush pri promeni taba, zatvaranju taba i zatvaranju prozora.
+- **Status:** Runtime potvrdjeno - restart app-a je vratio aktivni tab, projekat, poruke i session/token state. Close guard sa backup/handoff izborom prati se odvojeno kroz ISS-028.
 
 ### [ISS-028] Close tab/project flow nema backup i handoff potvrdu
 
@@ -52,7 +52,14 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Planirano pracenje tokena, model usage-a i performance signala nije bilo vidljivo kao app funkcija. Runtime test je pokazao i OpenAI `429` TPM gresku kada je zahtev procenjen na previse tokena.
 - **Ocekivano:** App treba da prikaze osnovne usage/performance signale po modelu/session-u kada ti podaci postoje, bez uvodjenja lazne preciznosti ili teskog dashboard-a. Kada nema provider usage metadata, dozvoljena je jasno oznacena procena konteksta.
-- **Status:** Implementirano v1 - ceka runtime proveru. SidePanel prikazuje procenu tokena za poslednji request/response, a slanje se zaustavlja kada procena konteksta predje konzervativni high prag.
+- **Status:** Runtime potvrdjeno v1 - kratak zahtev prolazi i osvezava procenu, a veliki ForgeKit init/context payload se lokalno zaustavlja pre provider 429 greske. Full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
+
+### [ISS-029] ForgeKit init context payload je prevelik
+
+- **Otkriveno:** post-v1.0.26 runtime test - 2026-06-02
+- **Simptom:** `Pokreni ForgeKit` / init tok moze pripremiti oko `~53,597` procenjenih tokena i biti zaustavljen token/context guard-om pre slanja.
+- **Ocekivano:** ForgeKit init treba da ima compact boot mode, etapno ucitavanje ili selektivni template context kako pocetni activation flow ne bi odmah presao token prag. Korisniku treba prikazati jasno objasnjenje ako se full init mora skratiti.
+- **Status:** Otvoreno - post-v1.0.26 context optimization follow-up; povezano sa ISS-016 Re-Prime structured handoff i ISS-024 token usage signalom.
 
 ### [ISS-025] Project session report nema pun decision/state/memory model
 

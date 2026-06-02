@@ -9,9 +9,10 @@ Format: `[verzija] - datum - opis`
 ## [Unreleased] - sledeci ciklus
 
 ### Otvoreno
-- Project/session persistence je ojacan immediate flush logikom pri promeni taba, zatvaranju taba i zatvaranju prozora; ceka runtime close/reopen test.
+- Project/session persistence je runtime potvrdjen: restart app-a vraca aktivni tab, projekat, poruke i session/token state.
 - Close tab/project flow treba dopuniti kontrolisanim korisnickim izborom za snimanje projekta, backup snapshot i handoff zapis pre zatvaranja.
-- Token/model usage signal je dodat kao v1 procena u SidePanel-u; app prikazuje context health i zaustavlja slanje kada je procena konteksta previsoka.
+- Token/model usage signal je runtime potvrdjen kao v1 procena u SidePanel-u; kratki zahtev prolazi, a prevelik context payload se zaustavlja pre provider 429 greske.
+- ForgeKit init context payload je oznacen kao poseban follow-up jer full init moze preci token prag i treba compact boot/context optimization.
 - Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
