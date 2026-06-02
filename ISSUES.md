@@ -17,7 +17,7 @@ Prioriteti:
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Levi sidebar, session state i Re-Prime mogu tretirati genericke ForgeKit faze kao projektne faze. Model je na osnovu toga pogresno zakljucio da je "F1 fundament paket kompletan" i pitao za prelazak na "F2 ForgeKit Logika", sto nije projektna faza PulseFit-a.
 - **Ocekivano:** App mora razlikovati app/setup placeholder faze od projektnih faza. Sidebar i Re-Prime smeju koristiti samo faze koje su potvrdjene kroz `PROJECT_PHASES_CONFIRMED` ili sinhronizovane kroz `PROJECT_PHASES_SYNCED`.
-- **Status:** Otvoreno - post-v1.0.26 state correctness follow-up; v1.0.26 je popravio deo runtime/UX signala, ali pun regression scenario ostaje otvoren.
+- **Status:** Delimicno patchovano - parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional atributom, npr. `[PROJECT_PHASES_CONFIRMED: StateCheck]`. Ceka runtime ponovni test kroz ISS-027 scenario.
 
 ### [ISS-021] Korisnicka korekcija ne zastareva zavisne draftove i file actions
 - **Prioritet:** KRITICNO
@@ -80,7 +80,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Phase Sync, Re-Prime, correction invalidation i security manifest boundary postoje kao pojedinacni problemi, ali nema jednog regression scenario-a koji proverava ceo state correctness tok.
 - **Ocekivano:** Dodati regresioni scenario koji zajedno proverava phase state, Re-Prime handoff, stale/pending file actions i security manifest granicu.
-- **Status:** Test scenario dodat - ceka runtime prolaz kroz `release_test_state_correctness_post_v1.0.26.md`.
+- **Status:** Runtime prolaz zapocet - Test 1 je PASS, Test 2 je otkrio da parser nije prihvatao phase tag sa project atributom; patch dodat i ceka ponovni test.
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.22 test - 2026-05-21

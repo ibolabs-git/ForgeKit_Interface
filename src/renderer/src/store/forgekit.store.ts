@@ -138,13 +138,13 @@ function parseProjectPhasesFromText(content: string, status: PhaseLockStatus = '
 }
 
 function extractPhaseLock(content: string): { phases: ProjectPhaseDefinition[]; status: PhaseLockStatus } | null {
-  const synced = content.match(/\[PROJECT_PHASES_SYNCED\]([\s\S]+?)\[\/PROJECT_PHASES_SYNCED\]/i)
+  const synced = content.match(/\[PROJECT_PHASES_SYNCED(?:\s*:[^\]]+)?\]([\s\S]+?)\[\/PROJECT_PHASES_SYNCED\]/i)
   if (synced) {
     const phases = parseProjectPhasesFromText(synced[1], 'synced')
     return phases.length ? { phases, status: 'synced' } : null
   }
 
-  const confirmed = content.match(/\[PROJECT_PHASES_CONFIRMED\]([\s\S]+?)\[\/PROJECT_PHASES_CONFIRMED\]/i)
+  const confirmed = content.match(/\[PROJECT_PHASES_CONFIRMED(?:\s*:[^\]]+)?\]([\s\S]+?)\[\/PROJECT_PHASES_CONFIRMED\]/i)
   if (confirmed) {
     const phases = parseProjectPhasesFromText(confirmed[1], 'confirmed')
     return phases.length ? { phases, status: 'confirmed' } : null
