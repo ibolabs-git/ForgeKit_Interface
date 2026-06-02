@@ -168,6 +168,26 @@ const CORRECTION_SIGNAL_RE = /\b(ispravka|korekcija|moja greska|moja greška|pog
 const PHASE_CONFIRMATION_RE = /^\s*(?:da[\s,;:-]*)?(?:potvrdjujem|potvrÄ‘ujem|potvrda|confirm|odobreno)\b/i
 const PHASE_PROPOSAL_HINT_RE = /\b(faze|faza|phase|phases)\b|PROJECT_PHASES_/i
 
+const NUMBERED_PHASE_LINE_RE = /^\s{0,2}(\d+)[.)]\s+(?:\*\*)?([^:\n\r]{3,80}?)(?:\*\*)?\s*(?::|$)/
+
+function parseNumberedPhaseProposal(content: string, status: PhaseLockStatus = 'confirmed'): ProjectPhaseDefinition[] {
+  const phases = new Map<ForgeKitPhase, ProjectPhaseDefinition>()
+  let expectedNumber = 1
+
+  for (const line of content.split('\n')) {
+    const match = line.match(NUMBERED_PHASE_LINE_RE)
+    if (!match) continue
+
+    const itemNumber = Number(match[1])
+    if (itemNumber !== expectedNumber) continue
+
+    addPhase(phases, `F${expectedNumber}` as ForgeKitPhase, match[2], status)
+    expectedNumber += 1
+  }
+
+  return [...phases.values()].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
+}
+
 function extractConfirmedPhasesFromHistory(messages: ChatMessage[]): ProjectPhaseDefinition[] {
   const lastAssistant = [...messages].reverse().find((message) =>
     message.role === 'assistant' &&
@@ -178,7 +198,9 @@ function extractConfirmedPhasesFromHistory(messages: ChatMessage[]): ProjectPhas
   )
   if (!lastAssistant || !PHASE_PROPOSAL_HINT_RE.test(lastAssistant.content)) return []
   const phases = parseProjectPhasesFromText(lastAssistant.content, 'confirmed')
-  return phases.length >= 2 ? phases : []
+  if (phases.length >= 2) return phases
+  const numberedPhases = parseNumberedPhaseProposal(lastAssistant.content, 'confirmed')
+  return numberedPhases.length >= 2 ? numberedPhases : []
 }
 
 function markDependentActionsForReview(actions: ProjectFileAction[]): ProjectFileAction[] {

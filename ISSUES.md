@@ -17,7 +17,7 @@ Prioriteti:
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Levi sidebar, session state i Re-Prime mogu tretirati genericke ForgeKit faze kao projektne faze. Model je na osnovu toga pogresno zakljucio da je "F1 fundament paket kompletan" i pitao za prelazak na "F2 ForgeKit Logika", sto nije projektna faza PulseFit-a.
 - **Ocekivano:** App mora razlikovati app/setup placeholder faze od projektnih faza. Sidebar i Re-Prime smeju koristiti samo faze koje su potvrdjene kroz `PROJECT_PHASES_CONFIRMED` ili sinhronizovane kroz `PROJECT_PHASES_SYNCED`.
-- **Status:** Delimicno patchovano - parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional atributom, npr. `[PROJECT_PHASES_CONFIRMED: StateCheck]`. Dodat je i fallback koji na eksplicitnu korisnicku potvrdu pokusava da potvrdi faze iz poslednjeg assistant predloga. Ceka runtime ponovni test kroz ISS-027 scenario.
+- **Status:** Delimicno patchovano - parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional atributom, npr. `[PROJECT_PHASES_CONFIRMED: StateCheck]`. Dodat je i fallback koji na eksplicitnu korisnicku potvrdu pokusava da potvrdi faze iz poslednjeg assistant predloga, ukljucujuci obicnu numerisanu listu faza. Ceka runtime ponovni test kroz ISS-027 scenario.
 
 ### [ISS-021] Korisnicka korekcija ne zastareva zavisne draftove i file actions
 - **Prioritet:** KRITICNO
