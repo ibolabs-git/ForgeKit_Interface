@@ -10,29 +10,63 @@ Prioriteti:
 
 ---
 
-## Otvoreni issues za v1.0.25+
+## Otvoreni issues za post-v1.0.26 ciklus
 
 ### [ISS-020] Phase Sync protokol ne razlikuje placeholder, confirmed, written i synced faze
 - **Prioritet:** KRITICNO
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Levi sidebar, session state i Re-Prime mogu tretirati genericke ForgeKit faze kao projektne faze. Model je na osnovu toga pogresno zakljucio da je "F1 fundament paket kompletan" i pitao za prelazak na "F2 ForgeKit Logika", sto nije projektna faza PulseFit-a.
 - **Ocekivano:** App mora razlikovati app/setup placeholder faze od projektnih faza. Sidebar i Re-Prime smeju koristiti samo faze koje su potvrdjene kroz `PROJECT_PHASES_CONFIRMED` ili sinhronizovane kroz `PROJECT_PHASES_SYNCED`.
-- **Status:** Otvoreno - v1.0.25 stabilizacija.
+- **Status:** Otvoreno - post-v1.0.26 state correctness follow-up; v1.0.26 je popravio deo runtime/UX signala, ali pun regression scenario ostaje otvoren.
 
 ### [ISS-021] Korisnicka korekcija ne zastareva zavisne draftove i file actions
 - **Prioritet:** KRITICNO
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Kada korisnik ispravi odluku, raniji nacrti, pending file actions, fazni zakljucci ili taskovi mogu ostati vazeci iako zavise od pogresne odluke.
 - **Ocekivano:** Korekcioni signali korisnika moraju oznaciti zavisne nacrte/file actions kao `requires_review` ili `stale`, osveziti context status i traziti novi Decision Lock ako korekcija utice na stack, faze, scope, arhitekturu ili dokumente.
-- **Status:** Otvoreno - v1.0.25 stabilizacija.
+- **Status:** Otvoreno - post-v1.0.26 file action invalidation follow-up.
 
 ### [ISS-022] project_security_manifest se pogresno koristi za zakljucavanje arhitekture
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Manifest moze sadrzati i zakljucati arhitekturne odluke kao row-level tenant model, JWT tenant ID ili hosting pre posebnog Decision Lock-a.
 - **Ocekivano:** `project_security_manifest.md` zakljucava filesystem i bezbednosne granice rada nad fajlovima. Arhitektura, stack, tenant model, data model, faze i implementacioni scope smeju biti zakljucani samo kroz odvojeni Decision Lock i odgovarajuci projektni dokument.
-- **Status:** Otvoreno - v1.0.25 Master/app uskladjivanje.
+- **Status:** Otvoreno - post-v1.0.26 Master/app Decision Lock uskladjivanje.
 
+### [ISS-023] Projekat se ne cuva/obnavlja pouzdano pri gasenju taba ili prozora
+
+- **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
+- **Simptom:** Ranije planirana funkcija snimanja/obnove projekta pri gasenju taba ili prozora nije jasno dostupna kao pouzdan runtime guarantee.
+- **Ocekivano:** Zatvaranje taba/prozora ne sme izgubiti aktivni project/session state. App treba da ima jasan save/restore path ili eksplicitno upozorenje ako state nije sacuvan.
+- **Status:** Otvoreno - post-v1.0.26 app persistence follow-up.
+
+### [ISS-024] Token/model usage i performance prikaz nisu implementirani
+
+- **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
+- **Simptom:** Planirano pracenje tokena, model usage-a i performance signala nije vidljivo kao app funkcija.
+- **Ocekivano:** App treba da prikaze osnovne usage/performance signale po modelu/session-u kada ti podaci postoje, bez uvodjenja lazne preciznosti ili teskog dashboard-a.
+- **Status:** Otvoreno - post-v1.0.26 telemetry/usage UX follow-up.
+
+### [ISS-025] Project session report nema pun decision/state/memory model
+
+- **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
+- **Simptom:** Export je vec postao Project Session Report, ali jos nije pun decision-support packet sa odlukama, file action statusima, model switch signalima, memory signalima i otvorenim pitanjima.
+- **Ocekivano:** Report treba da bude koristan za nastavak rada i review, ne samo formatiran chat export.
+- **Status:** Otvoreno - post-v1.0.26 report enrichment follow-up.
+
+### [ISS-026] Provider/model setup nema runtime validation prema stvarnom katalogu
+
+- **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
+- **Simptom:** Provider/model setup UX je prosiren, ali treba potvrditi runtime validaciju protiv stvarnog provider/model kataloga i fallback ponasanja.
+- **Ocekivano:** Izbor modela u setup-u treba da bude proverljiv, validan i uskladjen sa runtime provider health signalom.
+- **Status:** Otvoreno - post-v1.0.26 provider setup validation follow-up.
+
+### [ISS-027] State correctness regression scenario ne postoji kao objedinjeni test tok
+
+- **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
+- **Simptom:** Phase Sync, Re-Prime, correction invalidation i security manifest boundary postoje kao pojedinacni problemi, ali nema jednog regression scenario-a koji proverava ceo state correctness tok.
+- **Ocekivano:** Dodati regresioni scenario koji zajedno proverava phase state, Re-Prime handoff, stale/pending file actions i security manifest granicu.
+- **Status:** Otvoreno - post-v1.0.26 regression test follow-up.
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.22 test - 2026-05-21
