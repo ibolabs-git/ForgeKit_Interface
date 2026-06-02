@@ -40,6 +40,13 @@ Prioriteti:
 - **Ocekivano:** Zatvaranje taba/prozora ne sme izgubiti aktivni project/session state. App treba da ima jasan save/restore path ili eksplicitno upozorenje ako state nije sacuvan.
 - **Status:** Implementirano - ceka runtime close/reopen regression test. Patch dodaje immediate session/tab persistence flush pri promeni taba, zatvaranju taba i zatvaranju prozora.
 
+### [ISS-028] Close tab/project flow nema backup i handoff potvrdu
+
+- **Otkriveno:** post-v1.0.26 runtime test - 2026-06-02
+- **Simptom:** Osnovni persistence flush cuva state u pozadini, ali zatvaranje taba/prozora jos nema kontrolisan korisnicki izbor za snimanje projekta, kreiranje backup-a ili automatski handoff zapis.
+- **Ocekivano:** Pri zatvaranju taba ili projekta app treba da prikaže kontrolisani close guard kada postoji aktivan projekat, pending state, file actions ili nesnimljen handoff. Korisnik treba jasno da bira izmedju opcija kao sto su `Sacuvaj projekat`, `Sacuvaj + kreiraj handoff`, `Kreiraj backup`, `Zatvori bez cuvanja` i `Otkazi`.
+- **Status:** Otvoreno - post-v1.0.26 UX/governance follow-up; ne mesati sa ISS-023 baseline persistence flush-om.
+
 ### [ISS-024] Token/model usage i performance prikaz nisu implementirani
 
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
