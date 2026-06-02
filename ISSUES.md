@@ -38,7 +38,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Ranije planirana funkcija snimanja/obnove projekta pri gasenju taba ili prozora nije jasno dostupna kao pouzdan runtime guarantee.
 - **Ocekivano:** Zatvaranje taba/prozora ne sme izgubiti aktivni project/session state. App treba da ima jasan save/restore path ili eksplicitno upozorenje ako state nije sacuvan.
-- **Status:** Otvoreno - post-v1.0.26 app persistence follow-up.
+- **Status:** Implementirano - ceka runtime close/reopen regression test. Patch dodaje immediate session/tab persistence flush pri promeni taba, zatvaranju taba i zatvaranju prozora.
 
 ### [ISS-024] Token/model usage i performance prikaz nisu implementirani
 

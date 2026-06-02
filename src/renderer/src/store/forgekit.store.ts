@@ -304,6 +304,13 @@ function captureSnapshot(s: ForgeKitStore): TabSnapshot {
   }
 }
 
+function persistTabHeaders(tabs: TabHeader[], activeTabId: string): void {
+  void window.api.tabsSaveState(
+    tabs.map((t) => ({ id: t.id, projectPath: t.projectPath, projectName: t.projectName })),
+    activeTabId
+  )
+}
+
 // ── Store interfejs ───────────────────────────────────────────────────────────
 
 interface ForgeKitStore {
@@ -442,21 +449,24 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     const { tabs, activeTabId } = get()
     if (tabs.length >= MAX_TABS) return
 
+    void get().saveSession()
+
     const newId = `tab-${Date.now()}`
     const snapshot = captureSnapshot(get())
     const fresh = makeDefaultSnapshot({ sessionId: `session-${Date.now()}` })
+    const nextTabs = [
+      ...tabs.map((t) => t.id === activeTabId
+        ? { ...t, projectName: snapshot.projectName, projectPath: snapshot.projectPath }
+        : t
+      ),
+      { id: newId, projectName: 'Novi projekat', projectPath: null, isStreaming: false }
+    ]
 
     set((s) => ({
       // Sačuvaj trenutni tab
       tabSnapshots: { ...s.tabSnapshots, [activeTabId]: snapshot },
       // Ažuriraj header aktivnog taba
-      tabs: [
-        ...s.tabs.map((t) => t.id === activeTabId
-          ? { ...t, projectName: snapshot.projectName, projectPath: snapshot.projectPath }
-          : t
-        ),
-        { id: newId, projectName: 'Novi projekat', projectPath: null, isStreaming: false }
-      ],
+      tabs: nextTabs,
       // Aktiviraj novi tab
       activeTabId: newId,
       // Postavi fresh stanje
@@ -464,21 +474,27 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       // Novi tab = odmah pokaži setup
       showProjectSetup: true
     }))
+
+    persistTabHeaders(nextTabs, newId)
   },
 
   removeTab: (id) => {
     const { tabs, activeTabId, tabSnapshots } = get()
     if (tabs.length <= 1) return  // ne može zatvoriti jedini tab
 
+    if (id === activeTabId) void get().saveSession()
+
     const newTabs = tabs.filter((t) => t.id !== id)
     const newSnapshots = { ...tabSnapshots }
     delete newSnapshots[id]
+    let nextActiveTabId = activeTabId
 
     if (id === activeTabId) {
       // Prelaz na prethodni ili sledeći tab
       const idx = tabs.findIndex((t) => t.id === id)
       const nextTab = newTabs[Math.max(0, idx - 1)]
       const snap = newSnapshots[nextTab.id] ?? makeDefaultSnapshot()
+      nextActiveTabId = nextTab.id
 
       set({
         tabs: newTabs,
@@ -489,11 +505,15 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     } else {
       set({ tabs: newTabs, tabSnapshots: newSnapshots })
     }
+
+    persistTabHeaders(newTabs, nextActiveTabId)
   },
 
   switchToTab: (id) => {
     const { activeTabId, tabSnapshots, tabs } = get()
     if (id === activeTabId) return
+
+    void get().saveSession()
 
     // Sačuvaj trenutni tab
     const currentSnapshot = captureSnapshot(get())

@@ -9,6 +9,7 @@ Format: `[verzija] - datum - opis`
 ## [Unreleased] - sledeci ciklus
 
 ### Otvoreno
+- Project/session persistence je ojacan immediate flush logikom pri promeni taba, zatvaranju taba i zatvaranju prozora; ceka runtime close/reopen test.
 - Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
