@@ -80,7 +80,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Phase Sync, Re-Prime, correction invalidation i security manifest boundary postoje kao pojedinacni problemi, ali nema jednog regression scenario-a koji proverava ceo state correctness tok.
 - **Ocekivano:** Dodati regresioni scenario koji zajedno proverava phase state, Re-Prime handoff, stale/pending file actions i security manifest granicu.
-- **Status:** Otvoreno - post-v1.0.26 regression test follow-up.
+- **Status:** Test scenario dodat - ceka runtime prolaz kroz `release_test_state_correctness_post_v1.0.26.md`.
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.22 test - 2026-05-21
