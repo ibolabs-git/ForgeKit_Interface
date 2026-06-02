@@ -127,6 +127,10 @@ function parseProjectPhasesFromText(content: string, status: PhaseLockStatus = '
     addPhase(phases, match[1].toUpperCase() as ForgeKitPhase, match[2], status)
   }
 
+  for (const match of content.matchAll(/^\s*(?:#{1,4}\s*)?(?:\d+[.)]\s*)?(?:\*\*)?(?:Faza|Phase)\s+(\d+)\s*(?:[-:\u2013\u2014]\s*)([^\n\r|]+)/gim)) {
+    addPhase(phases, `F${Number(match[1])}` as ForgeKitPhase, match[2], status)
+  }
+
   let versionIndex = 1
   for (const match of content.matchAll(/^\s*(?:#{1,4}\s*)?(v\d+(?:\.\d+)?)\s*(?:[—–-]\s*|:\s+)([^\n\r|]+)/gim)) {
     const label = [match[1], match[2]].filter(Boolean).join(' - ')
@@ -160,6 +164,22 @@ function extractPhaseLock(content: string): { phases: ProjectPhaseDefinition[]; 
 }
 
 const CORRECTION_SIGNAL_RE = /\b(ispravka|korekcija|moja greska|moja greška|pogresno|pogrešno|nije tacno|nije tačno|menjam odluku|promena odluke|promenio sam odluku)\b/i
+
+const PHASE_CONFIRMATION_RE = /^\s*(?:da[\s,;:-]*)?(?:potvrdjujem|potvrÄ‘ujem|potvrda|confirm|odobreno)\b/i
+const PHASE_PROPOSAL_HINT_RE = /\b(faze|faza|phase|phases)\b|PROJECT_PHASES_/i
+
+function extractConfirmedPhasesFromHistory(messages: ChatMessage[]): ProjectPhaseDefinition[] {
+  const lastAssistant = [...messages].reverse().find((message) =>
+    message.role === 'assistant' &&
+    !message.isStreaming &&
+    message.forgeRole !== 'SYSTEM' &&
+    !message.content.startsWith('[SESSION_DIVIDER]') &&
+    !message.content.startsWith('[MODEL_SWITCH:')
+  )
+  if (!lastAssistant || !PHASE_PROPOSAL_HINT_RE.test(lastAssistant.content)) return []
+  const phases = parseProjectPhasesFromText(lastAssistant.content, 'confirmed')
+  return phases.length >= 2 ? phases : []
+}
 
 function markDependentActionsForReview(actions: ProjectFileAction[]): ProjectFileAction[] {
   return actions.map((action) => {
@@ -624,10 +644,16 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   addUserMessage: (content) => {
     const id = `msg-${Date.now()}`
     const hasCorrectionSignal = CORRECTION_SIGNAL_RE.test(content)
+    const confirmedPhases = PHASE_CONFIRMATION_RE.test(content)
+      ? extractConfirmedPhasesFromHistory(get().messages)
+      : []
     set((s) => ({
       messages: [...s.messages, { id, role: 'user', content, forgeRole: 'USER', timestamp: Date.now() }],
       projectFileActions: hasCorrectionSignal ? markDependentActionsForReview(s.projectFileActions) : s.projectFileActions,
-      contextStatus: hasCorrectionSignal ? 'needs_refresh' : s.contextStatus
+      projectPhases: confirmedPhases.length > 0 ? confirmedPhases : s.projectPhases,
+      phaseLockStatus: confirmedPhases.length > 0 ? 'confirmed' as const : s.phaseLockStatus,
+      currentPhase: confirmedPhases[0]?.id ?? s.currentPhase,
+      contextStatus: hasCorrectionSignal || confirmedPhases.length > 0 ? 'needs_refresh' : s.contextStatus
     }))
     return id
   },
