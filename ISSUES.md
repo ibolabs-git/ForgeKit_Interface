@@ -17,7 +17,7 @@ Prioriteti:
 - **Otkriveno:** v1.0.24 PulseFit test - 2026-05-23
 - **Simptom:** Levi sidebar, session state i Re-Prime mogu tretirati genericke ForgeKit faze kao projektne faze. Model je na osnovu toga pogresno zakljucio da je "F1 fundament paket kompletan" i pitao za prelazak na "F2 ForgeKit Logika", sto nije projektna faza PulseFit-a.
 - **Ocekivano:** App mora razlikovati app/setup placeholder faze od projektnih faza. Sidebar i Re-Prime smeju koristiti samo faze koje su potvrdjene kroz `PROJECT_PHASES_CONFIRMED` ili sinhronizovane kroz `PROJECT_PHASES_SYNCED`.
-- **Status:** Delimicno patchovano - parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional atributom, npr. `[PROJECT_PHASES_CONFIRMED: StateCheck]`. Dodat je i fallback koji na eksplicitnu korisnicku potvrdu pokusava da potvrdi faze iz poslednjeg assistant predloga, ukljucujuci obicnu numerisanu listu faza. Ceka runtime ponovni test kroz ISS-027 scenario.
+- **Status:** Runtime potvrdjeno za confirmation path - parser prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional atributom, npr. `[PROJECT_PHASES_CONFIRMED: StateCheck]`. Dodat je fallback koji na korisnicku potvrdu faza trazi najskoriji fazni predlog u istoriji i potvrdjuje ga iz `Faza/F` formata ili obicne numerisane liste. Kratke potvrde kao `da`, `moze`, `kreni` i `prihvatam` rade samo kada prethodna assistant poruka eksplicitno trazi potvrdu faza.
 
 ### [ISS-021] Korisnicka korekcija ne zastareva zavisne draftove i file actions
 - **Prioritet:** KRITICNO
@@ -80,7 +80,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Phase Sync, Re-Prime, correction invalidation i security manifest boundary postoje kao pojedinacni problemi, ali nema jednog regression scenario-a koji proverava ceo state correctness tok.
 - **Ocekivano:** Dodati regresioni scenario koji zajedno proverava phase state, Re-Prime handoff, stale/pending file actions i security manifest granicu.
-- **Status:** Runtime prolaz zapocet - Test 1 je PASS, Test 2 je otkrio da tekstualna potvrda faza ne azurira app state. Patch dodat za attributed phase tag i confirmation fallback; ceka ponovni test.
+- **Status:** Runtime potvrdjeno za phase confirmation slice - Test 1 placeholder faze je PASS; app ne prikazuje projektne faze pre potvrde. Test 2 je PASS posle patch-a; natural confirmation, attributed phase tag i obicna numerisana lista azuriraju app state u `potvrdjeno`, popunjavaju levi phase ladder i oznacavaju context kao `treba Re-Prime`. Preostali ISS-027 delovi za poseban test: Re-Prime handoff, stale/pending file actions i security manifest boundary.
 ### [ISS-016] Re-Prime kontekst nije pravi handoff/state paket
 - **Prioritet:** VAZNO
 - **Otkriveno:** v1.0.22 test - 2026-05-21

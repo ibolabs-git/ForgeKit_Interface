@@ -14,7 +14,7 @@ Format: `[verzija] - datum - opis`
 - Token/model usage signal je runtime potvrdjen kao v1 procena u SidePanel-u; kratki zahtev prolazi, a prevelik context payload se zaustavlja pre provider 429 greske.
 - ForgeKit init context payload je oznacen kao poseban follow-up jer full init moze preci token prag i treba compact boot/context optimization.
 - State correctness regression scenario je dodat za Phase Sync, Re-Prime, correction invalidation i security manifest boundary.
-- Phase parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional project atributom, a eksplicitna korisnicka potvrda moze potvrditi faze iz poslednjeg assistant predloga ili numerisane liste faza.
+- Phase parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional project atributom, a korisnicka potvrda faza moze potvrditi najskoriji fazni predlog iz istorije, `Faza/F` formata ili numerisane liste. Runtime je potvrdio i contextual kratke potvrde kao `da`, `moze`, `kreni` i `prihvatam` kada prethodna poruka trazi potvrdu faza.
 - Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.

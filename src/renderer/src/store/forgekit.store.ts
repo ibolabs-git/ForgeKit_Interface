@@ -168,6 +168,9 @@ const CORRECTION_SIGNAL_RE = /\b(ispravka|korekcija|moja greska|moja greška|pog
 const PHASE_CONFIRMATION_RE = /^\s*(?:da[\s,;:-]*)?(?:potvrdjujem|potvrÄ‘ujem|potvrda|confirm|odobreno)\b/i
 const PHASE_PROPOSAL_HINT_RE = /\b(faze|faza|phase|phases)\b|PROJECT_PHASES_/i
 
+const PHASE_CONFIRMATION_SCOPE_RE = /\b(faze|faza|phase|phases)\b/i
+const PHASE_CONTEXTUAL_CONFIRMATION_RE = /^\s*(?:da|yes|moze|može|kreni|prihvatam|prihvacam|prihvaćam|ok|u redu|saglasan|saglasna)\s*[.!?]*\s*$/i
+const PHASE_CONFIRMATION_PROMPT_RE = /\bpotvr[\s\S]{0,180}\b(faze|faza|phase|phases)\b|\b(faze|faza|phase|phases)\b[\s\S]{0,180}\bpotvr/i
 const NUMBERED_PHASE_LINE_RE = /^\s{0,2}(\d+)[.)]\s+(?:\*\*)?([^:\n\r]{3,80}?)(?:\*\*)?\s*(?::|$)/
 
 function parseNumberedPhaseProposal(content: string, status: PhaseLockStatus = 'confirmed'): ProjectPhaseDefinition[] {
@@ -188,7 +191,34 @@ function parseNumberedPhaseProposal(content: string, status: PhaseLockStatus = '
   return [...phases.values()].sort((a, b) => phaseSortValue(a.id) - phaseSortValue(b.id))
 }
 
-function extractConfirmedPhasesFromHistory(messages: ChatMessage[]): ProjectPhaseDefinition[] {
+function extractConfirmedPhasesFromHistory(messages: ChatMessage[], confirmationContent: string): ProjectPhaseDefinition[] {
+  const candidates = [...messages].reverse().filter((message) =>
+    message.role === 'assistant' &&
+    !message.isStreaming &&
+    message.forgeRole !== 'SYSTEM' &&
+    !message.content.startsWith('[SESSION_DIVIDER]') &&
+    !message.content.startsWith('[MODEL_SWITCH:')
+  )
+
+  const confirmationHasPhaseScope = PHASE_CONFIRMATION_SCOPE_RE.test(confirmationContent)
+  for (const candidate of candidates) {
+    const hasPhaseScope = confirmationHasPhaseScope || PHASE_PROPOSAL_HINT_RE.test(candidate.content)
+    if (!hasPhaseScope) continue
+
+    const phases = parseProjectPhasesFromText(candidate.content, 'confirmed')
+    if (phases.length >= 2) return phases
+
+    const numberedPhases = parseNumberedPhaseProposal(candidate.content, 'confirmed')
+    if (numberedPhases.length >= 2) return numberedPhases
+  }
+
+  return []
+}
+
+function isPhaseConfirmationMessage(content: string, messages: ChatMessage[]): boolean {
+  if (PHASE_CONFIRMATION_RE.test(content)) return true
+  if (!PHASE_CONTEXTUAL_CONFIRMATION_RE.test(content)) return false
+
   const lastAssistant = [...messages].reverse().find((message) =>
     message.role === 'assistant' &&
     !message.isStreaming &&
@@ -196,11 +226,8 @@ function extractConfirmedPhasesFromHistory(messages: ChatMessage[]): ProjectPhas
     !message.content.startsWith('[SESSION_DIVIDER]') &&
     !message.content.startsWith('[MODEL_SWITCH:')
   )
-  if (!lastAssistant || !PHASE_PROPOSAL_HINT_RE.test(lastAssistant.content)) return []
-  const phases = parseProjectPhasesFromText(lastAssistant.content, 'confirmed')
-  if (phases.length >= 2) return phases
-  const numberedPhases = parseNumberedPhaseProposal(lastAssistant.content, 'confirmed')
-  return numberedPhases.length >= 2 ? numberedPhases : []
+
+  return Boolean(lastAssistant && PHASE_CONFIRMATION_PROMPT_RE.test(lastAssistant.content))
 }
 
 function markDependentActionsForReview(actions: ProjectFileAction[]): ProjectFileAction[] {
@@ -666,8 +693,9 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   addUserMessage: (content) => {
     const id = `msg-${Date.now()}`
     const hasCorrectionSignal = CORRECTION_SIGNAL_RE.test(content)
-    const confirmedPhases = PHASE_CONFIRMATION_RE.test(content)
-      ? extractConfirmedPhasesFromHistory(get().messages)
+    const existingMessages = get().messages
+    const confirmedPhases = isPhaseConfirmationMessage(content, existingMessages)
+      ? extractConfirmedPhasesFromHistory(existingMessages, content)
       : []
     set((s) => ({
       messages: [...s.messages, { id, role: 'user', content, forgeRole: 'USER', timestamp: Date.now() }],
