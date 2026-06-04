@@ -12,11 +12,22 @@ Format: `[verzija] - datum - opis`
 - Close tab/project flow treba dopuniti kontrolisanim korisnickim izborom za snimanje projekta, backup snapshot i handoff zapis pre zatvaranja.
 - Token/model usage signal ima v1 procenu u SidePanel-u; full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
 - ForgeKit init context payload je oznacen kao poseban follow-up jer full init moze preci token prag i treba compact boot/context optimization.
-- Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
 - Project session report treba dalje obogatiti odlukama, file action statusima i memory signalima.
 - U glavni ForgeKit repo treba uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` kao inicijalni mentor/handoff dokument ako se potvrdi kao standard.
+
+---
+
+## [1.0.28] - 2026-06-04 - Creue Mod left panel action
+
+### UX / app
+- Levo dugme `Pokreni ForgeKit` je zamenjeno akcijom `Creue Mod`, jer ForgeKit app vise ne treba da izgleda kao da korisnik mora rucno da pokrene osnovni rezim.
+- `Creue Mod` pokrece kratak pregled trenutnog toka iz tri ugla: proces, kvalitet i rizik, bez izmene fajlova i sa sledecom odlukom za Orchestrator.
+- Stari full init tok ostaje vezan za interne/init mehanizme; compact boot i prevelik init context ostaju poseban follow-up.
+
+### Release / update
+- Verzija je bumpovana na `1.0.28` za instalacioni update test.
 
 ---
 

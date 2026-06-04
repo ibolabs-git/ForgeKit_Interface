@@ -92,8 +92,8 @@ Prioriteti:
 - **Prioritet:** NICE
 - **Otkriveno:** v1.0.22 test - 2026-05-21
 - **Simptom:** Nakon uspesnog init-a dugme i dalje izgleda kao primarni start rezima.
-- **Ocekivano:** Kada je ForgeKit init vec uradjen, dugme treba da promeni stanje ili namenu, npr. `ForgeKit aktivan`, `Osvezi ForgeKit kontekst` ili `Ponovo ucitaj instrukcije`.
-- **Status:** Otvoreno - uskladiti label i ponasanje dugmeta sa stvarnim init stanjem.
+- **Ocekivano:** Kada je ForgeKit init vec uradjen, dugme treba da promeni stanje ili namenu, npr. `ForgeKit aktivan`, `Osvezi ForgeKit kontekst`, `Ponovo ucitaj instrukcije` ili `Creue Mod`.
+- **Status:** Implementirano za v1.0.28 - levo dugme vise ne salje full `[FORGEKIT_INIT]`; prikazuje `Creue Mod` i pokrece kratak pregled trenutnog toka iz tri ugla: proces, kvalitet i rizik, bez izmene fajlova. Auto-init/compact boot ostaje poseban follow-up kroz ISS-029 i Master improvement backlog.
 
 ### [ISS-011] Intake pitanje ponekad postaje predugacko
 - **Prioritet:** NICE

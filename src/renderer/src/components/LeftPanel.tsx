@@ -44,9 +44,9 @@ export function LeftPanel(): JSX.Element {
     send(`Pozivam ${roleDisplayName(role)}.`)
   }
 
-  const handleForgeKitInit = () => {
+  const handleCreueMode = () => {
     if (isStreaming) return
-    send('[FORGEKIT_INIT]')
+    send('Creue Mod: uradi kratak pregled trenutnog toka iz tri ugla: proces, kvalitet i rizik. Ne menjaj fajlove. Vrati nalaz i sledecu odluku za Orchestrator.')
   }
 
   return (
@@ -79,12 +79,12 @@ export function LeftPanel(): JSX.Element {
       <section className="lp-section lp-section-init">
         <button
           className={`lp-btn-init${isStreaming ? ' disabled' : ''}`}
-          onClick={handleForgeKitInit}
+          onClick={handleCreueMode}
           disabled={isStreaming}
-          title="Ucitaj ForgeKit dokumentaciju i pokreni Orchestrator"
+          title="Pokreni kratak Creue Mod pregled bez izmene fajlova"
         >
           <span className="lp-init-icon">▶</span>
-          <span className="lp-init-label">Pokreni ForgeKit</span>
+          <span className="lp-init-label">Creue Mod</span>
         </button>
       </section>
 
