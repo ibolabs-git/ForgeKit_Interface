@@ -9,18 +9,30 @@ Format: `[verzija] - datum - opis`
 ## [Unreleased] - sledeci ciklus
 
 ### Otvoreno
-- Project/session persistence je runtime potvrdjen: restart app-a vraca aktivni tab, projekat, poruke i session/token state.
 - Close tab/project flow treba dopuniti kontrolisanim korisnickim izborom za snimanje projekta, backup snapshot i handoff zapis pre zatvaranja.
-- Token/model usage signal je runtime potvrdjen kao v1 procena u SidePanel-u; kratki zahtev prolazi, a prevelik context payload se zaustavlja pre provider 429 greske.
+- Token/model usage signal ima v1 procenu u SidePanel-u; full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
 - ForgeKit init context payload je oznacen kao poseban follow-up jer full init moze preci token prag i treba compact boot/context optimization.
-- State correctness regression scenario je dodat za Phase Sync, Re-Prime, correction invalidation i security manifest boundary.
-- Phase parser sada prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional project atributom, a korisnicka potvrda faza moze potvrditi najskoriji fazni predlog iz istorije, `Faza/F` formata ili numerisane liste. Runtime je potvrdio i contextual kratke potvrde kao `da`, `moze`, `kreni` i `prihvatam` kada prethodna poruka trazi potvrdu faza.
-- Runtime test je potvrdio ISS-027 state correctness tok: Re-Prime/context continuity cuva potvrdjene faze, canonical `PROJECT_WRITE_FILE` ide kroz Project File Actions panel, chat potvrda ne zamenjuje stvarni upis, panel `Upisi` pravi fajl, a `project_security_manifest.md` ne zakljucava stack, faze, arhitekturu ili v1 scope.
 - Dugme `POKRENI FORGEKIT` treba preimenovati/promeniti namenu nakon init-a u refresh/re-prime ili drugi jasan runtime signal.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
 - Project session report treba dalje obogatiti odlukama, file action statusima i memory signalima.
 - U glavni ForgeKit repo treba uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` kao inicijalni mentor/handoff dokument ako se potvrdi kao standard.
+
+---
+
+## [1.0.27] - 2026-06-04 - State correctness cleanup i Master docs baseline
+
+### Runtime / app
+- Project/session persistence je runtime potvrdjen: restart app-a vraca aktivni tab, projekat, poruke i session/token state.
+- Token/model usage signal je dodat kao v1 procena u SidePanel-u; kratki zahtev prolazi, a prevelik context payload se zaustavlja pre provider 429 greske.
+- Phase parser prihvata `PROJECT_PHASES_CONFIRMED` i `PROJECT_PHASES_SYNCED` tagove sa optional project atributom, a korisnicka potvrda faza moze potvrditi najskoriji fazni predlog iz istorije, `Faza/F` formata ili numerisane liste.
+- Runtime je potvrdio contextual kratke potvrde kao `da`, `moze`, `kreni` i `prihvatam` kada prethodna poruka trazi potvrdu faza.
+- Runtime test je potvrdio ISS-027 state correctness tok: Re-Prime/context continuity cuva potvrdjene faze, canonical `PROJECT_WRITE_FILE` ide kroz Project File Actions panel, chat potvrda ne zamenjuje stvarni upis, panel `Upisi` pravi fajl, a `project_security_manifest.md` ne zakljucava stack, faze, arhitekturu ili v1 scope.
+
+### Dokumentacija / release
+- Verzija je bumpovana na `1.0.27` za instalacioni update test preko GitHub Release-a.
+- App issue ledger i changelog su uskladjeni sa runtime validacijom za ISS-023, ISS-024, ISS-027, ISS-028 i ISS-029.
+- Release se testira uz najnoviji pushovani Master docs baseline `ForgeKit_tool@1773be0`, koji ukljucuje Research layer, Skill Change governance, record routing cleanup i pre-FLE cleanup plan.
 
 ---
 
