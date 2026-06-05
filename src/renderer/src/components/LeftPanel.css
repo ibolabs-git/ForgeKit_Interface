@@ -40,7 +40,7 @@
   color: var(--text-primary);
 }
 
-/* ── Role grid — 2×3 metric-tile stil ── */
+/* ── Role grid — 2×4 metric-tile stil ── */
 .lp-role-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -332,6 +332,16 @@
 .lp-role-tile[data-role="observer"].active .lrt-star { color: #3a4a5a; }
 .lp-role-tile[data-role="observer"]:hover:not(:disabled) .lrt-name { color: #3a4a5a; }
 
+.lp-role-tile[data-role="research"].active { border-left-color: #1f6f63; }
+.lp-role-tile[data-role="research"].active .lrt-name { color: #1f6f63; }
+.lp-role-tile[data-role="research"].active .lrt-star { color: #1f6f63; }
+.lp-role-tile[data-role="research"]:hover:not(:disabled) .lrt-name { color: #1f6f63; }
+
+.lp-role-tile[data-role="premortem"].active { border-left-color: #7a2635; }
+.lp-role-tile[data-role="premortem"].active .lrt-name { color: #7a2635; }
+.lp-role-tile[data-role="premortem"].active .lrt-star { color: #7a2635; }
+.lp-role-tile[data-role="premortem"]:hover:not(:disabled) .lrt-name { color: #7a2635; }
+
 /* ── Role tile — tamna tema: svetli pastelni tonovi ── */
 [data-theme="dark"] .lp-role-tile[data-role="orchestrator"].active { border-left-color: #7eb5e8; }
 [data-theme="dark"] .lp-role-tile[data-role="orchestrator"].active .lrt-name { color: #7eb5e8; }
@@ -362,3 +372,13 @@
 [data-theme="dark"] .lp-role-tile[data-role="observer"].active .lrt-name { color: #a0b4c4; }
 [data-theme="dark"] .lp-role-tile[data-role="observer"].active .lrt-star { color: #a0b4c4; }
 [data-theme="dark"] .lp-role-tile[data-role="observer"]:hover:not(:disabled) .lrt-name { color: #a0b4c4; }
+
+[data-theme="dark"] .lp-role-tile[data-role="research"].active { border-left-color: #7fd8ca; }
+[data-theme="dark"] .lp-role-tile[data-role="research"].active .lrt-name { color: #7fd8ca; }
+[data-theme="dark"] .lp-role-tile[data-role="research"].active .lrt-star { color: #7fd8ca; }
+[data-theme="dark"] .lp-role-tile[data-role="research"]:hover:not(:disabled) .lrt-name { color: #7fd8ca; }
+
+[data-theme="dark"] .lp-role-tile[data-role="premortem"].active { border-left-color: #d98a99; }
+[data-theme="dark"] .lp-role-tile[data-role="premortem"].active .lrt-name { color: #d98a99; }
+[data-theme="dark"] .lp-role-tile[data-role="premortem"].active .lrt-star { color: #d98a99; }
+[data-theme="dark"] .lp-role-tile[data-role="premortem"]:hover:not(:disabled) .lrt-name { color: #d98a99; }

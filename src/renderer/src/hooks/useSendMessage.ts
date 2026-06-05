@@ -10,16 +10,18 @@ import type { ForgeKitRole, ProjectFileAction } from '../types'
 const READ_TEMPLATE_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
 const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[[A-Z][A-Z\s]+\]\s*)?(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const PROJECT_WRITE_REGEX = /\[PROJECT_WRITE_FILE:\s*([^\]]+)\]([\s\S]*?)\[\/PROJECT_WRITE_FILE\]/g
-const ROLE_SEGMENT_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]\s*$/gim
+const ROLE_SEGMENT_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|RESEARCH|PREMORTEM)\]\s*$/gim
 const FILE_ACTION_CONFIRM_REGEX = /^\s*(?:da[\s,;:-]*)?(?:potvrdjujem|potvrđujem|potvrda|confirm|odobreno|upisi|upiši)\s*\.?\s*$/i
 const FORGEKIT_INIT_TEXT_REGEX = /\b(pokreni|startuj|aktiviraj|koristi|ukljuci|uklju\u010di)\b[\s\S]{0,40}\b(forge\s*kit|forgekit|forgkit|forgetkit)\b(?:[\s\S]{0,40}\b(rezim|re\u017eim|mode)\b)?/i
-const INVOKE_REGEX = /^\[INVOKE:(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]$/i
+const INVOKE_REGEX = /^\[INVOKE:(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|RESEARCH|PREMORTEM)\]$/i
 const NATURAL_INVOKE_TRIGGER_REGEX = /\b(pozivam|pozovi|zovi|aktiviraj|prebaci|prebacujem|handoff|invoke)\b/i
 const ROLE_ALIASES: Array<{ role: ForgeKitRole; patterns: RegExp[] }> = [
   { role: 'ORCHESTRATOR', patterns: [/\borchestrator\b/i, /\borkestrator\b/i] },
   { role: 'THINKER', patterns: [/\bthinker\b/i, /\banaliticar\b/i, /\banaliti[cč]ar\b/i] },
   { role: 'BUILDER', patterns: [/\bbuilder\b/i, /\bizvrsilac\b/i, /\bizvr[sš]ilac\b/i] },
   { role: 'REVIEWER', patterns: [/\breviewer\b/i, /\breview\b/i, /\brevizor\b/i] },
+  { role: 'RESEARCH', patterns: [/\bresearch\b/i, /\bresearcher\b/i, /\bistrazivac\b/i, /\bistrazivanje\b/i] },
+  { role: 'PREMORTEM', patterns: [/\bpremortem\b/i, /\bpre-mortem\b/i, /\bpre\s*mortem\b/i, /\brizik\b/i, /\brizici\b/i] },
   { role: 'MEMORY CURATOR', patterns: [/\bmemory\s+curator\b/i, /\bmemorijski\s+kustos\b/i, /\bkustos\s+memorije\b/i] },
   { role: 'OBSERVER', patterns: [/\bobserver\b/i, /\bopserver\b/i, /\bposmatrac\b/i, /\bposmatra[cč]\b/i] }
 ]
@@ -61,6 +63,15 @@ function isInternalTemplateMessage(content: string): boolean {
 function extractInvokedRole(content: string): ForgeKitRole | null {
   const match = content.trim().match(INVOKE_REGEX)
   return match ? (match[1].toUpperCase() as ForgeKitRole) : null
+}
+
+function buildRoleInvokePrompt(role: ForgeKitRole): string {
+  return `Pozvana je uloga [${role}].
+
+Odgovori kao [${role}].
+Ne odgovaraj kao [ORCHESTRATOR] u ovoj poruci.
+Radi samo zadatak te uloge, bez izmene fajlova osim ako je uloga BUILDER i korisnik eksplicitno odobri file action.
+Na kraju vrati nalaz i sledecu odluku za Orchestrator.`
 }
 
 function extractNaturalInvokedRole(content: string): ForgeKitRole | null {
@@ -253,7 +264,9 @@ export function useSendMessage() {
     const invokedRole = extractInvokedRole(outboundText)
     const modelInput = isForgeKitInit
       ? buildForgeKitInitContext(await loadTemplates(INIT_TEMPLATE_PATHS))
-      : outboundText
+      : invokedRole
+        ? buildRoleInvokePrompt(invokedRole)
+        : outboundText
 
     contentRef.current = ''
     if (!options.hiddenUser) addUserMessage(text)
@@ -297,7 +310,7 @@ Sledeci korak: otvori kraci scoped tok, smanji istoriju ili uradi Re-Prime sa ma
 
     const messageId = `ai-${Date.now()}`
     activeMessageIdRef.current = messageId
-    startAssistantMessage(messageId, invokedRole ?? undefined)
+    startAssistantMessage(messageId, invokedRole ?? undefined, Boolean(invokedRole))
 
     const timeoutId = window.setTimeout(() => {
       window.api.cancelMessage(messageId)

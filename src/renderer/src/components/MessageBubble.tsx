@@ -41,6 +41,8 @@ const ROLE_COLORS: Record<string, string> = {
   REVIEWER:        '#e67e22',
   'MEMORY CURATOR':'#1abc9c',
   OBSERVER:        '#95a5a6',
+  RESEARCH:        '#2f9e8f',
+  PREMORTEM:       '#b84b5f',
   USER:            '#888888',
   SYSTEM:          '#e74c3c'
 }

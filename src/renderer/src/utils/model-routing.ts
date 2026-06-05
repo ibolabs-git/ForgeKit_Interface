@@ -38,6 +38,18 @@ const NVIDIA_MODEL_RECOMMENDATIONS: Record<ForgeKitRole, ModelRecommendation | n
     label: 'Nemotron 3 Super 120B',
     reason: 'dobar za procesni pregled, boundary signale i koordinacioni kontekst'
   },
+  RESEARCH: {
+    provider: 'nvidia',
+    model: 'mistralai/mistral-large-3-675b-instruct-2512',
+    label: 'Mistral Large 3',
+    reason: 'najbolji za research, business kontekst, sazimanje izvora i decision-support packet'
+  },
+  PREMORTEM: {
+    provider: 'nvidia',
+    model: 'qwen/qwen3-next-80b-a3b-thinking',
+    label: 'Qwen3 Next Thinking',
+    reason: 'dobar za rizike, failure scenario i proveru pre bitnih odluka'
+  },
   'MEMORY CURATOR': {
     provider: 'nvidia',
     model: 'mistralai/mistral-large-3-675b-instruct-2512',

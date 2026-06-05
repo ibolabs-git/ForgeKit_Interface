@@ -5,6 +5,8 @@ export type ForgeKitRole =
   | 'REVIEWER'
   | 'MEMORY CURATOR'
   | 'OBSERVER'
+  | 'RESEARCH'
+  | 'PREMORTEM'
   | 'USER'
   | 'SYSTEM'
 

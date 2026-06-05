@@ -3,8 +3,8 @@ import type { ChatMessage, ForgeKitRole, ForgeKitPhase, Task, MemoryRecord, Proj
 
 // ── Regex parseri ──────────────────────────────────────────────────────────────
 const ROLE_REGEX = /^\[([A-Z][A-Z\s]+)\]/
-const ROLE_LINE_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER)\]/gim
-const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER)\]|$)/
+const ROLE_LINE_REGEX = /^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|RESEARCH|PREMORTEM)\]/gim
+const MEMORY_CURATOR_REGEX = /\[MEMORY CURATOR\]([\s\S]+?)(?=\[(?:ORCHESTRATOR|THINKER|BUILDER|REVIEWER|OBSERVER|RESEARCH|PREMORTEM)\]|$)/
 
 // Ključne riječi koje signaliziraju task sekciju (case-insensitive)
 const TASK_KEYWORD_RE = /\btask(?:ov[ia]?)?\b|\bzadac[ia]?\b|\bzadatak\b|\bakcij[ae]?\b|\btodo\b/i
@@ -13,7 +13,8 @@ const CHECKBOX_RE = /^[-*] \[( |x)\] (.+)$/
 
 const VALID_ROLES: ForgeKitRole[] = [
   'ORCHESTRATOR', 'THINKER', 'BUILDER',
-  'REVIEWER', 'MEMORY CURATOR', 'OBSERVER'
+  'REVIEWER', 'MEMORY CURATOR', 'OBSERVER',
+  'RESEARCH', 'PREMORTEM'
 ]
 
 const MAX_TABS = 4
@@ -551,6 +552,7 @@ interface ForgeKitStore {
   isStreaming: boolean
   // OPT-02: streaming tokeni se akumuliraju ovdje — ne diraju messages array na svaki token
   streamingContent: string
+  streamingRoleLock: ForgeKitRole | null
 
   // ── ForgeKit stanje (aktivni tab) ──
   activeRole: ForgeKitRole
@@ -592,7 +594,7 @@ interface ForgeKitStore {
   addUserMessage: (content: string) => string
   addSystemMessage: (content: string) => void
   addAssistantMessage: (content: string, role?: ForgeKitRole) => void
-  startAssistantMessage: (messageId: string, initialRole?: ForgeKitRole) => void
+  startAssistantMessage: (messageId: string, initialRole?: ForgeKitRole, lockRole?: boolean) => void
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
   addErrorMessage: (error: string, messageId: string) => void
@@ -785,6 +787,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   streamingMessageId: null,
   isStreaming: false,
   streamingContent: '',
+  streamingRoleLock: null,
   activeRole: 'ORCHESTRATOR',
   currentPhase: 'F1',
   projectPhases: [],
@@ -860,10 +863,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     }))
   },
 
-  startAssistantMessage: (messageId, initialRole) => {
+  startAssistantMessage: (messageId, initialRole, lockRole = false) => {
     set((s) => ({
       isStreaming: true,
       streamingMessageId: messageId,
+      streamingRoleLock: lockRole && initialRole ? initialRole : null,
       activeRole: initialRole ?? s.activeRole,
       // Ažuriraj streaming indikator u tab headeru
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: true } : t),
@@ -880,7 +884,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   appendStreamToken: (token, _messageId) => {
     set((s) => {
       const nextContent = s.streamingContent + token
-      const nextRole = resolveMessageRole(nextContent, s.activeRole)
+      const nextRole = s.streamingRoleLock ?? resolveMessageRole(nextContent, s.activeRole)
       return {
         streamingContent: nextContent,
         activeRole: nextRole,
@@ -900,7 +904,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     if (!fullContent && !get().messages.find((m) => m.id === messageId)) return
 
     const currentMessageRole = get().messages.find((m) => m.id === messageId)?.forgeRole ?? get().activeRole
-    const role = resolveMessageRole(fullContent, currentMessageRole)
+    const role = get().streamingRoleLock ?? resolveMessageRole(fullContent, currentMessageRole)
     const newTasks = extractTasks(fullContent, messageId)
     const phaseLock = extractPhaseLock(fullContent)
 
@@ -908,6 +912,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       isStreaming: false,
       streamingMessageId: null,
       streamingContent: '',   // oslobodi buffer
+      streamingRoleLock: null,
       activeRole: role,
       currentPhase: phaseLock?.phases.length ? phaseLock.phases[0].id : s.currentPhase,
       projectPhases: phaseLock?.phases.length ? phaseLock.phases : s.projectPhases,
@@ -946,6 +951,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     set((s) => ({
       isStreaming: false,
       streamingMessageId: null,
+      streamingRoleLock: null,
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
       messages: s.messages.map((m) =>
         m.id === _messageId
@@ -968,6 +974,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
       isStreaming: false,
       streamingMessageId: null,
       streamingContent: '',
+      streamingRoleLock: null,
       tabs: s.tabs.map((t) => t.id === s.activeTabId ? { ...t, isStreaming: false } : t),
       messages: s.messages.map((m) =>
         m.id === messageId
@@ -1045,6 +1052,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
     isStreaming: false,
     streamingMessageId: null,
     streamingContent: '',
+    streamingRoleLock: null,
     projectName: s.projectName,
     projectPath: s.projectPath,
     projectFileActions: [],

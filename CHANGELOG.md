@@ -8,24 +8,41 @@ Format: `[verzija] - datum - opis`
 
 ## [Unreleased] - sledeci ciklus
 
-### Promenjeno
-- NVIDIA model pool je prosiren na 10 preporucenih NIM modela, sa labelima za Orchestrator, Strategy, Builder, Thinker, Reviewer, Premortem, Research, rutinu i fallback tokove.
-- NVIDIA default model je pomeren na `nvidia/nemotron-3-super-120b-a12b` kao primarni Orchestrator/agentic kandidat; runtime smoke test dostupnosti ostaje poseban gate pre release-a.
-- SidePanel sada prikazuje vidljiv `NVIDIA routing predlog` samo kada je aktivan NVIDIA provider, sa razlogom i rucnom `Primeni` akcijom bez automatskog prebacivanja modela.
-- Prevelik context payload se sada prikazuje kao `CONTEXT GUARD` obavestenje i `Kontekst` procena, da ne izgleda kao provider/runtime greska.
-- Novi projekat sada koristi lokalni compact Orchestrator welcome bez API poziva, umesto automatskog full `[FORGEKIT_INIT]` slanja modelu.
-- Project reference import dodat je kao v1 tok: `.txt`, `.md` i `.markdown` fajlovi mogu da se kopiraju u `references/` folder aktivnog projekta, uz lokalni manifest, SidePanel listu, preview i ograniceni excerpt tok.
-- Project save/clone flow dodat je kao v1 tok: `Snimi projekat` upisuje `session.json`, `project_handoff.md` i `project_chat_transcript.md`, zatvaranje taba prikazuje izbor `Snimi i zatvori`, `Samo zatvori` ili `Otkazi`, a `Odaberi postojeci folder` ucitava postojeci `session.json` bez pokretanja novog init-a.
-
 ### Otvoreno
 - Napredniji backup profil i dodatne opcije pakovanja projekta ostaju follow-up ako se potvrdi potreba.
-- Token/model usage signal ima v1 procenu u SidePanel-u; full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
 - Scoped instruction load ostaje follow-up: relevantne Master/mentor instrukcije treba ucitavati selektivno nakon sto korisnik definise cilj ili kada tok trazi Re-Prime/Governed kontekst.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
 - Project session report treba dalje obogatiti odlukama, file action statusima i memory signalima.
 - Napredni scoped section picker, full summary i Research Packet tok za importovane reference fajlove ostaju follow-up; v1 reference tok ne salje ceo fajl modelu.
-- U glavni ForgeKit repo treba uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` kao inicijalni mentor/handoff dokument ako se potvrdi kao standard.
+
+---
+
+## [1.1.0] - 2026-06-05 - Project continuity, role control i context management
+
+### Promenjeno
+- NVIDIA model pool je prosiren na 10 preporucenih NIM modela, sa labelima za Orchestrator, Strategy, Builder, Thinker, Reviewer, Premortem, Research, rutinu i fallback tokove.
+- NVIDIA default model je pomeren na `nvidia/nemotron-3-super-120b-a12b` kao primarni Orchestrator/agentic kandidat; runtime smoke test dostupnosti ostaje poseban gate pre release-a.
+- SidePanel sada prikazuje vidljiv `NVIDIA routing predlog` samo kada je aktivan NVIDIA provider, sa razlogom i rucnom `Primeni` akcijom bez automatskog prebacivanja modela.
+- Role panel sada prikazuje i rucne `RESEARCH` i `PREMORTEM` role kartice, tako da korisnik moze direktno da pozove inquiry/evidence ili rizik proveru bez menjanja autonomnih gate pravila.
+- Chat auto-scroll tokom dugog odgovora vise ne prisiljava korisnika na dno ako rucno skroluje gore da cita pocetak odgovora.
+- Context usage `watch` stanje sada koristi meksi `Oprez` signal, dok crveni/error treatment ostaje samo za `Prevelik` context.
+- Prevelik context payload se sada prikazuje kao `CONTEXT GUARD` obavestenje i `Kontekst` procena, da ne izgleda kao provider/runtime greska.
+- Novi projekat sada koristi lokalni compact Orchestrator welcome bez API poziva, umesto automatskog full `[FORGEKIT_INIT]` slanja modelu.
+- Project reference import dodat je kao v1 tok: `.txt`, `.md` i `.markdown` fajlovi mogu da se kopiraju u `references/` folder aktivnog projekta, uz lokalni manifest, SidePanel listu, preview i ograniceni excerpt tok.
+- Project save/clone flow dodat je kao v1 tok: `Snimi projekat` upisuje `session.json`, `project_handoff.md` i `project_chat_transcript.md`, zatvaranje taba prikazuje izbor `Snimi i zatvori`, `Samo zatvori` ili `Otkazi`, a `Odaberi postojeci folder` ucitava postojeci `session.json` bez pokretanja novog init-a.
+
+### Release / update
+- Verzija je bumpovana na `1.1.0` kao prvi siri app release posle `1.0.x` stabilizacionog niza.
+- Release je pripremljen za installed update tok preko GitHub Release-a `v1.1.0`.
+- Token/model usage signal ostaje v1 procena u SidePanel-u; full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
+
+### Validacija
+- Pre-release lokalni test je potvrdio compact new project start bez prevelikog init context guard-a.
+- Pre-release lokalni test je potvrdio `Snimi projekat`, close-tab save modal i restore preko `Odaberi postojeci folder`.
+- Pre-release lokalni test je potvrdio rucno pozivanje `RESEARCH` i `PREMORTEM` role kartica uz aktivan role state tokom odgovora.
+- Pre-release lokalni test je potvrdio Project File Actions tok: chat potvrda ne zamenjuje panel upis, a `Upisi` pravi stvarni fajl.
+- Pre-release lokalni test je potvrdio da imported reference fajl ostaje u project `references/` folderu i ne salje se modelu u celini.
 
 ---
 

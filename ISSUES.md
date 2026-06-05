@@ -52,7 +52,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Planirano pracenje tokena, model usage-a i performance signala nije bilo vidljivo kao app funkcija. Runtime test je pokazao i OpenAI `429` TPM gresku kada je zahtev procenjen na previse tokena.
 - **Ocekivano:** App treba da prikaze osnovne usage/performance signale po modelu/session-u kada ti podaci postoje, bez uvodjenja lazne preciznosti ili teskog dashboard-a. Kada nema provider usage metadata, dozvoljena je jasno oznacena procena konteksta.
-- **Status:** Runtime potvrdjeno v1 - kratak zahtev prolazi i osvezava procenu, a veliki ForgeKit init/context payload se lokalno zaustavlja pre provider 429 greske. Full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
+- **Status:** Runtime potvrdjeno v1.1 - kratak zahtev prolazi i osvezava procenu, a veliki ForgeKit init/context payload se lokalno zaustavlja pre provider 429 greske. `watch` stanje koristi meksi `Oprez` signal, dok crveni/error treatment ostaje samo za `Prevelik` context. Full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
 
 ### [ISS-029] ForgeKit init context payload je prevelik
 
@@ -126,6 +126,30 @@ Prioriteti:
 ---
 
 ## Zatvoreni issues
+
+### [ISS-033] Context usage watch signal izgleda kao greska
+- **Prioritet:** NICE
+- **Otkriveno:** v1.1.0 pre-release test - 2026-06-05
+- **Simptom:** SidePanel context/token signal je kod visokog, ali jos neblokirajuceg context-a izgledao kao greska, iako zahtev jos nije nuzno blokiran.
+- **Ocekivano:** App treba da razlikuje oprezno stanje od stvarnog prevelikog context-a. Korisnik treba da vidi upozorenje bez utiska da je provider ili app vec greskom pao.
+- **Resenje:** `watch` stanje prikazuje `Oprez` sa blazim amber tretmanom, dok crveni/error tretman ostaje za `Prevelik` context i lokalni `CONTEXT GUARD`.
+- **Status:** Zatvoreno - v1.1.0
+
+### [ISS-032] Chat auto-scroll vraca korisnika na kraj tokom dugog odgovora
+- **Prioritet:** NICE
+- **Otkriveno:** v1.1.0 pre-release test - 2026-06-05
+- **Simptom:** Kada agent daje dug odgovor, chat automatski skroluje na kraj i korisniku ne dozvoljava da cita pocetak odgovora dok streaming traje.
+- **Ocekivano:** Auto-scroll treba da prati dno samo dok korisnik ostaje na dnu. Ako korisnik rucno skroluje gore, app treba da prestane da ga vraca na poslednje redove.
+- **Resenje:** Chat prati `stick to bottom` stanje i ne forsira dno tokom stream-a kada je korisnik rucno skrolovao gore.
+- **Status:** Zatvoreno - v1.1.0
+
+### [ISS-031] Manual Research/Premortem invoke ne drzi aktivnu ulogu
+- **Prioritet:** VAZNO
+- **Otkriveno:** v1.1.0 pre-release test - 2026-06-05
+- **Simptom:** Klik na `PREMORTEM` ili `RESEARCH` moze sadrzajno aktivirati nalaz, ali UI badge/top bar ostanu na `ORCHESTRATOR` ako model odgovori kroz Orchestrator segment.
+- **Ocekivano:** Kada korisnik rucno pozove role karticu, app treba da postavi i zadrzi tu runtime ulogu tokom odgovora. Orchestrator dobija sledecu odluku posle role nalaza, ali ne preuzima labelu aktivnog role output-a.
+- **Resenje:** Dodate su `RESEARCH` i `PREMORTEM` role kartice, role invoke prompt jasno trazi odgovor u pozvanoj ulozi, a streaming role lock cuva rucno pozvanu ulogu tokom odgovora.
+- **Status:** Zatvoreno - v1.1.0
 
 ### [ISS-017] Phase sidebar se ne osvezava posle potvrdjene izmene faza
 - **Prioritet:** VAZNO

@@ -5,7 +5,10 @@ import type { ForgeKitRole } from '../types'
 import './LeftPanel.css'
 
 const ALL_ROLES: ForgeKitRole[] = [
-  'ORCHESTRATOR', 'THINKER', 'BUILDER', 'REVIEWER', 'MEMORY CURATOR', 'OBSERVER'
+  'ORCHESTRATOR', 'THINKER',
+  'BUILDER', 'REVIEWER',
+  'MEMORY CURATOR', 'OBSERVER',
+  'RESEARCH', 'PREMORTEM'
 ]
 
 function roleDisplayName(role: ForgeKitRole): string {

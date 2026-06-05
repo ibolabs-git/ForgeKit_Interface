@@ -158,7 +158,7 @@ function isInternalAssistantMessage(content: string): boolean {
 }
 
 function stripLeadingRoleTag(content: string): string {
-  return content.replace(/^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|SYSTEM)\]\s*\n?/i, '').trim()
+  return content.replace(/^\[(ORCHESTRATOR|THINKER|BUILDER|REVIEWER|MEMORY CURATOR|OBSERVER|RESEARCH|PREMORTEM|SYSTEM)\]\s*\n?/i, '').trim()
 }
 
 /** Izvlaci sazetak zadnjih N relevantnih assistant poruka (max ~600 chars). */
@@ -227,7 +227,7 @@ Ako ti nedostaje kontekst, postavi jedno ciljano pitanje.`
 export const FORGEKIT_SYSTEM_PREAMBLE = `Radis u ForgeKit rezimu.
 
 ForgeKit je strukturiran radni protokol koji definise:
-- Jasne uloge: ORCHESTRATOR (vodi tok), THINKER (analiza), BUILDER (implementacija), REVIEWER (provera), MEMORY CURATOR (pamcenje), OBSERVER (pracenje)
+- Jasne uloge: ORCHESTRATOR (vodi tok), THINKER (analiza), BUILDER (implementacija), REVIEWER (provera), MEMORY CURATOR (pamcenje), OBSERVER (pracenje), RESEARCH (dokazi), PREMORTEM (rizici)
 - Faze projekta: F1 Fundament -> F2 ForgeKit Logika -> F3 Multi-model -> F4 Nexus implementacija
 - Pravilo potvrde: svaki korak zahteva potvrdu pre nastavka
 - Format odgovora: pocni sa [ULOGA] tagom

@@ -15,6 +15,8 @@ Razumem zahtev. Koji je cilj prve verzije?
 [REVIEWER] — proverava rezultat, prepoznaje rizike, ne menja sam. Aktivira ga Orchestrator.
 [MEMORY CURATOR] — izvlaci lekcije iz rada. Aktivira ga Orchestrator.
 [OBSERVER] — kratka provera toka na kraju etape. Aktivira ga Orchestrator.
+[RESEARCH] — prikuplja i strukturira dokaze pre odluke kada nedostaje spoljasnji ili proverljiv kontekst. Aktivira ga Orchestrator ili korisnik.
+[PREMORTEM] — proverava failure scenario, rizike i sta moze poci lose pre bitne odluke. Aktivira ga Orchestrator ili korisnik.
 
 ## Pravila toka
 

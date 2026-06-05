@@ -25,6 +25,8 @@ export function ChatWindow(): JSX.Element {
   const setShowSummaryModal   = useForgeKitStore((s) => s.setShowSummaryModal)
 
   const bottomRef      = useRef<HTMLDivElement>(null)
+  const chatWindowRef  = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // ── Search state ──────────────────────────────────────────────────────────
@@ -97,13 +99,24 @@ export function ChatWindow(): JSX.Element {
   }, [searchQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-scroll na dno pri novoj poruci ──────────────────────────────────
+  const updateStickToBottom = useCallback(() => {
+    const el = chatWindowRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = distanceFromBottom < 96
+  }, [])
+
   useEffect(() => {
-    if (!searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, searchOpen])
+    if (!searchOpen && (!isStreaming || stickToBottomRef.current)) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, searchOpen, isStreaming])
 
   // OPT-02: Auto-scroll tokom aktivnog streaminga — prati streamingContent buffer
   useEffect(() => {
-    if (isStreaming && !searchOpen) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isStreaming && !searchOpen && stickToBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'auto' })
+    }
   }, [streamingContent, isStreaming, searchOpen])
 
   // ── B3: Jump to message ───────────────────────────────────────────────────
@@ -280,7 +293,11 @@ export function ChatWindow(): JSX.Element {
         </div>
       )}
 
-      <div className="chat-window">
+      <div
+        className="chat-window"
+        ref={chatWindowRef}
+        onScroll={updateStickToBottom}
+      >
         {messages.length === 0 && (
           <div className="chat-empty">
             <div className="chat-empty-icon">⬡</div>

@@ -266,7 +266,7 @@ ${excerpt}`,
   const tokenRiskCopy = tokenUsage.risk === 'high'
     ? 'Prevelik'
     : tokenUsage.risk === 'watch'
-      ? 'Visok'
+      ? 'Oprez'
       : 'OK'
   const tokenUsageTitle = `${tokenUsage.note} Provider/model: ${tokenUsage.provider || selectedProvider}/${tokenUsage.model || effectiveModelId}.`
   const phaseLadder = useMemo(() => buildPhaseLadder({
