@@ -286,10 +286,12 @@ export function useSendMessage() {
     const requestUsage = buildTokenUsageSnapshot(history, selectedProvider, effectiveModel)
     setTokenUsage(requestUsage)
     if (requestUsage.risk === 'high') {
-      addSystemMessage(`[SYSTEM]
-Zahtev nije poslat jer je procena konteksta previsoka: oko ${requestUsage.promptEstimate.toLocaleString('en-US')} tokena.
+      addSystemMessage(`[CONTEXT_GUARD]
+Kontekst nije poslat modelu.
 
-Smanji istoriju, uradi kraci Re-Prime ili otvori novi scoped tok pre slanja. Ova procena nije billing usage.`)
+Procena je oko ${requestUsage.promptEstimate.toLocaleString('en-US')} tokena, pa bi zahtev verovatno pao na token limitu. Ovo nije greska modela i nije billing usage.
+
+Sledeci korak: otvori kraci scoped tok, smanji istoriju ili uradi Re-Prime sa manjim paketom.`)
       return
     }
 

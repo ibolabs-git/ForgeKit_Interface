@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
 import { useSendMessage } from '../hooks/useSendMessage'
 import type { ForgeKitRole } from '../types'
@@ -22,12 +22,14 @@ function phaseSortValue(phase: string): number {
 }
 
 export function LeftPanel(): JSX.Element {
+  const [isSavingProject, setIsSavingProject] = useState(false)
   const messagesLength = useForgeKitStore((s) => s.messages.length)
   const {
     activeRole, currentPhase,
     projectName, projectPath,
     projectPhases, phaseLockStatus,
-    setPhase, setShowProjectSetup
+    setPhase, setShowProjectSetup,
+    saveProjectPack, addSystemMessage
   } = useForgeKitStore()
   const { send, isStreaming } = useSendMessage()
 
@@ -47,6 +49,20 @@ export function LeftPanel(): JSX.Element {
   const handleCreueMode = () => {
     if (isStreaming) return
     send('Creue Mod: uradi kratak pregled trenutnog toka iz tri ugla: proces, kvalitet i rizik. Ne menjaj fajlove. Vrati nalaz i sledecu odluku za Orchestrator.')
+  }
+
+  const handleSaveProject = async () => {
+    if (!projectPath || isSavingProject || isStreaming) return
+    setIsSavingProject(true)
+    try {
+      await saveProjectPack()
+      addSystemMessage('Projekat je snimljen: session.json, project_handoff.md i project_chat_transcript.md su azurirani u projektnom folderu.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Nepoznata greska pri snimanju projekta.'
+      addSystemMessage(`Snimanje projekta nije uspelo. ${message}`)
+    } finally {
+      setIsSavingProject(false)
+    }
   }
 
   return (
@@ -134,6 +150,14 @@ export function LeftPanel(): JSX.Element {
           onClick={() => setShowProjectSetup(true)}
         >
           {projectPath ? 'Promeni folder' : '+ Podesi folder'}
+        </button>
+        <button
+          className="lp-btn-save"
+          onClick={handleSaveProject}
+          disabled={!projectPath || isStreaming || isSavingProject}
+          title="Snimi session, handoff i chat transcript u projektni folder"
+        >
+          {isSavingProject ? 'Snimam...' : 'Snimi projekat'}
         </button>
       </section>
     </aside>

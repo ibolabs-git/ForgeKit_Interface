@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useForgeKitStore } from '../store/forgekit.store'
-import { useSendMessage } from '../hooks/useSendMessage'
 import type { ModelInfo, ProviderInfo } from '../types'
 import './ProjectSetupModal.css'
 
@@ -13,13 +12,13 @@ const FALLBACK_PROVIDERS: ProviderInfo[] = [
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
   openai: 'gpt-4o',
-  nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
+  nvidia: 'nvidia/nemotron-3-super-120b-a12b'
 }
 
 export function ProjectSetupModal(): JSX.Element | null {
   const { showProjectSetup, setShowProjectSetup, projectName, setProjectPath, setProjectName, messages,
-    selectedProvider, selectedModel, customModelId, setProvider, setModel, setCustomModelId } = useForgeKitStore()
-  const { send, isStreaming } = useSendMessage()
+    selectedProvider, selectedModel, customModelId, setProvider, setModel, setCustomModelId, loadSession,
+    addAssistantMessage, isStreaming } = useForgeKitStore()
 
   const [newName, setNewName] = useState(projectName)
   const [creating, setCreating] = useState(false)
@@ -39,10 +38,10 @@ export function ProjectSetupModal(): JSX.Element | null {
 
   if (!showProjectSetup) return null
 
-  const maybeStartForgeKit = () => {
+  const maybeAddCompactWelcome = () => {
     if (messages.length > 0 || isStreaming) return
     window.setTimeout(() => {
-      send('[FORGEKIT_INIT]', { hiddenUser: true, allowTemplateFollowup: false })
+      addAssistantMessage('Spreman sam.\n\nKoji projekat ili ideju pokrecemo?', 'ORCHESTRATOR')
     }, 120)
   }
 
@@ -51,8 +50,8 @@ export function ProjectSetupModal(): JSX.Element | null {
     const path = await window.api.projectChooseFolder()
     if (path) {
       setProjectPath(path)
+      await loadSession()
       setShowProjectSetup(false)
-      maybeStartForgeKit()
     }
   }
 
@@ -67,7 +66,7 @@ export function ProjectSetupModal(): JSX.Element | null {
         setProjectPath(path)
         setProjectName(name)
         setShowProjectSetup(false)
-        maybeStartForgeKit()
+        maybeAddCompactWelcome()
       } else {
         setError('Kreiranje otkazano.')
       }

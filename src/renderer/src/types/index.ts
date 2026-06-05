@@ -82,6 +82,14 @@ export interface ProjectFileAction {
   errorMessage?: string
 }
 
+export interface ProjectReferenceFile {
+  filename: string
+  originalName: string
+  relativePath: string
+  sizeBytes: number
+  importedAt: number
+}
+
 // Globalni window.api tip
 export interface ElectronAPI {
   sendMessage: (payload: {
@@ -107,6 +115,8 @@ export interface ElectronAPI {
   projectGetPath: () => Promise<string | null>
   projectWriteFile: (filename: string, content: string) => Promise<{ ok: boolean; message?: string }>
   projectReadFile: (filename: string) => Promise<string | null>
+  projectImportReferenceFile: () => Promise<{ ok: boolean; reference?: ProjectReferenceFile; message?: string }>
+  projectListReferenceFiles: () => Promise<ProjectReferenceFile[]>
   // App info & update
   getAppVersion: () => Promise<string>
   checkForUpdate: () => Promise<{

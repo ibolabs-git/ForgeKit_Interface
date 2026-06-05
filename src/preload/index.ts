@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld('api', {
   projectWriteFile: (filename: string, content: string) =>
     ipcRenderer.invoke('project:write-file', filename, content),
   projectReadFile: (filename: string) => ipcRenderer.invoke('project:read-file', filename),
+  projectImportReferenceFile: () => ipcRenderer.invoke('project:import-reference-file'),
+  projectListReferenceFiles: () => ipcRenderer.invoke('project:list-reference-files'),
 
   // App info & update
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),

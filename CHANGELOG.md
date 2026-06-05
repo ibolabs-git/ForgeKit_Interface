@@ -8,13 +8,23 @@ Format: `[verzija] - datum - opis`
 
 ## [Unreleased] - sledeci ciklus
 
+### Promenjeno
+- NVIDIA model pool je prosiren na 10 preporucenih NIM modela, sa labelima za Orchestrator, Strategy, Builder, Thinker, Reviewer, Premortem, Research, rutinu i fallback tokove.
+- NVIDIA default model je pomeren na `nvidia/nemotron-3-super-120b-a12b` kao primarni Orchestrator/agentic kandidat; runtime smoke test dostupnosti ostaje poseban gate pre release-a.
+- SidePanel sada prikazuje vidljiv `NVIDIA routing predlog` samo kada je aktivan NVIDIA provider, sa razlogom i rucnom `Primeni` akcijom bez automatskog prebacivanja modela.
+- Prevelik context payload se sada prikazuje kao `CONTEXT GUARD` obavestenje i `Kontekst` procena, da ne izgleda kao provider/runtime greska.
+- Novi projekat sada koristi lokalni compact Orchestrator welcome bez API poziva, umesto automatskog full `[FORGEKIT_INIT]` slanja modelu.
+- Project reference import dodat je kao v1 tok: `.txt`, `.md` i `.markdown` fajlovi mogu da se kopiraju u `references/` folder aktivnog projekta, uz lokalni manifest, SidePanel listu, preview i ograniceni excerpt tok.
+- Project save/clone flow dodat je kao v1 tok: `Snimi projekat` upisuje `session.json`, `project_handoff.md` i `project_chat_transcript.md`, zatvaranje taba prikazuje izbor `Snimi i zatvori`, `Samo zatvori` ili `Otkazi`, a `Odaberi postojeci folder` ucitava postojeci `session.json` bez pokretanja novog init-a.
+
 ### Otvoreno
-- Close tab/project flow treba dopuniti kontrolisanim korisnickim izborom za snimanje projekta, backup snapshot i handoff zapis pre zatvaranja.
+- Napredniji backup profil i dodatne opcije pakovanja projekta ostaju follow-up ako se potvrdi potreba.
 - Token/model usage signal ima v1 procenu u SidePanel-u; full provider usage metadata ostaje buduci follow-up ako provider interfejs pocne da je vraca.
-- ForgeKit init context payload je oznacen kao poseban follow-up jer full init moze preci token prag i treba compact boot/context optimization.
+- Scoped instruction load ostaje follow-up: relevantne Master/mentor instrukcije treba ucitavati selektivno nakon sto korisnik definise cilj ili kada tok trazi Re-Prime/Governed kontekst.
 - Re-Prime treba dalje prosiriti u puniji handoff/state packet sa potvrdjenim odlukama, otvorenim pitanjima i pending file action stanjem.
 - NVIDIA timeout/fallback stabilizacija ostaje posebna provider tema.
 - Project session report treba dalje obogatiti odlukama, file action statusima i memory signalima.
+- Napredni scoped section picker, full summary i Research Packet tok za importovane reference fajlove ostaju follow-up; v1 reference tok ne salje ceo fajl modelu.
 - U glavni ForgeKit repo treba uvesti `ForgeKit_handoff_mentor_vodic_za_novi_start.md` kao inicijalni mentor/handoff dokument ako se potvrdi kao standard.
 
 ---

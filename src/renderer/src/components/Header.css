@@ -104,6 +104,36 @@
 }
 
 /* Orange CTA — "HANDOFF ›" */
+.header-save {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 14px;
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  border-right: 1px solid var(--border);
+  transition: all 0.12s;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+.header-save:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.header-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .header-cta {
   display: flex;
   align-items: center;

@@ -7,11 +7,12 @@ import './Header.css'
 export function Header(): JSX.Element {
   const {
     projectName, setProjectName, setShowSettings,
-    setShowHandoffModal
+    setShowHandoffModal, projectPath, saveProjectPack, addSystemMessage
   } = useForgeKitStore()
 
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState(projectName)
+  const [isSavingProject, setIsSavingProject] = useState(false)
 
   const handleNameSubmit = () => {
     setProjectName(nameInput.trim() || projectName)
@@ -20,6 +21,20 @@ export function Header(): JSX.Element {
 
   // C2: otvori HandoffModal umjesto window.confirm
   const handleNewSession = () => setShowHandoffModal(true)
+
+  const handleSaveProject = async () => {
+    if (!projectPath || isSavingProject) return
+    setIsSavingProject(true)
+    try {
+      await saveProjectPack()
+      addSystemMessage('Projekat je snimljen: session.json, project_handoff.md i project_chat_transcript.md su azurirani u projektnom folderu.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Nepoznata greska pri snimanju projekta.'
+      addSystemMessage(`Snimanje projekta nije uspelo. ${message}`)
+    } finally {
+      setIsSavingProject(false)
+    }
+  }
 
   return (
     <header className="header">
@@ -39,6 +54,14 @@ export function Header(): JSX.Element {
 
       {/* Right controls */}
       <div className="header-right">
+        <button
+          className="header-save"
+          onClick={handleSaveProject}
+          disabled={!projectPath || isSavingProject}
+          title="Snimi session, handoff i chat transcript u projektni folder"
+        >
+          {isSavingProject ? 'SNIMAM...' : 'SNIMI PROJEKAT'}
+        </button>
         <button
           className="header-icon-btn"
           onClick={handleNewSession}

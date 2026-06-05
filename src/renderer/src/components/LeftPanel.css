@@ -221,6 +221,28 @@
   color: var(--accent);
 }
 
+.lp-btn-save {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+  transition: all 0.12s;
+}
+.lp-btn-save:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+.lp-btn-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── ForgeKit Init ── */
 .lp-section-init {
   padding: 10px 14px;

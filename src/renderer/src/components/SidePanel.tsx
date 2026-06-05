@@ -8,8 +8,11 @@ import {
   getFileActionStatusCopy,
   splitProjectFileActions
 } from '../utils/operational-state'
-import type { ModelInfo, ProjectFileAction } from '../types'
+import { getModelRecommendation } from '../utils/model-routing'
+import type { ModelInfo, ProjectFileAction, ProjectReferenceFile } from '../types'
 import './SidePanel.css'
+
+const REFERENCE_EXCERPT_CHARS = 6000
 
 // OPT-07 + OPT-03: ReprimePreviewContent je posebna komponenta koja se mountuje SAMO
 // kad je preview otvoren. Ona sama subscribeuje na messages — SidePanel ne treba da
@@ -70,6 +73,20 @@ async function confirmProjectFileAction(
   }
 }
 
+function formatReferenceSize(sizeBytes: number): string {
+  if (sizeBytes < 1024) return `${sizeBytes} B`
+  if (sizeBytes < 1024 * 1024) return `${Math.round(sizeBytes / 1024)} KB`
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function buildReferenceExcerpt(content: string): string {
+  if (content.length <= REFERENCE_EXCERPT_CHARS) return content
+  return `${content.slice(0, REFERENCE_EXCERPT_CHARS)}
+
+[EXCERPT_TRUNCATED]
+Prikazan je samo pocetni excerpt reference fajla. Ne zakljucuj o delovima koji nisu poslati.`
+}
+
 export function SidePanel(): JSX.Element {
   // OPT-03: messages zamenjen sa messagesLength — SidePanel ne re-renderuje na svaki
   // stream token, samo kad se promeni broj poruka (nova poruka dodata/sesija resetovana)
@@ -81,7 +98,7 @@ export function SidePanel(): JSX.Element {
     selectedProvider, selectedModel, customModelId, contextStatus,
     tokenUsage,
     setProvider, setModel, setCustomModelId,
-    memoryRecords, projectFileActions, projectName,
+    memoryRecords, projectFileActions, projectName, projectPath,
     toggleTask, addManualTask, removeTask, clearTasks,
     updateMemoryStatus, removeMemoryRecord,
     updateProjectFileActionStatus, removeProjectFileAction,
@@ -95,6 +112,12 @@ export function SidePanel(): JSX.Element {
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'error'>('idle')
   const [updateMsg, setUpdateMsg] = useState('')
   const [reprimePreviewOpen, setReprimePreviewOpen] = useState(false)
+  const [referenceFiles, setReferenceFiles] = useState<ProjectReferenceFile[]>([])
+  const [referenceStatus, setReferenceStatus] = useState('')
+  const [referenceImporting, setReferenceImporting] = useState(false)
+  const [selectedReferencePath, setSelectedReferencePath] = useState('')
+  const [referencePreview, setReferencePreview] = useState('')
+  const [referenceLoading, setReferenceLoading] = useState(false)
 
   const [availableProviders, setAvailableProviders] = useState<{ id: string; name: string }[]>([])
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([])
@@ -114,6 +137,19 @@ export function SidePanel(): JSX.Element {
   useEffect(() => {
     window.api.getModels(selectedProvider).then(setAvailableModels).catch(() => {})
   }, [selectedProvider])
+
+  useEffect(() => {
+    if (!projectPath) {
+      setReferenceFiles([])
+      setReferenceStatus('')
+      setSelectedReferencePath('')
+      setReferencePreview('')
+      return
+    }
+    window.api.projectListReferenceFiles()
+      .then(setReferenceFiles)
+      .catch(() => setReferenceStatus('Reference lista nije ucitana'))
+  }, [projectPath])
 
   useEffect(() => { setCustomInput(customModelId) }, [customModelId])
 
@@ -139,6 +175,73 @@ export function SidePanel(): JSX.Element {
     await window.api.triggerUpdate()
   }
 
+  const handleImportReference = async () => {
+    if (!projectPath || referenceImporting) return
+    setReferenceImporting(true)
+    setReferenceStatus('')
+    try {
+      const result = await window.api.projectImportReferenceFile()
+      if (result.ok && result.reference) {
+        const list = await window.api.projectListReferenceFiles()
+        setReferenceFiles(list)
+        setReferenceStatus(`Dodato: ${result.reference.filename}`)
+      } else if (result.message && result.message !== 'Import otkazan') {
+        setReferenceStatus(result.message)
+      }
+    } catch {
+      setReferenceStatus('Import nije uspeo')
+    } finally {
+      setReferenceImporting(false)
+    }
+  }
+
+  const handleSelectReference = async (file: ProjectReferenceFile) => {
+    setSelectedReferencePath(file.relativePath)
+    setReferencePreview('')
+    setReferenceStatus('')
+    setReferenceLoading(true)
+    try {
+      const content = await window.api.projectReadFile(file.relativePath)
+      if (content === null) {
+        setReferenceStatus('Reference fajl nije procitan')
+        return
+      }
+      setReferencePreview(content)
+    } catch {
+      setReferenceStatus('Reference fajl nije procitan')
+    } finally {
+      setReferenceLoading(false)
+    }
+  }
+
+  const handleCopyReferenceExcerpt = async () => {
+    if (!referencePreview) return
+    try {
+      await navigator.clipboard.writeText(buildReferenceExcerpt(referencePreview))
+      setReferenceStatus('Excerpt kopiran')
+    } catch {
+      setReferenceStatus('Kopiranje nije uspelo')
+    }
+  }
+
+  const handleSendReferenceExcerpt = async () => {
+    const selected = referenceFiles.find((file) => file.relativePath === selectedReferencePath)
+    if (!selected || !referencePreview || isStreaming) return
+    const excerpt = buildReferenceExcerpt(referencePreview)
+    await send(
+      `[REFERENCE_EXCERPT]
+Fajl: ${selected.filename}
+Putanja: ${selected.relativePath}
+Napomena: Ovo je ogranicen excerpt importovanog reference fajla, ne ceo fajl. Ne zakljucuj o delovima koji nisu poslati.
+
+Zadatak: procitaj excerpt i vrati kratak Research/Orchestrator sazetak: sta je tema, koji su kljucni elementi, koje su otvorene nepoznanice i koji je sledeci bezbedan korak.
+
+--- EXCERPT ---
+${excerpt}`,
+      { allowTemplateFollowup: false, forceRePrime: true, timeoutMs: 90_000 }
+    )
+  }
+
   const completedCount = tasks.filter((t) => t.completed).length
   const effectiveModelId = customModelId.trim() || selectedModel
   const isCustomActive = Boolean(customModelId.trim())
@@ -151,10 +254,19 @@ export function SidePanel(): JSX.Element {
   const modelDisplayName = isCustomActive
     ? 'Custom'
     : shortName(availableModels.find((m) => m.id === selectedModel)?.name ?? selectedModel)
+  const modelRecommendation = selectedProvider === 'nvidia'
+    ? getModelRecommendation(activeRole)
+    : null
+  const isRecommendedModelActive = Boolean(
+    modelRecommendation &&
+    selectedProvider === modelRecommendation.provider &&
+    !isCustomActive &&
+    selectedModel === modelRecommendation.model
+  )
   const tokenRiskCopy = tokenUsage.risk === 'high'
-    ? 'Visoko'
+    ? 'Prevelik'
     : tokenUsage.risk === 'watch'
-      ? 'Paznja'
+      ? 'Visok'
       : 'OK'
   const tokenUsageTitle = `${tokenUsage.note} Provider/model: ${tokenUsage.provider || selectedProvider}/${tokenUsage.model || effectiveModelId}.`
   const phaseLadder = useMemo(() => buildPhaseLadder({
@@ -171,6 +283,9 @@ export function SidePanel(): JSX.Element {
     ...fileActionGroups.active,
     ...fileActionGroups.recentWritten
   ]
+  const selectedReference = referenceFiles.find((file) => file.relativePath === selectedReferencePath)
+  const referenceExcerpt = referencePreview ? buildReferenceExcerpt(referencePreview) : ''
+  const referenceIsTruncated = referencePreview.length > REFERENCE_EXCERPT_CHARS
 
   const handleAddTask = () => {
     const text = newTaskInput.trim()
@@ -245,7 +360,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
         </div>
 
         <div className={`usage-status-row usage-status-${tokenUsage.risk}`} title={tokenUsageTitle}>
-          <span>Tokeni: ~{tokenUsage.promptEstimate.toLocaleString('en-US')}</span>
+          <span>Kontekst: ~{tokenUsage.promptEstimate.toLocaleString('en-US')}</span>
           <span>{tokenRiskCopy}</span>
         </div>
         {tokenUsage.responseEstimate > 0 && (
@@ -307,7 +422,7 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
             const defaultModels: Record<string, string> = {
               anthropic: 'claude-sonnet-4-6',
               openai: 'gpt-4o',  // COMP-09 fix: gpt-5.4 ne postoji
-              nvidia: 'nvidia/nemotron-3-nano-30b-a3b'
+              nvidia: 'nvidia/nemotron-3-super-120b-a12b'
             }
             setProvider(newProvider, defaultModels[newProvider] ?? '')
           }}
@@ -348,6 +463,93 @@ Odgovori kratko kao [ORCHESTRATOR]: kontekst je osvezen i nastavljamo od trenutn
                 title="Resetuj na dropdown model"
               >✕</button>
             )}
+          </div>
+        )}
+
+        {modelRecommendation && (
+          <div className={`model-recommendation ${isRecommendedModelActive ? 'active' : ''}`}>
+            <div className="model-recommendation-kicker">NVIDIA routing predlog</div>
+            <div className="model-recommendation-title">{modelRecommendation.label}</div>
+            <div className="model-recommendation-reason">
+              Preporuceni NVIDIA kandidat za aktivnu ulogu: {modelRecommendation.reason}
+            </div>
+            <button
+              className="model-recommendation-apply"
+              disabled={isStreaming || isRecommendedModelActive}
+              onClick={() => setProvider(modelRecommendation.provider, modelRecommendation.model)}
+              title={isRecommendedModelActive ? 'Preporuceni model je vec aktivan' : 'Primeni preporuceni NVIDIA model'}
+            >
+              {isRecommendedModelActive ? 'Aktivno' : 'Primeni'}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* Reference files */}
+      <section className="panel-section panel-references">
+        <div className="panel-label">REFERENCE</div>
+
+        <button
+          className="reference-import-btn"
+          onClick={handleImportReference}
+          disabled={!projectPath || referenceImporting}
+          title={!projectPath ? 'Prvo izaberi projektni folder' : 'Importuj .txt ili .md fajl kao lokalnu referencu'}
+        >
+          {referenceImporting ? 'Import...' : 'Import .txt/.md'}
+        </button>
+
+        <div className="reference-hint">
+          Fajl se cuva u projektu i ne salje se modelu u celini.
+        </div>
+
+        {referenceStatus && <div className="reference-status">{referenceStatus}</div>}
+
+        {referenceFiles.length > 0 && (
+          <ul className="reference-list">
+            {referenceFiles.map((file) => (
+              <li key={file.relativePath}>
+                <button
+                  className={`reference-item ${selectedReferencePath === file.relativePath ? 'selected' : ''}`}
+                  onClick={() => handleSelectReference(file)}
+                  type="button"
+                >
+                  <div className="reference-name" title={file.relativePath}>{file.filename}</div>
+                  <div className="reference-meta">
+                    {formatReferenceSize(file.sizeBytes)} - {file.relativePath}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {selectedReference && (
+          <div className="reference-preview">
+            <div className="reference-preview-header">
+              <span>{selectedReference.filename}</span>
+              {referenceIsTruncated && <span>excerpt</span>}
+            </div>
+            <pre className="reference-preview-text">
+              {referenceLoading ? 'Ucitavanje reference...' : referenceExcerpt || 'Reference fajl je prazan.'}
+            </pre>
+            <div className="reference-actions">
+              <button
+                className="reference-action-btn"
+                onClick={handleCopyReferenceExcerpt}
+                disabled={!referenceExcerpt}
+                type="button"
+              >
+                Kopiraj excerpt
+              </button>
+              <button
+                className="reference-action-btn primary"
+                onClick={handleSendReferenceExcerpt}
+                disabled={!referenceExcerpt || isStreaming}
+                type="button"
+              >
+                Posalji excerpt
+              </button>
+            </div>
           </div>
         )}
       </section>

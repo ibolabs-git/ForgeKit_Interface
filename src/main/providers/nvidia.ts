@@ -38,22 +38,38 @@ export class NvidiaProvider implements AIProvider {
   }
 
   getAvailableModels(): ModelInfo[] {
-    // ForgeKit NIM pool — 5 modela, svaki pokriva jednu dimenziju
-    // Ažurna lista: https://build.nvidia.com/explore
+    // ForgeKit NIM pool - 10 modela za sire testiranje kroz role/tokove.
+    // Azurna lista: https://build.nvidia.com/explore i https://docs.api.nvidia.com/nim/reference/llm-apis
+    // Labeli su operativna preporuka za izbor modela; runtime routing ostaje u Orchestrator/MASTER-COORD toku.
     return [
-      // Orchestrator — role discipline, ForgeKit tok, instruction-following
-      { id: 'nvidia/llama-3.3-nemotron-super-49b-v1.5',     name: 'Nemotron Super 49B v1.5  [Orchestrator]' },
+      // Orchestrator / MASTER-COORD - agentic tok, koordinacija, multi-layer odluke
+      { id: 'nvidia/nemotron-3-super-120b-a12b',            name: 'Nemotron 3 Super 120B  [Orchestrator / agentic]' },
 
-      // Thinker / General — reasoning, structured output, baseline
-      { id: 'openai/gpt-oss-120b',                          name: 'GPT-OSS 120B  [Thinker / reasoning]' },
+      // Strategy / Spec - long-horizon planiranje, tool-use, slozeni tokovi
+      { id: 'z-ai/glm-5.1',                                  name: 'GLM 5.1  [Strategy / agentic]' },
 
-      // Thinker heavy — premortem, metakognicija, složena analiza
-      { id: 'deepseek-ai/deepseek-v4-pro',                  name: 'DeepSeek V4 Pro  [Thinker / analiza]' },
-
-      // Builder — kod, refaktor, instrukcije, implementacija
+      // Builder - kod, refaktor, implementacija, patch reasoning
       { id: 'qwen/qwen3-coder-480b-a35b-instruct',          name: 'Qwen3 Coder 480B  [Builder / kod]' },
 
-      // Fallback / nano — brzina, cost, svakodnevni kraći taskovi
+      // Thinker - dublja analiza, arhitektura, problem solving
+      { id: 'deepseek-ai/deepseek-v4-pro',                  name: 'DeepSeek V4 Pro  [Thinker / analiza]' },
+
+      // Reviewer - reasoning, objasnjenje, review i transparentna provera
+      { id: 'openai/gpt-oss-120b',                          name: 'GPT-OSS 120B  [Reviewer / reasoning]' },
+
+      // Premortem - rizik, kontradikcije, edge-case analiza
+      { id: 'qwen/qwen3-next-80b-a3b-thinking',             name: 'Qwen3 Next Thinking  [Premortem / rizik]' },
+
+      // Research - business/product, long-context enterprise tokovi
+      { id: 'mistralai/mistral-large-3-675b-instruct-2512', name: 'Mistral Large 3  [Research / business]' },
+
+      // Routine / fast pass - kraci zadaci, brzi proverni odgovori
+      { id: 'deepseek-ai/deepseek-v4-flash',                name: 'DeepSeek V4 Flash  [brz / rutina]' },
+
+      // Balanced fallback - postojeci stabilni Orchestrator kandidat
+      { id: 'nvidia/llama-3.3-nemotron-super-49b-v1.5',     name: 'Nemotron Super 49B v1.5  [balanced / fallback]' },
+
+      // Nano fallback - brzina, cost, svakodnevni kraci taskovi
       { id: 'nvidia/nemotron-3-nano-30b-a3b',               name: 'Nemotron Nano 30B  [fallback / brz]' }
     ]
   }

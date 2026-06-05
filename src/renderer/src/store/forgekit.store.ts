@@ -28,7 +28,7 @@ const PROVIDER_MODEL_PREFIXES: Record<string, string[]> = {
 const DEFAULT_MODELS: Record<string, string> = {
   anthropic: 'claude-sonnet-4-6',
   openai:    'gpt-4o',  // COMP-09: gpt-5.4 ne postoji — fallback na provjereni model
-  nvidia:    'nvidia/nemotron-3-nano-30b-a3b'
+  nvidia:    'nvidia/nemotron-3-super-120b-a12b'
 }
 
 function isModelCompatible(provider: string, model: string): boolean {
@@ -351,6 +351,27 @@ const EMPTY_TOKEN_USAGE: TokenUsageSnapshot = {
   note: 'Nema poslednje procene.'
 }
 
+interface ProjectSessionPayload {
+  savePackVersion: string
+  projectName: string
+  tasks: Task[]
+  messages: ChatMessage[]
+  activeRole: ForgeKitRole
+  currentPhase: ForgeKitPhase
+  projectPhases: ProjectPhaseDefinition[]
+  phaseLockStatus: PhaseLockStatus
+  selectedProvider: string
+  selectedModel: string
+  customModelId: string
+  modelHistory: Array<{ from: string; to: string; time: number }>
+  previousEffectiveModel: string
+  memoryRecords: MemoryRecord[]
+  projectFileActions: ProjectFileAction[]
+  tokenUsage: TokenUsageSnapshot
+  contextStatus: 'synced' | 'needs_refresh'
+  savedAt: number
+}
+
 function makeDefaultSnapshot(overrides?: Partial<TabSnapshot>): TabSnapshot {
   return {
     sessionId: `session-${Date.now()}`,
@@ -405,6 +426,110 @@ function persistTabHeaders(tabs: TabHeader[], activeTabId: string): void {
     tabs.map((t) => ({ id: t.id, projectPath: t.projectPath, projectName: t.projectName })),
     activeTabId
   )
+}
+
+function buildProjectSessionPayload(s: ForgeKitStore): ProjectSessionPayload {
+  return {
+    savePackVersion: 'v1',
+    projectName: s.projectName,
+    tasks: s.tasks,
+    messages: s.messages.filter((m) => !m.isStreaming),
+    activeRole: s.activeRole,
+    currentPhase: s.currentPhase,
+    projectPhases: s.projectPhases,
+    phaseLockStatus: s.phaseLockStatus,
+    selectedProvider: s.selectedProvider,
+    selectedModel: s.selectedModel,
+    customModelId: s.customModelId,
+    modelHistory: s.modelHistory,
+    previousEffectiveModel: s.previousEffectiveModel,
+    memoryRecords: s.memoryRecords,
+    projectFileActions: s.projectFileActions,
+    tokenUsage: s.tokenUsage,
+    contextStatus: s.contextStatus,
+    savedAt: Date.now()
+  }
+}
+
+function formatSavedTime(ts: number): string {
+  return new Date(ts).toISOString()
+}
+
+function buildProjectHandoff(data: ProjectSessionPayload, projectPath: string): string {
+  const phases = data.projectPhases.length > 0
+    ? data.projectPhases.map((p) => `- ${p.id}: ${p.label}`).join('\n')
+    : '- Nema potvrdjenih projektnih faza.'
+  const tasks = data.tasks.length > 0
+    ? data.tasks.map((t) => `- [${t.completed ? 'x' : ' '}] ${t.content}`).join('\n')
+    : '- Nema zabelezenih taskova.'
+  const fileActions = data.projectFileActions.length > 0
+    ? data.projectFileActions.map((a) => `- ${a.filename}: ${a.status} (${a.sourceRole ?? 'unknown'})`).join('\n')
+    : '- Nema Project File Actions stavki.'
+  const memories = data.memoryRecords.length > 0
+    ? data.memoryRecords.map((m) => `- ${m.status}: ${m.content}`).join('\n')
+    : '- Nema memory zapisa.'
+
+  return `# ForgeKit Project Handoff
+
+## Project
+- Name: ${data.projectName}
+- Project folder: ${projectPath}
+- Saved at: ${formatSavedTime(data.savedAt)}
+- Save pack: ${data.savePackVersion}
+
+## Runtime State
+- Active role: ${data.activeRole}
+- Active phase: ${data.currentPhase}
+- Phase status: ${data.phaseLockStatus}
+- Context status: ${data.contextStatus}
+- Provider/model: ${data.selectedProvider} / ${data.selectedModel}
+
+## Project Phases
+${phases}
+
+## Tasks
+${tasks}
+
+## Project File Actions
+${fileActions}
+
+## Memory Records
+${memories}
+
+## Clone Files
+- session.json: machine restore state for ForgeKit Interface
+- project_handoff.md: human/Codex continuation packet
+- project_chat_transcript.md: full project chat transcript
+- project_security_manifest.md: project file boundary and write governance
+- references/: imported local reference files when present
+
+## Next Start
+Open ForgeKit Interface, choose "Odaberi postojeci folder", and select this project folder.
+`
+}
+
+function buildProjectChatTranscript(data: ProjectSessionPayload): string {
+  const messages = data.messages.length > 0
+    ? data.messages.map((m) => {
+      const time = new Date(m.timestamp).toISOString()
+      const role = m.forgeRole ?? m.role
+      return `## ${role} - ${time}\n\n${m.content.trim() || '(prazna poruka)'}`
+    }).join('\n\n')
+    : 'Nema poruka u sesiji.'
+
+  return `# ForgeKit Project Chat Transcript
+
+- Project: ${data.projectName}
+- Saved at: ${formatSavedTime(data.savedAt)}
+- Messages: ${data.messages.length}
+
+${messages}
+`
+}
+
+async function writeCheckedProjectFile(filename: string, content: string): Promise<void> {
+  const result = await window.api.projectWriteFile(filename, content)
+  if (!result.ok) throw new Error(result.message ?? `Upis nije uspeo: ${filename}`)
 }
 
 // ── Store interfejs ───────────────────────────────────────────────────────────
@@ -466,6 +591,7 @@ interface ForgeKitStore {
   // ── Akcije — poruke ──
   addUserMessage: (content: string) => string
   addSystemMessage: (content: string) => void
+  addAssistantMessage: (content: string, role?: ForgeKitRole) => void
   startAssistantMessage: (messageId: string, initialRole?: ForgeKitRole) => void
   appendStreamToken: (token: string, messageId: string) => void
   finalizeMessage: (messageId: string) => void
@@ -527,6 +653,7 @@ interface ForgeKitStore {
 
   // ── Perzistencija ──
   saveSession: () => Promise<void>
+  saveProjectPack: () => Promise<void>
   loadSession: () => Promise<void>
 }
 
@@ -715,6 +842,19 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         role: 'assistant',
         content,
         forgeRole: 'SYSTEM',
+        timestamp: Date.now()
+      }]
+    }))
+  },
+
+  addAssistantMessage: (content, role = 'ORCHESTRATOR') => {
+    set((s) => ({
+      activeRole: role,
+      messages: [...s.messages, {
+        id: `local-${Date.now()}-${Math.random()}`,
+        role: 'assistant',
+        content,
+        forgeRole: role,
         timestamp: Date.now()
       }]
     }))
@@ -1148,22 +1288,16 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
   saveSession: async () => {
     const s = get()
     if (!s.projectPath) return
-    const data = {
-      projectName: s.projectName,
-      tasks: s.tasks,
-      messages: s.messages.filter((m) => !m.isStreaming),
-      currentPhase: s.currentPhase,
-      projectPhases: s.projectPhases,
-      phaseLockStatus: s.phaseLockStatus,
-      selectedProvider: s.selectedProvider,
-      selectedModel: s.selectedModel,
-      customModelId: s.customModelId,
-      modelHistory: s.modelHistory,
-      projectFileActions: s.projectFileActions,
-      tokenUsage: s.tokenUsage,
-      savedAt: Date.now()
-    }
-    await window.api.projectWriteFile('session.json', JSON.stringify(data, null, 2))
+    await writeCheckedProjectFile('session.json', JSON.stringify(buildProjectSessionPayload(s), null, 2))
+  },
+
+  saveProjectPack: async () => {
+    const s = get()
+    if (!s.projectPath) return
+    const data = buildProjectSessionPayload(s)
+    await writeCheckedProjectFile('session.json', JSON.stringify(data, null, 2))
+    await writeCheckedProjectFile('project_handoff.md', buildProjectHandoff(data, s.projectPath))
+    await writeCheckedProjectFile('project_chat_transcript.md', buildProjectChatTranscript(data))
   },
 
   loadSession: async () => {
@@ -1177,6 +1311,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         projectName?: string
         tasks?: Task[]
         messages?: ChatMessage[]
+        activeRole?: ForgeKitRole
         currentPhase?: ForgeKitPhase
         projectPhases?: ProjectPhaseDefinition[]
         phaseLockStatus?: PhaseLockStatus
@@ -1184,8 +1319,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         selectedModel?: string
         customModelId?: string
         modelHistory?: Array<{ from: string; to: string; time: number }>
+        previousEffectiveModel?: string
+        memoryRecords?: MemoryRecord[]
         projectFileActions?: ProjectFileAction[]
         tokenUsage?: TokenUsageSnapshot
+        contextStatus?: 'synced' | 'needs_refresh'
       }
       // Validacija provider/model — sprječava mismatch iz starih session.json
       const { provider: safeProvider, model: safeModel } = sanitizeProviderModel(
@@ -1196,6 +1334,7 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         projectName: data.projectName ?? s.projectName,
         tasks: data.tasks ?? [],
         messages: data.messages ?? [],
+        activeRole: data.activeRole ?? s.activeRole,
         currentPhase: data.currentPhase ?? s.currentPhase,
         projectPhases: data.projectPhases ?? [],
         phaseLockStatus: data.phaseLockStatus ?? 'none',
@@ -1203,8 +1342,11 @@ export const useForgeKitStore = create<ForgeKitStore>((set, get) => ({
         selectedModel: safeModel,
         customModelId: data.customModelId ?? '',
         modelHistory: data.modelHistory ?? [],
+        previousEffectiveModel: data.previousEffectiveModel ?? safeModel,
+        memoryRecords: data.memoryRecords ?? [],
         projectFileActions: data.projectFileActions ?? [],
         tokenUsage: data.tokenUsage ?? EMPTY_TOKEN_USAGE,
+        contextStatus: data.contextStatus ?? 'synced',
         tabs: s.tabs.map((t) => t.id === s.activeTabId
           ? { ...t, projectName: data.projectName ?? t.projectName }
           : t

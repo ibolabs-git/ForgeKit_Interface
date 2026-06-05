@@ -3,6 +3,19 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
 
+export interface ProjectReferenceFile {
+  filename: string
+  originalName: string
+  relativePath: string
+  sizeBytes: number
+  importedAt: number
+}
+
+const REFERENCES_DIR = 'references'
+const REFERENCES_MANIFEST = path.join(REFERENCES_DIR, 'reference_manifest.json')
+const ALLOWED_REFERENCE_EXTENSIONS = new Set(['.md', '.markdown', '.txt'])
+const MAX_REFERENCE_BYTES = 5 * 1024 * 1024
+
 export async function chooseProjectFolder(win: BrowserWindow): Promise<string | null> {
   const result = await dialog.showOpenDialog(win, {
     title: 'Izaberi folder za projekat',
@@ -50,6 +63,53 @@ function assertSafePath(projectPath: string, filename: string): string {
   return resolvedFile
 }
 
+function sanitizeReferenceFilename(filename: string): string {
+  const ext = path.extname(filename)
+  const base = path.basename(filename, ext)
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80)
+  return `${base || 'reference'}${ext.toLowerCase()}`
+}
+
+function readReferenceManifest(projectPath: string): ProjectReferenceFile[] {
+  const raw = readProjectFile(projectPath, REFERENCES_MANIFEST)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((item): item is ProjectReferenceFile =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as ProjectReferenceFile).filename === 'string' &&
+      typeof (item as ProjectReferenceFile).originalName === 'string' &&
+      typeof (item as ProjectReferenceFile).relativePath === 'string' &&
+      typeof (item as ProjectReferenceFile).sizeBytes === 'number' &&
+      typeof (item as ProjectReferenceFile).importedAt === 'number'
+    )
+  } catch {
+    return []
+  }
+}
+
+function writeReferenceManifest(projectPath: string, items: ProjectReferenceFile[]): void {
+  writeProjectFile(projectPath, REFERENCES_MANIFEST, JSON.stringify(items, null, 2))
+}
+
+function makeUniqueReferenceName(projectPath: string, filename: string): string {
+  const ext = path.extname(filename)
+  const base = path.basename(filename, ext)
+  let candidate = filename
+  let index = 1
+
+  while (fs.existsSync(assertSafePath(projectPath, path.join(REFERENCES_DIR, candidate)))) {
+    candidate = `${base}_${index}${ext}`
+    index += 1
+  }
+
+  return candidate
+}
+
 export function writeProjectFile(
   projectPath: string,
   filename: string,
@@ -70,6 +130,71 @@ export function readProjectFile(projectPath: string, filename: string): string |
   const safePath = assertSafePath(projectPath, filename)
   if (!fs.existsSync(safePath)) return null
   return fs.readFileSync(safePath, 'utf-8')
+}
+
+export function listReferenceFiles(projectPath: string): ProjectReferenceFile[] {
+  return readReferenceManifest(projectPath)
+}
+
+export async function importReferenceFile(
+  win: BrowserWindow,
+  projectPath: string
+): Promise<{ ok: boolean; reference?: ProjectReferenceFile; message?: string }> {
+  const result = await dialog.showOpenDialog(win, {
+    title: 'Importuj reference fajl',
+    properties: ['openFile'],
+    buttonLabel: 'Importuj',
+    filters: [
+      { name: 'Text i Markdown', extensions: ['txt', 'md', 'markdown'] }
+    ]
+  })
+
+  if (result.canceled || !result.filePaths[0]) {
+    return { ok: false, message: 'Import otkazan' }
+  }
+
+  const sourcePath = result.filePaths[0]
+  const ext = path.extname(sourcePath).toLowerCase()
+  if (!ALLOWED_REFERENCE_EXTENSIONS.has(ext)) {
+    return { ok: false, message: 'Dozvoljeni su samo .txt, .md i .markdown fajlovi' }
+  }
+
+  const sourceStat = fs.statSync(sourcePath)
+  if (sourceStat.size > MAX_REFERENCE_BYTES) {
+    return { ok: false, message: 'Reference fajl je veci od 5MB' }
+  }
+
+  if (!fs.existsSync(projectPath)) {
+    fs.mkdirSync(projectPath, { recursive: true })
+  }
+
+  const safeName = sanitizeReferenceFilename(path.basename(sourcePath))
+  const targetName = makeUniqueReferenceName(projectPath, safeName)
+  const targetRelativePath = path.join(REFERENCES_DIR, targetName)
+  const targetPath = assertSafePath(projectPath, targetRelativePath)
+  const targetDir = path.dirname(targetPath)
+
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true })
+  }
+
+  fs.copyFileSync(sourcePath, targetPath)
+
+  const reference: ProjectReferenceFile = {
+    filename: targetName,
+    originalName: path.basename(sourcePath),
+    relativePath: targetRelativePath.replace(/\\/g, '/'),
+    sizeBytes: fs.statSync(targetPath).size,
+    importedAt: Date.now()
+  }
+
+  const manifest = [
+    reference,
+    ...readReferenceManifest(projectPath).filter((item) => item.relativePath !== reference.relativePath)
+  ]
+  writeReferenceManifest(projectPath, manifest)
+
+  return { ok: true, reference }
 }
 
 export function initProjectFolder(projectPath: string, projectName: string): void {

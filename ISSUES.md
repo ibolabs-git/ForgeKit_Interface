@@ -43,9 +43,9 @@ Prioriteti:
 ### [ISS-028] Close tab/project flow nema backup i handoff potvrdu
 
 - **Otkriveno:** post-v1.0.26 runtime test - 2026-06-02
-- **Simptom:** Osnovni persistence flush cuva state u pozadini, ali zatvaranje taba/prozora jos nema kontrolisan korisnicki izbor za snimanje projekta, kreiranje backup-a ili automatski handoff zapis.
-- **Ocekivano:** Pri zatvaranju taba ili projekta app treba da prikaže kontrolisani close guard kada postoji aktivan projekat, pending state, file actions ili nesnimljen handoff. Korisnik treba jasno da bira izmedju opcija kao sto su `Sacuvaj projekat`, `Sacuvaj + kreiraj handoff`, `Kreiraj backup`, `Zatvori bez cuvanja` i `Otkazi`.
-- **Status:** Otvoreno - post-v1.0.26 UX/governance follow-up; ne mesati sa ISS-023 baseline persistence flush-om.
+- **Simptom:** Osnovni persistence flush cuva state u pozadini, ali zatvaranje taba/prozora jos nema kontrolisan korisnicki izbor za snimanje projekta, kreiranje backup-a ili automatski handoff zapis. Runtime test v1.0.28 je potvrdio da klik na zatvaranje taba samo snimi session, bez pitanja korisniku; u projektnom folderu ostaju samo osnovni fajlovi kao `session.json` i `project_security_manifest.md`.
+- **Ocekivano:** Pri zatvaranju taba ili projekta app mora da pita da li korisnik zeli da sacuva projekat. Ako korisnik izabere cuvanje, app treba da spakuje handoff i pratecu projektnu dokumentaciju u projektni folder, tako da se projekat kasnije moze nastaviti iz tog direktorijuma ili iz postojece opcije `Odaberi postojeci folder`. Korisnik treba jasno da bira izmedju opcija kao sto su `Sacuvaj projekat`, `Sacuvaj + kreiraj handoff`, `Kreiraj backup`, `Zatvori bez cuvanja` i `Otkazi`.
+- **Status:** Implementirano v1 - dodat je zajednicki project save pack koji pise `session.json`, `project_handoff.md` i `project_chat_transcript.md` u aktivni projektni folder; levi panel ima rucno dugme `Snimi projekat`; zatvaranje taba prikazuje custom modal sa izborom `Snimi i zatvori`, `Samo zatvori` ili `Otkazi`. `Odaberi postojeci folder` sada odmah ucitava `session.json` i ne pokrece novi init preko postojeceg projekta. Napredniji backup profil i dodatne opcije pakovanja projekta ostaju potencijalni UX follow-up.
 
 ### [ISS-024] Token/model usage i performance prikaz nisu implementirani
 
@@ -59,7 +59,14 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 runtime test - 2026-06-02
 - **Simptom:** `Pokreni ForgeKit` / init tok moze pripremiti oko `~53,597` procenjenih tokena i biti zaustavljen token/context guard-om pre slanja.
 - **Ocekivano:** ForgeKit init treba da ima compact boot mode, etapno ucitavanje ili selektivni template context kako pocetni activation flow ne bi odmah presao token prag. Korisniku treba prikazati jasno objasnjenje ako se full init mora skratiti.
-- **Status:** Otvoreno - post-v1.0.26 context optimization follow-up; povezano sa ISS-016 Re-Prime structured handoff i ISS-024 token usage signalom.
+- **Status:** Delimicno implementirano v1 - novi projekat vise ne salje automatski full `[FORGEKIT_INIT]` modelu. Project setup sada dodaje lokalnu compact Orchestrator welcome poruku bez API poziva, pa se pocetak rada ne blokira context guard-om i ne pravi token trosak. Otvoreno ostaje scoped instruction load: ucitavanje relevantnih Master/mentor instrukcija tek nakon sto korisnik definise cilj ili kada tok zatrazi Re-Prime/Governed kontekst.
+
+### [ISS-030] Project reference file import za veliki kontekst
+
+- **Otkriveno:** post-v1.0.28 NVIDIA/model routing test - 2026-06-04
+- **Simptom:** Kada korisnik ima dug `.txt` ili `.md` materijal, jedina direktna opcija je lepljenje u chat, sto brzo podize procenu konteksta i aktivira context guard.
+- **Ocekivano:** App treba da omoguci import `.txt` i `.md` fajlova kao project reference material. Importovani fajl treba da se cuva u projektnom folderu i koristi kao referenca, ali ne sme automatski da se salje modelu u celini. Korisnik treba da moze da izabere scoped excerpt, summary, research packet ili specificne sekcije koje se salju u model.
+- **Status:** Delimicno implementirano v1.1 - app moze da importuje `.txt`, `.md` i `.markdown` fajlove u `references/` folder aktivnog projekta, vodi `reference_manifest.json`, prikazuje preview i omogucava kopiranje ili slanje ogranicenog excerpt-a kroz Re-Prime. Fajl se ne salje modelu u celini. Otvoreno ostaje napredni scoped section picker / full summary / Research Packet tok.
 
 ### [ISS-025] Project session report nema pun decision/state/memory model
 
@@ -73,7 +80,7 @@ Prioriteti:
 - **Otkriveno:** post-v1.0.26 cleanup - 2026-06-02
 - **Simptom:** Provider/model setup UX je prosiren, ali treba potvrditi runtime validaciju protiv stvarnog provider/model kataloga i fallback ponasanja.
 - **Ocekivano:** Izbor modela u setup-u treba da bude proverljiv, validan i uskladjen sa runtime provider health signalom.
-- **Status:** Otvoreno - post-v1.0.26 provider setup validation follow-up.
+- **Status:** Delimicno reseno - NVIDIA model pool je prosiren na 10 preporucenih modela, default je pomeren na Orchestrator/agentic kandidat, a SidePanel ima vidljiv `NVIDIA routing predlog` samo kada je aktivan NVIDIA provider. Cross-provider ili provider-local routing za OpenAI/Anthropic ostaje poseban follow-up; ostaje runtime smoke test stvarne dostupnosti modela i timeout/fallback ponasanja.
 
 ### [ISS-027] State correctness regression scenario ne postoji kao objedinjeni test tok
 

@@ -47,9 +47,14 @@ const ROLE_COLORS: Record<string, string> = {
 
 const READ_TEMPLATE_ONLY_REGEX = /^\s*(?:\[READ_TEMPLATE:\s*[^\]]+\]\s*)+\s*$/
 const READ_TEMPLATE_TAG_REGEX = /\[READ_TEMPLATE:\s*([^\]]+)\]/g
+const CONTEXT_GUARD_REGEX = /^\[CONTEXT_GUARD\]\s*\n?/i
 
 function stripRoleTag(content: string): string {
   return content.replace(/^\[[A-Z][A-Z\s]+\]\s*\n?/, '')
+}
+
+function stripDisplayTag(content: string): string {
+  return stripRoleTag(content).replace(CONTEXT_GUARD_REGEX, '')
 }
 
 function getTemplateOnlyRequest(content: string): string[] | null {
@@ -265,11 +270,13 @@ export const MessageBubble = React.memo(function MessageBubble(
   }
 
   // ── Normalna poruka ──
-  const color  = ROLE_COLORS[message.forgeRole] ?? '#888'
+  const isContextGuard = CONTEXT_GUARD_REGEX.test(displayContent)
+  const color  = isContextGuard ? '#c07800' : ROLE_COLORS[message.forgeRole] ?? '#888'
+  const roleLabel = isContextGuard ? 'CONTEXT GUARD' : message.forgeRole
   const isUser = message.role === 'user'
 
   // Ukloni role tag s početka sadržaja (iz displayContent koji može biti streaming buffer)
-  const cleanedContent = stripRoleTag(displayContent)
+  const cleanedContent = stripDisplayTag(displayContent)
 
   const searchClasses = [
     isSearchMatch  ? 'search-match'   : '',
@@ -286,7 +293,7 @@ export const MessageBubble = React.memo(function MessageBubble(
       <div className="msg-row-header">
         {!isUser ? (
           <span className="role-tag" style={{ color, borderColor: color + '55' }}>
-            {message.forgeRole}
+            {roleLabel}
           </span>
         ) : (
           <span className="role-tag user-tag">YOU</span>

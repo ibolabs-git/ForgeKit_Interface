@@ -14,7 +14,7 @@ import './App.css'
 
 export function App(): JSX.Element {
   const {
-    setProjectPath, setShowProjectSetup, loadSession, saveSession,
+    setProjectPath, setShowProjectSetup, loadSession, saveSession, saveProjectPack,
     initTabsFromSaved,
     messages, tasks, activeTabId, tabs,
     theme, switchToTab, setShowSettings, setSettingsTab
@@ -104,7 +104,7 @@ export function App(): JSX.Element {
       if (saveTimer.current) clearTimeout(saveTimer.current)
       if (tabsSaveTimer.current) clearTimeout(tabsSaveTimer.current)
 
-      void saveSession()
+      void saveProjectPack()
       void window.api.tabsSaveState(
         tabs.map((t) => ({ id: t.id, projectPath: t.projectPath, projectName: t.projectName })),
         activeTabId
@@ -113,7 +113,7 @@ export function App(): JSX.Element {
 
     window.addEventListener('beforeunload', flushBeforeUnload)
     return () => window.removeEventListener('beforeunload', flushBeforeUnload)
-  }, [saveSession, tabs, activeTabId])
+  }, [saveProjectPack, tabs, activeTabId])
 
   return (
     <div className="app-shell">

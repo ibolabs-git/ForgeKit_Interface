@@ -24,7 +24,9 @@ import {
   createProjectFolder,
   writeProjectFile,
   readProjectFile,
-  initProjectFolder
+  initProjectFolder,
+  importReferenceFile,
+  listReferenceFiles
 } from './project-manager'
 import { checkForLatestRelease, checkAndNotifyFallback } from './updater'
 
@@ -281,6 +283,27 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     const projectPath = settingsStore.get('currentProjectPath')
     if (!projectPath) return null
     return readProjectFile(projectPath, filename)
+  })
+
+  ipcMain.handle('project:import-reference-file', async () => {
+    const projectPath = settingsStore.get('currentProjectPath')
+    if (!projectPath) return { ok: false, message: 'Nema aktivnog projekta' }
+    try {
+      return await importReferenceFile(win, projectPath)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Greska pri importu reference fajla'
+      return { ok: false, message: msg }
+    }
+  })
+
+  ipcMain.handle('project:list-reference-files', () => {
+    const projectPath = settingsStore.get('currentProjectPath')
+    if (!projectPath) return []
+    try {
+      return listReferenceFiles(projectPath)
+    } catch {
+      return []
+    }
   })
 
   // Čitanje fajla iz eksplicitnog foldera (bez oslanjanja na currentProjectPath)
